@@ -24,6 +24,12 @@ export type Actions = {
   clearCart: () => void;
 };
 
+const createNoopStorage = () => ({
+  getItem: () => null,
+  setItem: () => undefined,
+  removeItem: () => undefined,
+});
+
 export const useProductStore = create<State & Actions>()(
   persist(
     (set) => ({
@@ -101,8 +107,10 @@ export const useProductStore = create<State & Actions>()(
       },
     }),
     {
-      name: "products-storage", // name of the item in the storage (must be unique)
-      storage: createJSONStorage(() => sessionStorage), // (optional) by default, 'localStorage' is used
+      name: "products-storage",
+      storage: createJSONStorage(() =>
+        typeof window !== "undefined" ? sessionStorage : createNoopStorage()
+      ),
     }
   )
 );
