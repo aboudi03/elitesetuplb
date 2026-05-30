@@ -1,0 +1,334 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root,
+html[data-theme="light"] {
+    color-scheme: light;
+    --site-bg: #f8f8f8;
+    --site-panel: #ffffff;
+    --site-panel-soft: #f1f1f2;
+    --site-text: #111113;
+    --site-muted: #5f6068;
+    --site-border: #dedee3;
+    --site-accent: #d90429;
+    --site-accent-strong: #9d0208;
+    --site-accent-soft: rgba(217, 4, 41, 0.1);
+}
+
+html[data-theme="dark"] {
+    color-scheme: dark;
+    --site-bg: #09090b;
+    --site-panel: #121216;
+    --site-panel-soft: #18181d;
+    --site-text: #f7f7f8;
+    --site-muted: #a1a1aa;
+    --site-border: #27272f;
+    --site-accent: #ef233c;
+    --site-accent-strong: #c1121f;
+    --site-accent-soft: rgba(239, 35, 60, 0.16);
+}
+
+* {
+    border-color: var(--site-border);
+}
+
+body {
+    background: var(--site-bg);
+}
+
+.theme-surface {
+    background: var(--site-panel);
+    color: var(--site-text);
+}
+
+.theme-surface-soft {
+    background: var(--site-panel-soft);
+    color: var(--site-text);
+}
+
+.theme-link {
+    color: var(--site-muted);
+}
+
+.theme-link:hover {
+    color: var(--site-accent);
+}
+
+.theme-button {
+    background: var(--site-accent);
+    color: white;
+}
+
+.theme-button:hover {
+    background: var(--site-accent-strong);
+}
+
+@keyframes heroImageNext {
+    from {
+        opacity: 0;
+        transform: translateX(7%) scale(1.04);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+@keyframes heroImagePrevious {
+    from {
+        opacity: 0;
+        transform: translateX(-7%) scale(1.04);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+@keyframes heroCopyNext {
+    from {
+        opacity: 0;
+        transform: translateX(-38px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes heroCopyPrevious {
+    from {
+        opacity: 0;
+        transform: translateX(38px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes heroProductNext {
+    from {
+        opacity: 0;
+        transform: translateX(90px) scale(0.94) rotate(2deg);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1) rotate(0);
+    }
+}
+
+@keyframes heroProductPrevious {
+    from {
+        opacity: 0;
+        transform: translateX(-90px) scale(0.94) rotate(-2deg);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1) rotate(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [class*="heroImage"],
+    [class*="heroCopy"],
+    [class*="heroProduct"] {
+        animation: none !important;
+    }
+}
+
+/* Compatibility layer for older hardcoded Tailwind colors in pages/admin. */
+html[data-theme] .bg-white,
+html[data-theme] .bg-gray-50,
+html[data-theme] .bg-gray-100,
+html[data-theme] .bg-base-100 {
+    background-color: var(--site-panel);
+}
+
+html[data-theme] .bg-gray-200,
+html[data-theme] .bg-gray-300 {
+    background-color: var(--site-panel-soft);
+}
+
+html[data-theme] .bg-blue-50,
+html[data-theme] .bg-blue-100 {
+    background-color: var(--site-accent-soft);
+}
+
+html[data-theme] .bg-blue-500,
+html[data-theme] .bg-blue-600,
+html[data-theme] .hover\:bg-blue-600:hover,
+html[data-theme] .hover\:bg-blue-700:hover {
+    background-color: var(--site-accent);
+}
+
+html[data-theme] .text-black,
+html[data-theme] .text-gray-700,
+html[data-theme] .text-gray-800,
+html[data-theme] .text-gray-900 {
+    color: var(--site-text);
+}
+
+html[data-theme] .text-gray-400,
+html[data-theme] .text-gray-500,
+html[data-theme] .text-gray-600 {
+    color: var(--site-muted);
+}
+
+html[data-theme] .text-blue-500,
+html[data-theme] .text-blue-600,
+html[data-theme] .text-blue-700,
+html[data-theme] .text-blue-800,
+html[data-theme] .hover\:text-blue-500:hover,
+html[data-theme] .hover\:text-blue-600:hover {
+    color: var(--site-accent);
+}
+
+html[data-theme] .border-gray-200,
+html[data-theme] .border-gray-300,
+html[data-theme] .border-gray-400,
+html[data-theme] .border-blue-200,
+html[data-theme] .border-blue-300,
+html[data-theme] .border-blue-500 {
+    border-color: var(--site-border);
+}
+
+html[data-theme] .ring-gray-300,
+html[data-theme] .ring-blue-500,
+html[data-theme] .focus\:ring-blue-500:focus,
+html[data-theme] .focus\:ring-indigo-600:focus,
+html[data-theme] .focus\:border-blue-500:focus {
+    --tw-ring-color: var(--site-accent);
+    border-color: var(--site-accent);
+}
+
+html[data-theme] .input,
+html[data-theme] .select,
+html[data-theme] .textarea,
+html[data-theme] input,
+html[data-theme] select,
+html[data-theme] textarea {
+    background-color: var(--site-panel-soft);
+    color: var(--site-text);
+    border-color: var(--site-border);
+}
+
+html[data-theme] .input::placeholder,
+html[data-theme] input::placeholder,
+html[data-theme] textarea::placeholder {
+    color: var(--site-muted);
+}
+
+html[data-theme] .table,
+html[data-theme] table {
+    background-color: var(--site-panel);
+    color: var(--site-text);
+    border-color: var(--site-border);
+}
+
+html[data-theme] table {
+    min-width: max-content;
+}
+
+html[data-theme] .table {
+    min-width: 720px;
+}
+
+html[data-theme] .table thead,
+html[data-theme] .table tfoot,
+html[data-theme] table thead,
+html[data-theme] table tfoot {
+    background-color: var(--site-panel-soft);
+    color: var(--site-muted);
+}
+
+html[data-theme] .table tr,
+html[data-theme] table tr {
+    border-color: var(--site-border);
+}
+
+html[data-theme] .table :where(th, td),
+html[data-theme] table :where(th, td) {
+    background-color: inherit;
+    color: inherit;
+    border-color: var(--site-border);
+}
+
+html[data-theme] .table tbody tr,
+html[data-theme] table tbody tr {
+    background-color: var(--site-panel);
+    color: var(--site-text);
+}
+
+html[data-theme] .table tbody tr:nth-child(even),
+html[data-theme] table tbody tr:nth-child(even) {
+    background-color: var(--site-panel-soft);
+}
+
+html[data-theme] .table-pin-cols :where(th, td),
+html[data-theme] .table-pin-rows :where(th, td) {
+    background-color: inherit;
+    color: inherit;
+}
+
+html[data-theme] .btn-ghost {
+    color: var(--site-text);
+}
+
+html[data-theme] .btn-ghost:hover {
+    background-color: var(--site-accent-soft);
+    color: var(--site-accent);
+}
+
+html[data-theme] tr.hover\:bg-gray-50:hover,
+html[data-theme] tr.hover\:bg-gray-100:hover,
+html[data-theme] .table tbody tr:hover,
+html[data-theme] table tbody tr:hover,
+html[data-theme] .theme-hover-row:hover {
+    background-color: var(--site-accent);
+    color: white;
+}
+
+html[data-theme] tr.hover\:bg-gray-50:hover *,
+html[data-theme] tr.hover\:bg-gray-100:hover *,
+html[data-theme] .table tbody tr:hover *,
+html[data-theme] table tbody tr:hover *,
+html[data-theme] .theme-hover-row:hover * {
+    color: white;
+}
+
+html[data-theme] tr.hover\:bg-gray-50:hover a,
+html[data-theme] tr.hover\:bg-gray-100:hover a,
+html[data-theme] .table tbody tr:hover a,
+html[data-theme] table tbody tr:hover a,
+html[data-theme] .theme-hover-row:hover a {
+    color: white;
+    text-decoration-color: white;
+}
+
+html[data-theme] .table tbody tr:hover .badge,
+html[data-theme] table tbody tr:hover .badge {
+    color: white;
+}
+
+.range{
+    --range-shdw: var(--site-accent);
+}
+
+.checkbox:checked, .checkbox[checked="true"], .checkbox[aria-checked="true"] {
+    background-repeat: no-repeat;
+    animation: checkmark var(--animation-input, 0.2s) ease-out;
+    background-color: var(--site-accent);
+    background-image: linear-gradient(-45deg, transparent 65%, var(--site-accent) 65.99%),
+      linear-gradient(45deg, transparent 75%, var(--site-accent) 75.99%),
+      linear-gradient(-45deg, var(--site-accent) 40%, transparent 40.99%),
+      linear-gradient(
+        45deg,
+        var(--site-accent) 30%,
+        white 30.99%,
+        white 40%,
+        transparent 40.99%
+      ),
+      linear-gradient(-45deg, white 50%, var(--site-accent) 50.99%);
+}
