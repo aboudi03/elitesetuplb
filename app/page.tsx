@@ -1,4 +1,4 @@
-import { CategoryMenu, Hero, ProductsSection } from "@/components";
+import { BuildPcFloatingButton, CategoryMenu, Hero, ProductsSection } from "@/components";
 
 export default function Home() {
   return (
@@ -6,6 +6,7 @@ export default function Home() {
     <Hero />
     <CategoryMenu />
     <ProductsSection />
+    <BuildPcFloatingButton />
     </>
   );
 }

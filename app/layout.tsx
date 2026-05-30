@@ -10,7 +10,6 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Providers from "@/Providers";
 import SessionTimeoutWrapper from "@/components/SessionTimeoutWrapper";
-import BuildPcFloatingButton from "@/components/BuildPcFloatingButton";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -46,7 +45,6 @@ export default async function RootLayout({
           <Header />
           <Providers>
             {children}
-            <BuildPcFloatingButton />
           </Providers>
           <Footer />
         </SessionProvider>
