@@ -1,6 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-
-const prisma = new PrismaClient();
+const prisma = require("./db");
 
 /**
  * Generate ID using nanoid with dynamic import
