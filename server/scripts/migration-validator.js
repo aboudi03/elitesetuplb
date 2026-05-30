@@ -1,10 +1,10 @@
+const { PrismaClient } = require("@prisma/client");
 const fs = require('fs');
 const path = require('path');
-const prisma = require("../utills/db");
 
 class MigrationValidator {
     constructor() {
-        this.prisma = prisma;
+        this.prisma = new PrismaClient();
         this.backupDir = path.join(__dirname, '../backups');
         this.ensureBackupDir();
     }

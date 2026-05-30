@@ -1,5 +1,7 @@
 // Make a user admin by email
-const prisma = require("./utills/db");
+const { PrismaClient } = require("@prisma/client");
+
+const prisma = new PrismaClient();
 
 async function makeUserAdmin() {
   try {

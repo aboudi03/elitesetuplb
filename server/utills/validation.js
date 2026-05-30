@@ -1,5 +1,6 @@
 // Server-side validation utilities for payment and order processing
-const prisma = require("./db");
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
 
 // Validation error class
 class ValidationError extends Error {

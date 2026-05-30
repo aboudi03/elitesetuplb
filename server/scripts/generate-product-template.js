@@ -1,6 +1,8 @@
+const { PrismaClient } = require("@prisma/client");
 const fs = require("fs");
 const path = require("path");
-const prisma = require("../utills/db");
+
+const prisma = new PrismaClient();
 
 async function generateProductTemplate() {
   try {

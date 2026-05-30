@@ -1,5 +1,7 @@
+const { PrismaClient } = require('@prisma/client');
 const { nanoid } = require('nanoid');
-const prisma = require("../utills/db");
+
+const prisma = new PrismaClient();
 
 async function createSampleNotifications() {
   try {

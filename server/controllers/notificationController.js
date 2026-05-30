@@ -1,4 +1,5 @@
-const prisma = require("../utills/db");
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 /**
  * Get notifications for a user with filtering and pagination
