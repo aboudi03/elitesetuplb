@@ -2,6 +2,33 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const { validateOrderData, ValidationError } = require('../utills/validation');
 const { createOrderUpdateNotification } = require('../utills/notificationHelpers');
+const { getStatusWithGroup, ensureDefaultOrderStatuses } = require('../utills/orderStatus');
+
+function normalizeStatusCode(status) {
+  return status === 'canceled' ? 'cancelled' : status;
+}
+
+async function resolveStatusInfo(status) {
+  const normalizedStatus = normalizeStatusCode(status);
+  const statusInfo = await getStatusWithGroup(prisma, normalizedStatus);
+
+  if (statusInfo) {
+    return statusInfo;
+  }
+
+  return {
+    status: {
+      code: normalizedStatus || 'unknown',
+      name: normalizedStatus || 'Unknown',
+      groupCode: 'preparation',
+    },
+    group: {
+      code: 'preparation',
+      name: 'Preparation',
+      isCompletedGroup: false,
+    },
+  };
+}
 
 async function createCustomerOrder(request, response) {
   try {
@@ -31,6 +58,7 @@ async function createCustomerOrder(request, response) {
 
     const validatedData = validation.validatedData;
     console.log("✅ Validation passed, validated data:", validatedData);
+    validatedData.status = normalizeStatusCode(validatedData.status);
 
     // Additional business logic validation
     if (validatedData.total < 0.01) {
@@ -62,24 +90,43 @@ async function createCustomerOrder(request, response) {
     }
 
     console.log("Creating order in database...");
+    await ensureDefaultOrderStatuses(prisma);
+    const nextStatusInfo = await getStatusWithGroup(prisma, validatedData.status);
+
     // Create the order with validated data
-    const corder = await prisma.customer_order.create({
-      data: {
-        name: validatedData.name,
-        lastname: validatedData.lastname,
-        phone: validatedData.phone,
-        email: validatedData.email,
-        company: validatedData.company,
-        adress: validatedData.adress,
-        apartment: validatedData.apartment,
-        postalCode: validatedData.postalCode,
-        status: validatedData.status,
-        city: validatedData.city,
-        country: validatedData.country,
-        orderNotice: validatedData.orderNotice,
-        total: validatedData.total,
-        dateTime: new Date()
-      },
+    const corder = await prisma.$transaction(async (tx) => {
+      const createdOrder = await tx.customer_order.create({
+        data: {
+          name: validatedData.name,
+          lastname: validatedData.lastname,
+          phone: validatedData.phone,
+          email: validatedData.email,
+          company: validatedData.company,
+          adress: validatedData.adress,
+          apartment: validatedData.apartment,
+          postalCode: validatedData.postalCode,
+          status: validatedData.status,
+          city: validatedData.city,
+          country: validatedData.country,
+          orderNotice: validatedData.orderNotice,
+          total: validatedData.total,
+          dateTime: new Date()
+        },
+      });
+
+      await tx.orderStatusHistory.create({
+        data: {
+          customerOrderId: createdOrder.id,
+          previousStatus: null,
+          newStatus: validatedData.status,
+          previousGroupCode: null,
+          newGroupCode: nextStatusInfo?.group.code || "preparation",
+          note: "Order created",
+          changedBy: request.body.userId || null,
+        },
+      });
+
+      return createdOrder;
     });
 
     console.log("✅ Order created successfully:", corder);
@@ -199,6 +246,7 @@ async function updateCustomerOrder(request, response) {
     }
 
     const validatedData = validation.validatedData;
+    validatedData.status = normalizeStatusCode(validatedData.status);
 
     const existingOrder = await prisma.customer_order.findUnique({
       where: {
@@ -213,25 +261,113 @@ async function updateCustomerOrder(request, response) {
       });
     }
 
-    const updatedOrder = await prisma.customer_order.update({
-      where: {
-        id: existingOrder.id,
-      },
-      data: {
-        name: validatedData.name,
-        lastname: validatedData.lastname,
-        phone: validatedData.phone,
-        email: validatedData.email,
-        company: validatedData.company,
-        adress: validatedData.adress,
-        apartment: validatedData.apartment,
-        postalCode: validatedData.postalCode,
-        status: validatedData.status,
-        city: validatedData.city,
-        country: validatedData.country,
-        orderNotice: validatedData.orderNotice,
-        total: validatedData.total,
-      },
+    await ensureDefaultOrderStatuses(prisma);
+
+    const previousStatusInfo = await resolveStatusInfo(existingOrder.status);
+    const nextStatusInfo = await getStatusWithGroup(prisma, validatedData.status);
+
+    if (!nextStatusInfo) {
+      return response.status(400).json({
+        error: "Invalid order status",
+        details: `Status '${validatedData.status}' is not configured`,
+      });
+    }
+
+    const statusChanged = existingOrder.status !== validatedData.status;
+    const enteringCompleted =
+      statusChanged &&
+      !previousStatusInfo.group.isCompletedGroup &&
+      nextStatusInfo.group.isCompletedGroup;
+    const leavingCompleted =
+      statusChanged &&
+      previousStatusInfo.group.isCompletedGroup &&
+      !nextStatusInfo.group.isCompletedGroup;
+
+    const updatedOrder = await prisma.$transaction(async (tx) => {
+      const orderUpdate = await tx.customer_order.update({
+        where: {
+          id: existingOrder.id,
+        },
+        data: {
+          name: validatedData.name,
+          lastname: validatedData.lastname,
+          phone: validatedData.phone,
+          email: validatedData.email,
+          company: validatedData.company,
+          adress: validatedData.adress,
+          apartment: validatedData.apartment,
+          postalCode: validatedData.postalCode,
+          status: validatedData.status,
+          city: validatedData.city,
+          country: validatedData.country,
+          orderNotice: validatedData.orderNotice,
+          total: validatedData.total,
+        },
+      });
+
+      if (statusChanged) {
+        await tx.orderStatusHistory.create({
+          data: {
+            customerOrderId: existingOrder.id,
+            previousStatus: existingOrder.status,
+            newStatus: validatedData.status,
+            previousGroupCode: previousStatusInfo.group.code,
+            newGroupCode: nextStatusInfo.group.code,
+            note: request.body.statusNote || null,
+            changedBy: request.body.changedBy || null,
+          },
+        });
+      }
+
+      if (enteringCompleted || leavingCompleted) {
+        const orderProducts = await tx.customer_order_product.findMany({
+          where: { customerOrderId: existingOrder.id },
+        });
+
+        for (const orderProduct of orderProducts) {
+          const product = await tx.product.findUnique({
+            where: { id: orderProduct.productId },
+          });
+
+          if (!product) {
+            continue;
+          }
+
+          const quantityChange = enteringCompleted
+            ? -orderProduct.quantity
+            : orderProduct.quantity;
+          const newStock = product.inStock + quantityChange;
+
+          if (newStock < 0) {
+            const stockError = new Error(
+              `Not enough stock to complete order for ${product.title}`
+            );
+            stockError.statusCode = 409;
+            throw stockError;
+          }
+
+          await tx.product.update({
+            where: { id: product.id },
+            data: { inStock: newStock },
+          });
+
+          await tx.productStockHistory.create({
+            data: {
+              productId: product.id,
+              customerOrderId: existingOrder.id,
+              orderProductId: orderProduct.id,
+              previousStock: product.inStock,
+              quantityChange,
+              newStock,
+              reason: enteringCompleted
+                ? `Order entered completed group via ${validatedData.status}`
+                : `Order left completed group via ${validatedData.status}`,
+            },
+          });
+        }
+      }
+
+      return orderUpdate;
     });
 
     // Create notification for status update if status changed
@@ -257,9 +393,31 @@ async function updateCustomerOrder(request, response) {
 
     console.log(`Order updated successfully: ID ${updatedOrder.id}`);
 
-    return response.status(200).json(updatedOrder);
+    const [statusHistory, stockHistory] = await Promise.all([
+      prisma.orderStatusHistory.findMany({
+        where: { customerOrderId: updatedOrder.id },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.productStockHistory.findMany({
+        where: { customerOrderId: updatedOrder.id },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
+    return response.status(200).json({
+      ...updatedOrder,
+      statusHistory,
+      stockHistory,
+    });
   } catch (error) {
     console.error("Error updating order:", error);
+    
+    if (error.statusCode) {
+      return response.status(error.statusCode).json({
+        error: "Order update failed",
+        details: error.message,
+      });
+    }
     
     if (error.code === 'P2025') {
       return response.status(404).json({ 
@@ -340,11 +498,21 @@ async function getCustomerOrder(request, response) {
       });
     }
 
-    const order = await prisma.customer_order.findUnique({
-      where: {
-        id: id,
-      },
-    });
+    const [order, statusHistory, stockHistory] = await Promise.all([
+      prisma.customer_order.findUnique({
+        where: {
+          id: id,
+        },
+      }),
+      prisma.orderStatusHistory.findMany({
+        where: { customerOrderId: id },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.productStockHistory.findMany({
+        where: { customerOrderId: id },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
     
     if (!order) {
       return response.status(404).json({ 
@@ -353,7 +521,11 @@ async function getCustomerOrder(request, response) {
       });
     }
     
-    return response.status(200).json(order);
+    return response.status(200).json({
+      ...order,
+      statusHistory,
+      stockHistory,
+    });
   } catch (error) {
     console.error("Error fetching order:", error);
     return response.status(500).json({ 
@@ -365,6 +537,7 @@ async function getCustomerOrder(request, response) {
 
 async function getAllOrders(request, response) {
   try {
+    await ensureDefaultOrderStatuses(prisma);
     // Add pagination and filtering for better performance
     const page = parseInt(request.query.page) || 1;
     const limit = parseInt(request.query.limit) || 50;

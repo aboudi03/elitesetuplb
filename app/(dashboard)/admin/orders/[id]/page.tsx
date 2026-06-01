@@ -27,8 +27,36 @@ interface OrderProduct {
   };
 }
 
+interface OrderStatusOption {
+  id: string;
+  code: string;
+  name: string;
+  groupCode: string;
+}
+
+interface StatusHistoryItem {
+  id: string;
+  previousStatus?: string;
+  newStatus: string;
+  previousGroupCode?: string;
+  newGroupCode: string;
+  note?: string;
+  createdAt: string;
+}
+
+interface StockHistoryItem {
+  id: string;
+  productId: string;
+  previousStock: number;
+  quantityChange: number;
+  newStock: number;
+  reason: string;
+  createdAt: string;
+}
+
 const AdminSingleOrder = () => {
   const [orderProducts, setOrderProducts] = useState<OrderProduct[]>();
+  const [statusOptions, setStatusOptions] = useState<OrderStatusOption[]>([]);
   const [order, setOrder] = useState<Order>({
     id: "",
     adress: "",
@@ -46,6 +74,8 @@ const AdminSingleOrder = () => {
     status: "processing",
     total: 0,
   });
+  const [statusHistory, setStatusHistory] = useState<StatusHistoryItem[]>([]);
+  const [stockHistory, setStockHistory] = useState<StockHistoryItem[]>([]);
   const params = useParams<{ id: string }>();
 
   const router = useRouter();
@@ -55,8 +85,13 @@ const AdminSingleOrder = () => {
       const response = await apiClient.get(
         `/api/orders/${params?.id}`
       );
-      const data: Order = await response.json();
+      const data: Order & {
+        statusHistory?: StatusHistoryItem[];
+        stockHistory?: StockHistoryItem[];
+      } = await response.json();
       setOrder(data);
+      setStatusHistory(data.statusHistory || []);
+      setStockHistory(data.stockHistory || []);
     };
 
     const fetchOrderProducts = async () => {
@@ -67,8 +102,15 @@ const AdminSingleOrder = () => {
       setOrderProducts(data);
     };
 
+    const fetchOrderStatuses = async () => {
+      const response = await apiClient.get("/api/order-statuses");
+      const data = await response.json();
+      setStatusOptions(data?.statuses || []);
+    };
+
     fetchOrderData();
     fetchOrderProducts();
+    fetchOrderStatuses();
   }, [params?.id]);
 
   const updateOrder = async () => {
@@ -77,12 +119,8 @@ const AdminSingleOrder = () => {
       order?.lastname.length > 0 &&
       order?.phone.length > 0 &&
       order?.email.length > 0 &&
-      order?.company.length > 0 &&
       order?.adress.length > 0 &&
-      order?.apartment.length > 0 &&
-      order?.city.length > 0 &&
-      order?.country.length > 0 &&
-      order?.postalCode.length > 0
+      order?.city.length > 0
     ) {
       if (!isValidNameOrLastname(order?.name)) {
         toast.error("You entered invalid name format");
@@ -100,18 +138,23 @@ const AdminSingleOrder = () => {
       }
 
       apiClient.put(`/api/orders/${order?.id}`, order)
-        .then((response) => {
+        .then(async (response) => {
           if (response.status === 200) {
+            const updatedOrder = await response.json();
+            setOrder(updatedOrder);
+            setStatusHistory(updatedOrder.statusHistory || statusHistory);
+            setStockHistory(updatedOrder.stockHistory || stockHistory);
             toast.success("Order updated successfuly");
           } else {
-            throw Error("There was an error while updating a order");
+            const errorData = await response.json();
+            throw Error(errorData.details || "There was an error while updating a order");
           }
         })
         .catch((error) =>
-          toast.error("There was an error while updating a order")
+          toast.error(error.message || "There was an error while updating a order")
         );
     } else {
-      toast.error("Please fill all fields");
+      toast.error("Please fill all required fields");
     }
   };
 
@@ -311,16 +354,15 @@ const AdminSingleOrder = () => {
               onChange={(e) =>
                 setOrder({
                   ...order,
-                  status: e.target.value as
-                    | "processing"
-                    | "delivered"
-                    | "canceled",
+                  status: e.target.value,
                 })
               }
             >
-              <option value="processing">Processing</option>
-              <option value="delivered">Delivered</option>
-              <option value="canceled">Canceled</option>
+              {statusOptions.map((status) => (
+                <option key={status.id} value={status.code}>
+                  {status.name} ({status.groupCode})
+                </option>
+              ))}
             </select>
           </label>
         </div>
@@ -381,6 +423,51 @@ const AdminSingleOrder = () => {
             >
               Delete order
             </button>
+          </div>
+          <div className="mt-10 grid gap-6 lg:grid-cols-2">
+            <section className="rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] p-4">
+              <h2 className="text-xl font-semibold">Order status history</h2>
+              <div className="mt-4 space-y-3">
+                {statusHistory.length > 0 ? (
+                  statusHistory.map((item) => (
+                    <div key={item.id} className="text-sm text-[var(--site-muted)]">
+                      <p className="font-medium text-[var(--site-text)]">
+                        {item.previousStatus || "none"} to {item.newStatus}
+                      </p>
+                      <p>
+                        {item.previousGroupCode || "none"} to {item.newGroupCode}
+                      </p>
+                      <p>{new Date(item.createdAt).toLocaleString()}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-[var(--site-muted)]">No status changes yet.</p>
+                )}
+              </div>
+            </section>
+
+            <section className="rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] p-4">
+              <h2 className="text-xl font-semibold">Product stock history</h2>
+              <div className="mt-4 space-y-3">
+                {stockHistory.length > 0 ? (
+                  stockHistory.map((item) => (
+                    <div key={item.id} className="text-sm text-[var(--site-muted)]">
+                      <p className="font-medium text-[var(--site-text)]">
+                        {item.quantityChange > 0 ? "+" : ""}
+                        {item.quantityChange} stock
+                      </p>
+                      <p>
+                        {item.previousStock} to {item.newStock}
+                      </p>
+                      <p>{item.reason}</p>
+                      <p>{new Date(item.createdAt).toLocaleString()}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-[var(--site-muted)]">No stock changes yet.</p>
+                )}
+              </div>
+            </section>
           </div>
         </div>
       </div>

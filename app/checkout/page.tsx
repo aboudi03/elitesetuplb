@@ -30,7 +30,6 @@ const CheckoutPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { products, total, clearCart } = useProductStore();
   const router = useRouter();
-  const whatsappNumber = "96171089840";
 
   const orderGrandTotal = total === 0 ? 0 : Math.round(total + total / 5 + 5);
 
@@ -40,43 +39,6 @@ const CheckoutPage = () => {
       return `+${cleaned.slice(2)}`;
     }
     return cleaned;
-  };
-
-  const buildWhatsAppOrderMessage = (orderId: string) => {
-    const productLines = products
-      .map(
-        (product, index) =>
-          `${index + 1}. ${product.title} | Qty: ${product.amount} | Unit: $${product.price} | Line: $${product.price * product.amount}`
-      )
-      .join("\n");
-
-    return [
-      `New GearForge order`,
-      `Order ID: ${orderId}`,
-      ``,
-      `Customer: ${checkoutForm.name.trim()} ${checkoutForm.lastname.trim()}`,
-      `Phone: ${checkoutForm.phone.trim()}`,
-      `Email: ${checkoutForm.email.trim().toLowerCase()}`,
-      `Address: ${[checkoutForm.adress.trim(), checkoutForm.apartment.trim(), checkoutForm.city.trim()].filter(Boolean).join(", ")}`,
-      checkoutForm.company.trim() ? `Company: ${checkoutForm.company.trim()}` : "",
-      checkoutForm.orderNotice.trim() ? `Note: ${checkoutForm.orderNotice.trim()}` : "",
-      ``,
-      `Products:`,
-      productLines,
-      ``,
-      `Subtotal: $${total}`,
-      `Shipping: $5`,
-      `Taxes: $${total / 5}`,
-      `Total: $${orderGrandTotal}`,
-    ]
-      .filter(Boolean)
-      .join("\n");
-  };
-
-  const openWhatsAppOrder = (orderId: string) => {
-    const message = buildWhatsAppOrderMessage(orderId);
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
   };
 
   const validateCartStock = async () => {
@@ -305,8 +267,6 @@ const CheckoutPage = () => {
 
       console.log(" All products added successfully!");
 
-      openWhatsAppOrder(orderId);
-
       // Clear form and cart
       setCheckoutForm({
         name: "",
@@ -331,7 +291,7 @@ const CheckoutPage = () => {
         console.log('Note: Could not trigger notification refresh');
       }
       
-      toast.success("Order created successfully! You will be contacted for payment.");
+      toast.success("Order created successfully! We will review it and contact you for payment.");
       setTimeout(() => {
         router.push("/");
       }, 1000);

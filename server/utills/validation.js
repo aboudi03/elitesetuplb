@@ -347,7 +347,17 @@ const orderValidation = {
 
   // Validate order status
   validateStatus: (status) => {
-    const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+    const validStatuses = [
+      'pending',
+      'preparing',
+      'processing',
+      'completed',
+      'delivered',
+      'failed',
+      'missing',
+      'cancelled',
+      'canceled',
+    ];
     
     if (!status || typeof status !== 'string') {
       throw new ValidationError('Order status is required', 'status');
@@ -357,7 +367,8 @@ const orderValidation = {
       throw new ValidationError(`Invalid order status. Must be one of: ${validStatuses.join(', ')}`, 'status');
     }
 
-    return status.toLowerCase();
+    const normalizedStatus = status.toLowerCase();
+    return normalizedStatus === 'canceled' ? 'cancelled' : normalizedStatus;
   }
 };
 

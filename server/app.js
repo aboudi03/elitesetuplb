@@ -19,6 +19,7 @@ const notificationsRouter = require('./routes/notifications');
 const merchantRouter = require('./routes/merchant'); // Add this line
 const bulkUploadRouter = require('./routes/bulkUpload');
 const heroSlidesRouter = require("./routes/heroSlides");
+const orderStatusesRouter = require("./routes/orderStatuses");
 var cors = require("cors");
 
 // Import logging middleware
@@ -143,6 +144,7 @@ app.use("/api/notifications", notificationsRouter);
 app.use("/api/merchants", merchantRouter); 
 app.use("/api/bulk-upload", bulkUploadRouter);
 app.use("/api/hero-slides", heroSlidesRouter);
+app.use("/api/order-statuses", orderStatusesRouter);
 
 // Health check endpoint (no rate limiting)
 app.get('/health', (req, res) => {

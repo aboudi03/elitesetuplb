@@ -27,7 +27,7 @@ const createOrderProduct = asyncHandler(async (request, response) => {
 
   const requestedQuantity = parseInt(quantity);
 
-  // Create order line and decrement product stock together.
+  // Stock is adjusted later when an order enters or leaves a completed status group.
   const orderProduct = await prisma.$transaction(async (tx) => {
     const existingProduct = await tx.product.findUnique({
       where: { id: productId }
@@ -53,15 +53,6 @@ const createOrderProduct = asyncHandler(async (request, response) => {
         customerOrderId: customerOrderId,
         productId: productId,
         quantity: requestedQuantity
-      }
-    });
-
-    await tx.product.update({
-      where: { id: productId },
-      data: {
-        inStock: {
-          decrement: requestedQuantity
-        }
       }
     });
 
