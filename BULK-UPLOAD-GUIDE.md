@@ -1,154 +1,145 @@
 # 📦 Bulk Upload Template Guide
 
-## 📋 File Templates yang Tersedia
+## 📋 Available File Templates
 
-1. **bulk-upload-example.csv** - Template dengan 5 contoh produk lengkap
-2. **bulk-upload-template-blank.csv** - Template kosong untuk diisi manual
-3. **product-template.csv** - Template dasar
+1. **bulk-upload-example.csv** - A template with 5 sample products
+2. **bulk-upload-template-blank.csv** - A blank template for manual entry
+3. **product-template.csv** - A basic product template
 
-## 📊 Format CSV
+## 📊 CSV Format
 
-### Header (Kolom yang Diperlukan)
+### Required Header Columns
 
 ```csv
 title,price,manufacturer,inStock,mainImage,description,slug,categoryId
 ```
 
-### Deskripsi Kolom
+### Column Descriptions
 
-| Kolom            | Wajib    | Tipe   | Deskripsi                                              | Contoh                            |
-| ---------------- | -------- | ------ | ------------------------------------------------------ | --------------------------------- |
-| **title**        | ✅ Ya    | String | Nama produk                                            | Samsung Galaxy S24 Ultra          |
-| **price**        | ✅ Ya    | Number | Harga produk (gunakan titik untuk desimal)             | 1299.99                           |
-| **manufacturer** | ✅ Ya    | String | Nama manufaktur/brand                                  | Samsung                           |
-| **inStock**      | ❌ Tidak | Number | Jumlah stok (default: 0)                               | 25                                |
-| **mainImage**    | ❌ Tidak | URL    | URL gambar produk                                      | https://example.com/image.jpg     |
-| **description**  | ✅ Ya    | String | Deskripsi produk                                       | The latest flagship smartphone... |
-| **slug**         | ✅ Ya    | String | URL-friendly identifier (gunakan huruf kecil dan dash) | samsung-galaxy-s24-ultra          |
-| **categoryId**   | ✅ Ya    | String | ID kategori dari database (atau nama kategori)         | electronics                       |
+| Column          | Required | Type   | Description                                      | Example                            |
+| --------------- | -------- | ------ | ------------------------------------------------ | ---------------------------------- |
+| **title**       | ✅ Yes   | String | Product name                                      | Samsung Galaxy S24 Ultra          |
+| **price**       | ✅ Yes   | Number | Product price (use dot for decimals)              | 1299.99                           |
+| **manufacturer**| ✅ Yes   | String | Manufacturer or brand name                        | Samsung                           |
+| **inStock**     | ❌ No    | Number | Stock quantity (default: 0)                       | 25                                |
+| **mainImage**   | ❌ No    | URL    | Product image URL                                 | https://example.com/image.jpg     |
+| **description** | ✅ Yes   | String | Product description                               | The latest flagship smartphone... |
+| **slug**        | ✅ Yes   | String | URL-friendly identifier (lowercase, dashes only)  | samsung-galaxy-s24-ultra          |
+| **categoryId**  | ✅ Yes   | String | Category ID from the database (or category name)  | electronics                       |
 
-## ⚠️ Aturan Penting
+## ⚠️ Important Rules
 
-### 1. Format Data
+### 1. Data Formatting
 
-- **Harga**: Gunakan titik (.) untuk desimal, bukan koma
+- **Price** should use a dot (`.`) for decimals.
+  - ✅ Correct: `1299.99`
+  - ❌ Incorrect: `1.299,99`
 
-  - ✅ Benar: `1299.99`
-  - ❌ Salah: `1.299,99`
+- **Slug** must be URL-friendly and lowercase.
+  - ✅ Correct: `samsung-galaxy-s24`
+  - ❌ Incorrect: `Samsung Galaxy S24`
 
-- **Slug**: Harus URL-friendly (lowercase, no spaces)
-
-  - ✅ Benar: `samsung-galaxy-s24`
-  - ❌ Salah: `Samsung Galaxy S24`
-
-- **Text dengan Koma**: Gunakan tanda kutip ganda
-  - ✅ Benar: `"Camera with 200MP, 50MP, and 12MP lenses"`
-  - ❌ Salah: `Camera with 200MP, 50MP, and 12MP lenses`
+- **Text containing commas** should be wrapped in double quotes.
+  - ✅ Correct: `"Camera with 200MP, 50MP, and 12MP lenses"`
+  - ❌ Incorrect: `Camera with 200MP, 50MP, and 12MP lenses`
 
 ### 2. Category ID
 
-Anda bisa menggunakan:
+You can use:
+- A category UUID from the database (recommended)
+- A category name that can be resolved by the system
 
-- **UUID kategori** dari database (rekomendasi)
-- **Nama kategori** (akan dicari di database)
-
-Untuk mendapatkan category ID yang valid:
+To fetch valid category IDs:
 
 ```javascript
-// Jalankan di server directory:
-node -e "const {PrismaClient} = require('@prisma/client'); const p = new PrismaClient(); p.category.findMany().then(c => {console.log(c); p.$disconnect()});"
+// Run from the server directory:
+node -e "const { PrismaClient } = require('@prisma/client'); const p = new PrismaClient(); p.category.findMany().then(c => { console.log(c); p.$disconnect(); });"
 ```
 
 ### 3. Image URL
 
-- Gunakan URL lengkap dengan `http://` atau `https://`
-- Rekomendasi: Unsplash, atau upload ke CDN terlebih dahulu
-- Jika kosong, akan menggunakan placeholder default
+- Use a full URL with `http://` or `https://`
+- Recommended: host your images on a CDN or public storage
+- If empty, a default placeholder may be used
 
-## 📝 Contoh Row CSV
+## 📝 Example CSV Rows
 
-### Format Basic
+### Basic Row
 
 ```csv
 title,price,manufacturer,inStock,mainImage,description,slug,categoryId
 iPhone 15 Pro,999.99,Apple,50,https://example.com/iphone.jpg,Latest iPhone model,iphone-15-pro,smartphones
 ```
 
-### Format dengan Deskripsi Panjang
+### Long Description Row
 
 ```csv
 title,price,manufacturer,inStock,mainImage,description,slug,categoryId
 "Sony WH-1000XM5","399.99",Sony,30,https://example.com/sony.jpg,"Premium wireless headphones with industry-leading noise cancellation, 30-hour battery life, and exceptional sound quality.",sony-wh-1000xm5,audio
 ```
 
-## 🚀 Cara Upload
+## 🚀 Upload Process
 
 ### Via Admin Dashboard
 
-1. Login ke admin dashboard
-2. Buka menu **Bulk Upload**
-3. Download template CSV atau gunakan yang sudah ada
-4. Isi data produk sesuai format
-5. Drag & drop file CSV atau klik "Select CSV File"
-6. Klik "Upload Products"
-7. Tunggu proses selesai dan lihat hasilnya
+1. Log in to the admin dashboard
+2. Open the **Bulk Upload** page
+3. Download a CSV template or use an existing one
+4. Fill in product data according to the format
+5. Drag and drop the CSV file or click "Select CSV File"
+6. Click "Upload Products"
+7. Wait for the upload to complete and review the results
 
 ### Via API (Advanced)
 
 ```bash
-curl -X POST http://localhost:3001/api/products/bulk-upload \
-  -F "file=@bulk-upload-example.csv"
+curl -X POST http://localhost:3001/api/products/bulk-upload   -F "file=@bulk-upload-example.csv"
 ```
 
-## ✅ Checklist Sebelum Upload
+## ✅ Pre-Upload Checklist
 
-- [ ] Semua kolom wajib sudah diisi (title, price, manufacturer, description, slug, categoryId)
-- [ ] Harga menggunakan format angka dengan titik untuk desimal
-- [ ] Slug unik dan URL-friendly (lowercase, dash-separated)
-- [ ] Category ID valid (ada di database)
-- [ ] Image URL valid (jika diisi)
-- [ ] Text dengan koma dibungkus tanda kutip ganda
-- [ ] File berformat CSV (bukan Excel .xlsx)
+- [ ] Required columns are filled: title, price, manufacturer, description, slug, categoryId
+- [ ] Price uses a decimal dot format
+- [ ] Slug is unique and lowercase with dashes
+- [ ] Category ID is valid and exists in the database
+- [ ] Image URL is valid (if provided)
+- [ ] Text containing commas is wrapped in double quotes
+- [ ] File is saved as CSV, not XLSX
 
 ## 🔍 Troubleshooting
 
 ### Error: "Category not found"
-
-- Pastikan categoryId yang digunakan ada di database
-- Atau gunakan nama kategori yang sudah terdaftar
+- Verify the categoryId exists in the database
+- Or use an existing category name that can be resolved
 
 ### Error: "Duplicate slug"
-
-- Slug harus unik untuk setiap produk
-- Ubah slug menjadi lebih spesifik: `macbook-pro-16-2024` instead of `macbook`
+- Make sure each slug is unique
+- Use more specific values, such as `macbook-pro-16-2024`
 
 ### Error: "Invalid price format"
-
-- Gunakan angka dengan titik untuk desimal
-- Jangan gunakan simbol mata uang (Rp, $, dll)
+- Use a numeric value with a decimal dot
+- Do not include currency symbols like `$` or `Rp`
 
 ### Error: "CSV parsing failed"
-
-- Pastikan format CSV benar
-- Gunakan text editor atau Excel untuk edit
-- Save as CSV (Comma delimited)
+- Check that the CSV format is valid
+- Use a plain text editor or Excel to edit
+- Save as comma-delimited CSV
 
 ## 📞 Support
 
-Jika mengalami masalah:
-
-1. Cek error message di upload result
-2. Validasi format CSV menggunakan Excel atau Google Sheets
-3. Pastikan encoding file UTF-8
-4. Test dengan 1-2 produk dulu sebelum upload banyak
+If you encounter problems:
+1. Check the upload error message
+2. Validate CSV format in Excel or Google Sheets
+3. Ensure the file encoding is UTF-8
+4. Test with 1-2 products before uploading a large list
 
 ## 🎯 Tips
 
-1. **Start Small**: Test dengan 2-3 produk dulu
-2. **Validate Categories**: Pastikan kategori sudah dibuat di database
-3. **Unique Slugs**: Gunakan kombinasi nama + model untuk slug
-4. **Backup**: Simpan backup CSV sebelum upload
-5. **Monitor**: Cek upload history untuk melihat hasilnya
+1. **Start small**: test with 2-3 products first
+2. **Validate categories**: ensure category records exist
+3. **Use unique slugs**: combine name and model
+4. **Keep backups**: save a copy of your CSV before upload
+5. **Monitor history**: review upload results after each attempt
 
 ---
 

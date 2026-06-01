@@ -1,68 +1,52 @@
 # 📊 Bulk Upload - Quick Reference Guide
 
-## 🎯 Fitur yang Sudah Tersedia
+## Available Bulk Upload Features
 
-### ✅ Upload CSV
+### ✅ CSV Upload
 
-- **UI**: Drag & drop di http://localhost:3000/admin/bulk-upload
-- **API**: `POST /api/bulk-upload`
-- **Supports**: 5-1000+ products
+- **UI**: Drag and drop at http://localhost:3000/admin/bulk-upload
+- **API**: POST /api/bulk-upload
+- **Supported scale**: 5 to 1000+ products
 - **Validation**: Real-time category checking
-- **Format**: Download template tersedia
+- **Template**: Download a CSV template
 
-### ✅ View History
+### ✅ Upload History
 
 - **UI**: Upload History section
-- **API**: `GET /api/bulk-upload`
-- **Shows**: File name, statistics, errors, timestamp
-- **Status**: COMPLETED / FAILED / PARTIAL
+- **API**: GET /api/bulk-upload
+- Shows file name, statistics, errors, and timestamps
+- Status values: COMPLETED / FAILED / PARTIAL
 
 ### ✅ Delete Batch
 
-- **UI**: 🗑️ Trash icon di setiap batch
-- **API**: `DELETE /api/bulk-upload/{batchId}`
-- **Options**:
+- **UI**: Trash icon on each batch
+- **API**: DELETE /api/bulk-upload/{batchId}
+- Options:
   - Delete batch only (keep products)
   - Delete batch + products
-- **Protection**: Cannot delete if products in orders
+- Protection: Cannot delete if products are in orders
 
 ---
 
-## 🚀 Cara Menggunakan Delete Feature
+## How to Use Delete
 
-### Dari UI (Recommended):
+### From the UI (Recommended)
 
-```
-1. Buka: http://localhost:3000/admin/bulk-upload
-2. Scroll ke "Upload History"
-3. Klik tombol 🗑️ di batch yang ingin dihapus
-4. Modal muncul dengan 2 pilihan:
-
-   ┌─────────────────────────────────────────┐
-   │ ⚠️ Delete Batch Upload                  │
-   ├─────────────────────────────────────────┤
-   │ Delete bulk-upload-example.csv?         │
-   │                                         │
-   │ ☐ Also delete all products from batch  │
-   │   Warning: Permanent deletion!          │
-   │                                         │
-   │ [Cancel] [Delete Batch Only/& Products] │
-   └─────────────────────────────────────────┘
-
-5. Pilih:
-   - ☐ UNCHECKED = Keep products, delete history only
-   - ✅ CHECKED = Delete products + history
-
-6. Klik button delete
-7. ✅ Toast notification muncul
-8. List auto-refresh
-```
+1. Open http://localhost:3000/admin/bulk-upload
+2. Scroll to the Upload History section
+3. Click the trash icon for the batch you want to delete
+4. In the confirmation modal, choose:
+   - **Keep products**: remove batch history only
+   - **Delete products**: remove products and batch history
+5. Confirm the deletion
+6. A toast notification will appear
+7. The list refreshes automatically
 
 ---
 
-### Dari cURL/API:
+### From cURL / API
 
-#### Delete Batch Only (Keep Products):
+#### Delete Batch Only (Keep Products)
 
 ```bash
 curl -X DELETE "http://localhost:3001/api/bulk-upload/BATCH_ID?deleteProducts=false"
@@ -77,7 +61,7 @@ curl -X DELETE "http://localhost:3001/api/bulk-upload/BATCH_ID?deleteProducts=fa
 }
 ```
 
-#### Delete Batch + Products:
+#### Delete Batch + Products
 
 ```bash
 curl -X DELETE "http://localhost:3001/api/bulk-upload/BATCH_ID?deleteProducts=true"
@@ -92,7 +76,7 @@ curl -X DELETE "http://localhost:3001/api/bulk-upload/BATCH_ID?deleteProducts=tr
 }
 ```
 
-**Error** (if products in orders):
+**Error** (if products are in orders):
 
 ```json
 {
@@ -103,197 +87,70 @@ curl -X DELETE "http://localhost:3001/api/bulk-upload/BATCH_ID?deleteProducts=tr
 
 ---
 
-## 📋 Comparison Table
+## Comparison Table
 
 | Action                      | Batch Record | Items Record | Products       | Use Case                              |
 | --------------------------- | ------------ | ------------ | -------------- | ------------------------------------- |
-| **Delete Batch Only**       | ❌ Deleted   | ❌ Deleted   | ✅ **KEPT**    | Keep products for sale, clean history |
-| **Delete Batch + Products** | ❌ Deleted   | ❌ Deleted   | ❌ **DELETED** | Wrong upload, test data, duplicates   |
+| **Delete Batch Only**       | ❌ Deleted   | ❌ Deleted   | ✅ Kept        | Keep products for sale, clean history |
+| **Delete Batch + Products** | ❌ Deleted   | ❌ Deleted   | ❌ Deleted      | Wrong upload, test data, duplicates   |
 
 ---
 
-## 🛡️ Protections
+## Order Protection
 
-### Order Protection:
+When products from a batch already exist in orders, deletion of the products is blocked.
 
-```
-Product sudah di-order?
-    ↓
-DELETE request
-    ↓
-[Check orders] ←─ Database query
-    ↓
-If products in orders:
-    ❌ Error 409
-    "Cannot delete products: Some products are in orders"
-Else:
-    ✅ Delete allowed
-```
+**Flow:**
 
-### What Gets Deleted:
-
-**Scenario 1: Delete Batch Only**
-
-```
-Before:
-┌─────────────────┐  ┌──────────────┐  ┌──────────┐
-│ bulk_upload_    │  │ bulk_upload_ │  │ Product  │
-│ batch           │─→│ item         │─→│          │
-│ (metadata)      │  │ (5 items)    │  │ (5 prod) │
-└─────────────────┘  └──────────────┘  └──────────┘
-
-After:
-                                        ┌──────────┐
-                                        │ Product  │
-                                        │          │
-                                        │ (5 prod) │
-                                        └──────────┘
-                                        ✅ Still available
-```
-
-**Scenario 2: Delete Batch + Products**
-
-```
-Before:
-┌─────────────────┐  ┌──────────────┐  ┌──────────┐
-│ bulk_upload_    │  │ bulk_upload_ │  │ Product  │
-│ batch           │─→│ item         │─→│          │
-│ (metadata)      │  │ (5 items)    │  │ (5 prod) │
-└─────────────────┘  └──────────────┘  └──────────┘
-
-After:
-                     [All deleted]
-                     ❌ Nothing left
-```
+- Check batch items for product IDs
+- Verify whether any product IDs appear in `customer_order_product`
+- If yes, return `409 Conflict` with a message
+- Otherwise, allow deletion
 
 ---
 
-## 🧪 Testing Steps
+## Testing Steps
 
-### Test Delete Batch Only:
+### Test Delete Batch Only
 
 ```bash
 # 1. Upload CSV
-curl -X POST http://localhost:3001/api/bulk-upload \
-  -F "file=@bulk-upload-example.csv"
+curl -X POST http://localhost:3001/api/bulk-upload   -F "file=@bulk-upload-example.csv"
 
-# Response: { "batchId": "abc-123", ... }
-
-# 2. Verify products created
+# 2. Verify products were created
 curl http://localhost:3001/api/products | grep "Samsung Galaxy"
-# ✅ Should find product
 
-# 3. Delete batch (keep products)
+# 3. Delete batch only
 curl -X DELETE "http://localhost:3001/api/bulk-upload/abc-123?deleteProducts=false"
 
-# 4. Verify batch gone
+# 4. Verify batch is gone
 curl http://localhost:3001/api/bulk-upload
-# ❌ Batch abc-123 should be gone
 
 # 5. Verify products still exist
 curl http://localhost:3001/api/products | grep "Samsung Galaxy"
-# ✅ Product still exists!
 ```
 
----
-
-### Test Delete Batch + Products:
+### Test Delete Batch + Products
 
 ```bash
 # 1. Upload CSV
-curl -X POST http://localhost:3001/api/bulk-upload \
-  -F "file=@bulk-upload-example.csv"
+curl -X POST http://localhost:3001/api/bulk-upload   -F "file=@bulk-upload-example.csv"
 
-# Response: { "batchId": "xyz-789", ... }
-
-# 2. Delete batch + products
+# 2. Delete batch and products
 curl -X DELETE "http://localhost:3001/api/bulk-upload/xyz-789?deleteProducts=true"
 
-# 3. Verify products deleted
+# 3. Verify batch is gone
+curl http://localhost:3001/api/bulk-upload
+
+# 4. Verify products are deleted
 curl http://localhost:3001/api/products | grep "Samsung Galaxy"
-# ❌ Product should NOT exist
 ```
 
 ---
 
-### Test Order Protection:
+## Best Practices
 
-```bash
-# 1. Upload products
-curl -X POST http://localhost:3001/api/bulk-upload \
-  -F "file=@bulk-upload-example.csv"
-
-# 2. Login as customer via frontend
-# 3. Add product to cart
-# 4. Checkout (create order)
-
-# 5. Try to delete batch + products
-curl -X DELETE "http://localhost:3001/api/bulk-upload/BATCH_ID?deleteProducts=true"
-
-# Expected: 409 error
-# {
-#   "error": "Cannot delete products: Some products are in orders"
-# }
-```
-
----
-
-## 💡 Best Practices
-
-### ✅ DO:
-
-1. **Review before delete**
-
-   - Check how many products will be deleted
-   - Check if batch status is FAILED/PARTIAL
-
-2. **Use "Delete Batch Only" for audit trail**
-
-   - Keep history for compliance
-   - Products already in production
-
-3. **Use "Delete Batch + Products" for cleanup**
-
-   - Test uploads
-   - Duplicate data
-   - Invalid imports
-
-4. **Check orders first**
-   - Don't try to delete products that are ordered
-   - System will block, but manual check is better
-
-### ❌ DON'T:
-
-1. **Don't delete production batches without backup**
-2. **Don't force delete products in orders**
-3. **Don't spam delete (rate limiter)**
-
----
-
-## 🎯 Summary
-
-**Hasil dari screenshot Anda sudah BENAR!** ✅
-
-1. ✅ **Upload COMPLETED**: 5 products created successfully
-2. ✅ **Upload FAILED**: Category errors shown clearly
-3. ✅ **History displayed**: With statistics and errors
-4. ✅ **Delete button available**: 🗑️ icon di setiap batch
-
-**Cara Delete**:
-
-- **Via UI**: Klik 🗑️ → Choose option → Confirm
-- **Via API**: `DELETE /api/bulk-upload/{id}?deleteProducts=true/false`
-
-**Protection**: Products in orders cannot be deleted ✅
-
----
-
-## 📚 Related Documentation
-
-- `BULK-UPLOAD-GUIDE.md` - Comprehensive guide
-- `BULK-UPLOAD-EXPLANATION.md` - Full explanation
-- `DELETE-BULK-UPLOAD-GUIDE.md` - Detailed delete guide
-
----
-
-🎉 **Feature Complete!**
+- Keep products when you only need to remove batch history
+- Delete products only when the batch is test data or invalid
+- Always confirm there are no order references before deleting products
+- Use the API response to verify whether deletion succeeded

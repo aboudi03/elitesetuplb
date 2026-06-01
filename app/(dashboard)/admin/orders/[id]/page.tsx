@@ -185,8 +185,12 @@ const AdminSingleOrder = () => {
         <div className="mt-5">
           <label className="w-full">
             <div>
-              <span className="text-xl font-bold">Order ID:</span>
-              <span className="text-base"> {order?.id}</span>
+              <span className="text-xl font-bold">Order number:</span>
+              <span className="text-base"> #{order?.orderNumber || order?.id.slice(0, 8)}</span>
+            </div>
+            <div className="mt-1">
+              <span className="text-sm font-bold text-[var(--site-muted)]">Internal ID:</span>
+              <span className="text-sm text-[var(--site-muted)]"> {order?.id}</span>
             </div>
           </label>
         </div>

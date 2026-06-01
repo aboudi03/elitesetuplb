@@ -13,9 +13,18 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import apiClient from "@/lib/api";
+import toast from "react-hot-toast";
+
+interface OrderStatusOption {
+  id: string;
+  code: string;
+  name: string;
+  groupCode: string;
+}
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [statusOptions, setStatusOptions] = useState<OrderStatusOption[]>([]);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -24,8 +33,55 @@ const AdminOrders = () => {
       
       setOrders(data?.orders);
     };
+
+    const fetchStatuses = async () => {
+      const response = await apiClient.get("/api/order-statuses");
+      const data = await response.json();
+      setStatusOptions(data?.statuses || []);
+    };
+
     fetchOrders();
+    fetchStatuses();
   }, []);
+
+  const updateOrderStatus = async (order: Order, status: string) => {
+    const previousStatus = order.status;
+
+    setOrders((currentOrders) =>
+      currentOrders.map((currentOrder) =>
+        currentOrder.id === order.id ? { ...currentOrder, status } : currentOrder
+      )
+    );
+
+    try {
+      const response = await apiClient.put(`/api/orders/${order.id}`, {
+        ...order,
+        status,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || "Failed to update order status");
+      }
+
+      const updatedOrder = await response.json();
+      setOrders((currentOrders) =>
+        currentOrders.map((currentOrder) =>
+          currentOrder.id === order.id ? { ...currentOrder, ...updatedOrder } : currentOrder
+        )
+      );
+      toast.success("Order status updated");
+    } catch (error: any) {
+      setOrders((currentOrders) =>
+        currentOrders.map((currentOrder) =>
+          currentOrder.id === order.id
+            ? { ...currentOrder, status: previousStatus }
+            : currentOrder
+        )
+      );
+      toast.error(error?.message || "Failed to update order status");
+    }
+  };
 
   return (
     <div className="xl:ml-5 w-full max-xl:mt-5 ">
@@ -61,7 +117,10 @@ const AdminOrders = () => {
 
                   <td>
                     <div>
-                      <p className="font-bold">#{order?.id}</p>
+                      <p className="font-bold">
+                        #{order?.orderNumber || order?.id.slice(0, 8)}
+                      </p>
+                      <p className="text-xs text-[var(--site-muted)]">{order?.id}</p>
                     </div>
                   </td>
 
@@ -75,9 +134,17 @@ const AdminOrders = () => {
                   </td>
 
                   <td>
-                    <span className="badge badge-success text-white badge-sm">
-                      {order?.status}
-                    </span>
+                    <select
+                      className="select select-bordered select-sm min-w-40"
+                      value={order?.status}
+                      onChange={(event) => updateOrderStatus(order, event.target.value)}
+                    >
+                      {statusOptions.map((status) => (
+                        <option key={status.id} value={status.code}>
+                          {status.name}
+                        </option>
+                      ))}
+                    </select>
                   </td>
 
                   <td>

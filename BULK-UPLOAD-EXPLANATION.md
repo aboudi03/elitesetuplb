@@ -1,18 +1,18 @@
-# 📦 Penjelasan Bulk Upload Product
+# 📦 Bulk Upload Product Explanation
 
-## 🎯 Apa itu Bulk Upload?
+## 🎯 What is Bulk Upload?
 
-Bulk upload adalah fitur untuk **membuat banyak produk sekaligus** menggunakan file CSV, tanpa perlu input manual satu per satu.
+Bulk upload is a feature for creating many products at once using a CSV file, without manual entry for each product.
 
 ---
 
-## 📊 Hasil Bulk Upload
+## 📊 Bulk Upload Data Flow
 
-### 1️⃣ Data yang Tersimpan di Database:
+### 1️⃣ Data Stored in the Database
 
-Ketika Anda upload CSV dengan 5 produk dan berhasil 100%, maka:
+When you upload a CSV with 5 products and the upload completes successfully, the system stores data in these tables:
 
-#### **Tabel `Product`** (Produk yang dibuat):
+#### **Product Table**
 
 ```sql
 SELECT * FROM Product WHERE id IN (
@@ -21,7 +21,7 @@ SELECT * FROM Product WHERE id IN (
 );
 ```
 
-**Hasil**: 5 produk baru ditambahkan ke catalog:
+Result: 5 new products are added to the catalog.
 
 - Samsung Galaxy S24 Ultra
 - Apple MacBook Pro 16-inch M3
@@ -29,7 +29,7 @@ SELECT * FROM Product WHERE id IN (
 - LG OLED C3 55-inch 4K Smart TV
 - Canon EOS R6 Mark II Mirrorless Camera
 
-#### **Tabel `bulk_upload_batch`** (Metadata upload):
+#### **bulk_upload_batch Table**
 
 ```sql
 id: bbd17cc8-b714-489a-9b54-14c859b19b6e
@@ -40,28 +40,28 @@ errorCount: 0
 createdAt: 2025-10-12 22:38:00
 ```
 
-#### **Tabel `bulk_upload_item`** (Detail tiap produk):
+#### **bulk_upload_item Table**
 
 ```sql
--- 5 records dengan:
+-- 5 records with:
 status: CREATED
-productId: [UUID produk yang dibuat]
-error: NULL (karena sukses)
+productId: [UUID of created product]
+error: NULL (success)
 ```
 
 ---
 
-## 🔄 CRUD Bulk Upload
+## 🔄 Bulk Upload CRUD Overview
 
-### **C - CREATE** ✅ (Sudah Bisa)
+### **C - CREATE** ✅
 
-**Cara 1: Via UI Dashboard**
+**From the UI Dashboard**
 
-1. Buka http://localhost:3000/admin/bulk-upload
-2. Upload file CSV
-3. Lihat hasilnya di Upload History
+1. Open http://localhost:3000/admin/bulk-upload
+2. Upload the CSV file
+3. Review the upload results in Upload History
 
-**Cara 2: Via API**
+**From the API**
 
 ```bash
 curl -X POST http://localhost:3001/api/bulk-upload -F "file=@bulk-upload-example.csv"
@@ -81,15 +81,15 @@ curl -X POST http://localhost:3001/api/bulk-upload -F "file=@bulk-upload-example
 
 ---
 
-### **R - READ** ✅ (Sudah Bisa)
+### **R - READ** ✅
 
-#### **1. List Semua Upload History**
+#### **1. List Upload Batches**
 
 ```bash
 GET http://localhost:3001/api/bulk-upload
 ```
 
-**Response**:
+**Sample Response**:
 
 ```json
 {
@@ -109,13 +109,13 @@ GET http://localhost:3001/api/bulk-upload
 }
 ```
 
-#### **2. Detail Batch Tertentu**
+#### **2. Get Batch Details**
 
 ```bash
 GET http://localhost:3001/api/bulk-upload/{batchId}
 ```
 
-**Response**:
+**Sample Response**:
 
 ```json
 {
@@ -137,17 +137,17 @@ GET http://localhost:3001/api/bulk-upload/{batchId}
       "status": "CREATED",
       "error": null,
       "product": {
-        /* detail produk */
+        /* product detail */
       }
     }
-    // ... 4 item lainnya
+    // ... 4 more items
   ]
 }
 ```
 
-#### **3. Lihat Produk yang Dibuat**
+#### **3. Product Visibility**
 
-Produk yang berhasil dibuat akan langsung muncul di:
+Successfully created products appear in:
 
 - http://localhost:3000/admin/products
 - http://localhost:3000/shop
@@ -155,11 +155,11 @@ Produk yang berhasil dibuat akan langsung muncul di:
 
 ---
 
-### **U - UPDATE** ⚙️ (Partial, perlu development lebih lanjut)
+### **U - UPDATE** ⚙️
 
-**Update yang Sudah Ada**:
+The current bulk upload implementation supports partial update capabilities, but the main flow is still focused on create behavior.
 
-#### **1. Update Item dalam Batch (Fix Error)**
+#### **1. Fixing Error Items**
 
 ```bash
 PUT http://localhost:3001/api/bulk-upload/{batchId}
@@ -175,66 +175,38 @@ Content-Type: application/json
 }
 ```
 
-**Fungsi**: Memperbaiki item yang error dengan categoryId yang benar
+This endpoint is intended to fix individual items that failed validation.
 
-**Kapan Digunakan**:
+#### **2. Updating Individual Products**
 
-- Upload gagal karena kategori tidak ditemukan
-- Ingin retry create produk dari item yang error
-
-#### **2. Update Produk Individual**
-
-Setelah bulk upload berhasil, produk bisa diupdate via:
+After bulk upload completes, individual products can be updated through:
 
 ```bash
 PUT http://localhost:3001/api/products/{productId}
 ```
 
-**Yang Bisa Diupdate Lewat Bulk Upload** (Enhancement):
-Untuk saat ini, bulk upload **hanya CREATE**. Jika ingin UPDATE existing products via CSV, perlu tambahan:
+#### **Bulk Update Enhancement**
 
-```javascript
-// Di bulkUploadService.js - createBatchWithItems()
-// Tambahkan logic:
+If you want bulk CSV updates for existing products, add an UPDATE mode using `productId` in the CSV. Example:
 
-// Check if product with slug already exists
-const existingProduct = await tx.product.findUnique({
-  where: { slug: row.slug },
-});
-
-if (existingProduct) {
-  // UPDATE product
-  const updatedProduct = await tx.product.update({
-    where: { id: existingProduct.id },
-    data: {
-      /* data dari CSV */
-    },
-  });
-
-  await tx.bulk_upload_item.create({
-    data: {
-      batchId,
-      productId: updatedProduct.id,
-      status: "UPDATED", // Bukan CREATED
-      // ... field lainnya
-    },
-  });
-} else {
-  // CREATE product (logic yang sudah ada)
-}
+```csv
+productId,title,price,inStock
+uuid-123,Updated Title,999.99,50
 ```
+
+Then modify the bulk upload service to check for an existing product by slug and update it instead of creating a new one.
 
 ---
 
-### **D - DELETE** ✅ (Sudah Bisa)
+### **D - DELETE** ✅
 
-#### **1. Delete Batch (Metadata saja)**
+#### **1. Delete Batch Only**
 
 ```bash
 DELETE http://localhost:3001/api/bulk-upload/{batchId}?deleteProducts=false
 ```
 
-**Hasil**: Hapus batch + items record, tapi **produk tetap ada**
+This removes the batch and item records, but keeps the actual products in the catalog.
 
 #### **2. Delete Batch + Products**
 
@@ -242,22 +214,20 @@ DELETE http://localhost:3001/api/bulk-upload/{batchId}?deleteProducts=false
 DELETE http://localhost:3001/api/bulk-upload/{batchId}?deleteProducts=true
 ```
 
-**Hasil**: Hapus batch, items, **DAN semua produk yang dibuat**
+This removes the batch record, item records, and the products created by that batch.
 
-**Protection**: Tidak bisa delete jika produk sudah ada di order
+**Protection**: Product deletion is blocked if any product is referenced in an order.
 
 ```javascript
-// Dari bulkUploadService.js
 async function canDeleteProductsForBatch(tx, batchId) {
   const items = await tx.bulk_upload_item.findMany({
-    where: { batchId, productId: { not: null } },
+    where: { batchId, productId: { not: null } }
   });
 
-  const productIds = items.map((i) => i.productId);
+  const productIds = items.map((item) => item.productId);
 
-  // Check if any product is in orders
   const orderedProducts = await tx.customer_order_product.findMany({
-    where: { productId: { in: productIds } },
+    where: { productId: { in: productIds } }
   });
 
   if (orderedProducts.length > 0) {
@@ -270,169 +240,134 @@ async function canDeleteProductsForBatch(tx, batchId) {
 
 ---
 
-## 🎨 UI yang Sudah Ada
+## 🎨 Existing UI Features
 
-### **1. Bulk Upload Page** (`/admin/bulk-upload`)
+### Bulk Upload Page (`/admin/bulk-upload`)
 
 - ✅ Drag & drop CSV upload
 - ✅ File validation
 - ✅ Upload progress
-- ✅ Result display (success/error)
+- ✅ Success/error result display
 - ✅ Template download
 - ✅ Upload history list
 
-### **2. Upload History Component**
+### Upload History Component
 
-- ✅ List semua upload batch
-- ✅ Status badge (COMPLETED/FAILED/PARTIAL)
-- ✅ Statistics (total/success/failed/rate)
-- ✅ Error messages display
-- ✅ File name & upload time
+- ✅ Lists all bulk upload batches
+- ✅ Status badges for COMPLETED / FAILED / PARTIAL
+- ✅ Statistics for total, success, failed, and rate
+- ✅ Error message display
+- ✅ File name and upload timestamp
 
 ---
 
-## 🚀 Enhancement yang Bisa Ditambahkan
+## 🚀 Suggested Enhancements
 
-### **1. Update Existing Products** (via CSV)
+### 1. Bulk Update Existing Products
+Add an `UPDATE` mode in the CSV with a `productId` column.
 
-Tambahkan mode "UPDATE" di CSV dengan column `productId`:
+### 2. Bulk Delete via CSV
+Support uploading a CSV of `productId` values for mass deletion.
 
-```csv
-productId,title,price,inStock
-uuid-123,Updated Title,999.99,50
-```
-
-### **2. Bulk Delete via CSV**
-
-Upload CSV berisi productId untuk mass delete:
-
-```csv
-productId
-uuid-1
-uuid-2
-uuid-3
-```
-
-### **3. Export Products to CSV**
-
-Download produk existing ke CSV untuk edit:
+### 3. Export Products to CSV
+Allow downloading existing products for editing:
 
 ```bash
 GET /api/products/export?categoryId=xxx&format=csv
 ```
 
-### **4. Scheduled/Background Upload**
-
-Untuk file besar (1000+ products):
+### 4. Scheduled / Background Upload
+For large files (1000+ products):
 
 - Queue system (Bull/BullMQ)
 - Progress tracking
-- Email notification setelah selesai
+- Completion notification
 
-### **5. Image Bulk Upload**
+### 5. Image Bulk Upload
+Support uploading images in a ZIP archive alongside the CSV.
 
-Upload images dalam ZIP bersamaan dengan CSV:
+### 6. Validation Preview
+Preview rows before commit with:
 
-```csv
-title,price,imageName
-Product 1,99.99,product1.jpg
-```
+- Valid rows (green)
+- Invalid rows (red) with error reasons
+- Confirm Upload / Cancel buttons
 
-### **6. Validation Preview**
-
-Sebelum commit ke database, tampilkan preview:
-
-- Valid rows (hijau)
-- Invalid rows (merah) dengan alasan error
-- Button "Confirm Upload" atau "Cancel"
-
-### **7. Rollback/Undo Upload**
-
-Tambahkan button "Undo Upload" dalam 5 menit setelah upload:
-
-```javascript
-DELETE / api / bulk - upload / { batchId } / rollback;
-```
+### 7. Rollback / Undo Upload
+Add a rollback endpoint that allows undoing a batch within a limited time window.
 
 ---
 
-## 📝 Workflow Lengkap
+## 📝 Workflow Scenarios
 
-### **Scenario 1: Upload Produk Baru**
+### Scenario 1: New Product Upload
 
-1. **Prepare CSV** dengan data produk
-2. **Upload** via dashboard
-3. **Verify** di Upload History
-4. **Check Products** di product list
-5. **Test** di frontend shop
+1. Prepare the CSV with product data
+2. Upload via the dashboard
+3. Verify the batch in Upload History
+4. Check the products in the product list
+5. Test the products in the shop frontend
 
-### **Scenario 2: Fix Failed Upload**
+### Scenario 2: Fix a Failed Upload
 
-1. **Upload CSV** → Gagal karena category salah
-2. **Lihat error** di Upload History
-3. **Fix category** di CSV
-4. **Re-upload** file yang sudah diperbaiki
-5. **Verify success**
+1. Upload a CSV that fails due to an invalid category
+2. Review the error in Upload History
+3. Fix the CSV
+4. Re-upload the corrected file
+5. Verify success
 
-### **Scenario 3: Mass Delete via Batch**
+### Scenario 3: Mass Delete a Batch
 
-1. **Find batch** yang mau dihapus
-2. **Check** apakah produk sudah ada di order
-3. **Delete batch + products** jika aman
-4. **Verify** produk hilang dari catalog
+1. Find the batch to delete
+2. Check whether any products are already ordered
+3. Delete the batch and products if safe
+4. Verify the products are removed from the catalog
 
 ---
 
 ## 🛠️ Testing Commands
 
 ```bash
-# 1. Test Upload
-cd "d:\MyDocuments\Documents\Kuliah\Semester 5\Pengembangan WEB (T2-P2)\ETS-v2\Electronics-eCommerce-Shop-With-Admin-Dashboard-NextJS-NodeJS"
-curl.exe -X POST http://localhost:3001/api/bulk-upload -F "file=@bulk-upload-example.csv"
+# 1. Test bulk upload
+curl -X POST http://localhost:3001/api/bulk-upload -F "file=@bulk-upload-example.csv"
 
-# 2. List Batches
+# 2. List batches
 curl http://localhost:3001/api/bulk-upload
 
-# 3. Get Batch Detail
+# 3. Get batch detail
 curl http://localhost:3001/api/bulk-upload/{batchId}
 
-# 4. Delete Batch (keep products)
-curl -X DELETE http://localhost:3001/api/bulk-upload/{batchId}?deleteProducts=false
+# 4. Delete batch (keep products)
+curl -X DELETE "http://localhost:3001/api/bulk-upload/{batchId}?deleteProducts=false"
 
-# 5. Delete Batch (with products)
-curl -X DELETE http://localhost:3001/api/bulk-upload/{batchId}?deleteProducts=true
+# 5. Delete batch (with products)
+curl -X DELETE "http://localhost:3001/api/bulk-upload/{batchId}?deleteProducts=true"
 
-# 6. Check Products Created
+# 6. Check products created
 curl http://localhost:3001/api/products?page=1&limit=10
 ```
 
 ---
 
-## ✅ Kesimpulan
+## ✅ Summary
 
-**Hasil bulk upload Anda sudah BENAR!** ✅
+Bulk upload is working correctly if:
 
-Yang terjadi:
+1. 5 products are created in the database
+2. Products appear in the product list
+3. Products can be purchased in the shop
+4. Upload history is stored for tracking
+5. Error handling works for failed items
 
-1. ✅ 5 produk berhasil dibuat di database
-2. ✅ Produk muncul di product list
-3. ✅ Produk bisa dibeli di shop
-4. ✅ History tersimpan untuk tracking
-5. ✅ Error handling berfungsi (lihat upload pertama yang gagal)
+**Available features**:
 
-**Fitur CRUD yang sudah ada**:
+- ✅ CREATE: Upload CSV to create products
+- ✅ READ: List batches, view details, inspect products
+- ⚠️ UPDATE: Individual product updates are available, but bulk update by CSV is not fully supported yet
+- ✅ DELETE: Delete batch history, with or without products
 
-- ✅ **CREATE**: Upload CSV → Buat produk baru
-- ✅ **READ**: List batches, detail batch, lihat produk
-- ⚠️ **UPDATE**: Bisa update individual product, tapi belum support bulk update via CSV
-- ✅ **DELETE**: Delete batch (dengan/tanpa produk)
+**Recommended next steps**:
 
-**Rekomendasi Next Steps**:
-
-1. Test upload dengan kategori yang berbeda
-2. Test upload file besar (50+ products)
-3. Test error handling (invalid data)
-4. Implement bulk UPDATE jika diperlukan
-5. Add export to CSV feature
-
-🎉 **Bulk upload feature is working perfectly!**
+- add bulk update support
+- add rollback/undo
+- add large-file background processing

@@ -58,7 +58,14 @@ function run(prefix, command, args, options = {}) {
 function stopAll() {
   for (const child of children) {
     if (!child.killed) {
-      child.kill("SIGINT");
+      if (isWindows) {
+        spawn("taskkill", ["/pid", child.pid, "/T", "/F"], {
+          stdio: "ignore",
+          shell: false,
+        });
+      } else {
+        child.kill("SIGINT");
+      }
     }
   }
 }

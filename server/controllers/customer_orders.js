@@ -95,8 +95,24 @@ async function createCustomerOrder(request, response) {
 
     // Create the order with validated data
     const corder = await prisma.$transaction(async (tx) => {
+      const latestOrder = await tx.customer_order.findFirst({
+        where: {
+          orderNumber: {
+            not: null,
+          },
+        },
+        orderBy: {
+          orderNumber: 'desc',
+        },
+        select: {
+          orderNumber: true,
+        },
+      });
+      const nextOrderNumber = (latestOrder?.orderNumber || 0) + 1;
+
       const createdOrder = await tx.customer_order.create({
         data: {
+          orderNumber: nextOrderNumber,
           name: validatedData.name,
           lastname: validatedData.lastname,
           phone: validatedData.phone,
@@ -182,7 +198,7 @@ async function createCustomerOrder(request, response) {
     const responseData = {
       id: corder.id,
       message: "Order created successfully",
-      orderNumber: corder.id
+      orderNumber: corder.orderNumber
     };
     
     console.log("Sending response:", responseData);
@@ -580,10 +596,115 @@ async function getAllOrders(request, response) {
   }
 }
 
+async function getOrderStatusHistory(request, response) {
+  try {
+    const history = await prisma.orderStatusHistory.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 200,
+    });
+
+    const orderIds = [...new Set(history.map((item) => item.customerOrderId))];
+    const orders = await prisma.customer_order.findMany({
+      where: {
+        id: {
+          in: orderIds,
+        },
+      },
+      select: {
+        id: true,
+        orderNumber: true,
+        name: true,
+        lastname: true,
+        email: true,
+      },
+    });
+    const ordersById = new Map(orders.map((order) => [order.id, order]));
+
+    return response.status(200).json(
+      history.map((item) => ({
+        ...item,
+        order: ordersById.get(item.customerOrderId) || null,
+      }))
+    );
+  } catch (error) {
+    console.error("Error fetching order status history:", error);
+    return response.status(500).json({
+      error: "Internal server error",
+      details: "Failed to fetch order status history."
+    });
+  }
+}
+
+async function getProductStockHistory(request, response) {
+  try {
+    const history = await prisma.productStockHistory.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 200,
+    });
+
+    const productIds = [...new Set(history.map((item) => item.productId))];
+    const orderIds = history
+      .map((item) => item.customerOrderId)
+      .filter(Boolean);
+
+    const [products, orders] = await Promise.all([
+      prisma.product.findMany({
+        where: {
+          id: {
+            in: productIds,
+          },
+        },
+        select: {
+          id: true,
+          title: true,
+          mainImage: true,
+          slug: true,
+        },
+      }),
+      prisma.customer_order.findMany({
+        where: {
+          id: {
+            in: [...new Set(orderIds)],
+          },
+        },
+        select: {
+          id: true,
+          orderNumber: true,
+          name: true,
+          lastname: true,
+        },
+      }),
+    ]);
+
+    const productsById = new Map(products.map((product) => [product.id, product]));
+    const ordersById = new Map(orders.map((order) => [order.id, order]));
+
+    return response.status(200).json(
+      history.map((item) => ({
+        ...item,
+        product: productsById.get(item.productId) || null,
+        order: item.customerOrderId ? ordersById.get(item.customerOrderId) || null : null,
+      }))
+    );
+  } catch (error) {
+    console.error("Error fetching product stock history:", error);
+    return response.status(500).json({
+      error: "Internal server error",
+      details: "Failed to fetch product stock history."
+    });
+  }
+}
+
 module.exports = {
   createCustomerOrder,
   updateCustomerOrder,
   deleteCustomerOrder,
   getCustomerOrder,
   getAllOrders,
+  getOrderStatusHistory,
+  getProductStockHistory,
 };

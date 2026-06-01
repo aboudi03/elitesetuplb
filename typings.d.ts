@@ -61,6 +61,7 @@ interface User {
 
 interface Order {
   id: string;
+  orderNumber?: number | null;
   adress: string;
   apartment: string;
   company: string;

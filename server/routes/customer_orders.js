@@ -7,12 +7,20 @@ const {
     createCustomerOrder,
     updateCustomerOrder,
     deleteCustomerOrder,
-    getAllOrders 
+    getAllOrders,
+    getOrderStatusHistory,
+    getProductStockHistory
   } = require('../controllers/customer_orders');
 
   router.route('/')
   .get(getAllOrders)
   .post(createCustomerOrder);
+
+  router.route('/history/status')
+  .get(getOrderStatusHistory);
+
+  router.route('/history/stock')
+  .get(getProductStockHistory);
 
   router.route('/:id')
   .get(getCustomerOrder)
