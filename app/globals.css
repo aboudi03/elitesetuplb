@@ -38,9 +38,9 @@ html[data-theme="dim"],
     --site-text: #b2ccd6;
     --site-muted: #8ea7b2;
     --site-border: #394150;
-    --site-accent: #9fe88d;
-    --site-accent-strong: #86d576;
-    --site-accent-soft: rgba(159, 232, 141, 0.14);
+    --site-accent: #ef445d;
+    --site-accent-strong: #d02f46;
+    --site-accent-soft: rgba(239, 68, 93, 0.16);
 }
 
 * {
@@ -493,44 +493,44 @@ html[data-theme] .admin-data-table tbody tr:hover :where(td, th, a, p, span, div
 }
 
 .admin-table-select {
-    background-color: #16161d;
-    color: #f7f7f8;
-    border-color: #2a2a35;
-    color-scheme: dark;
+    background-color: var(--site-panel);
+    color: var(--site-text);
+    border-color: var(--site-border);
+    color-scheme: inherit;
 }
 
 .admin-table-select:hover,
 .admin-table-select:focus {
-    background-color: #1b1b24;
-    color: #f7f7f8;
+    background-color: var(--site-panel-soft);
+    color: var(--site-text);
     border-color: var(--site-accent);
 }
 
 .admin-table-select:disabled {
-    background-color: #14141a;
-    color: #8f90a0;
-    border-color: #23232c;
+    background-color: var(--site-panel-soft);
+    color: var(--site-muted);
+    border-color: var(--site-border);
 }
 
 .admin-table-select option {
-    background-color: #16161d;
-    color: #f7f7f8;
+    background-color: var(--site-panel);
+    color: var(--site-text);
 }
 
 .admin-table-select-menu {
-    background-color: #16161d;
-    color: #f7f7f8;
+    background-color: var(--site-panel);
+    color: var(--site-text);
 }
 
 .admin-table-select-option {
     background-color: transparent;
-    color: #f7f7f8;
+    color: var(--site-text);
     cursor: pointer;
 }
 
 .admin-table-select-option--active {
-    background-color: rgba(239, 35, 60, 0.18);
-    color: #ffffff;
+    background-color: var(--site-accent-soft);
+    color: var(--site-text);
 }
 
 .admin-table-select-option--selected {
@@ -544,16 +544,16 @@ html[data-theme] .admin-data-table tbody tr:hover :where(td, th, a, p, span, div
 .checkbox:checked, .checkbox[checked="true"], .checkbox[aria-checked="true"] {
     background-repeat: no-repeat;
     animation: checkmark var(--animation-input, 0.2s) ease-out;
-    background-color: var(--site-accent);
-    background-image: linear-gradient(-45deg, transparent 65%, var(--site-accent) 65.99%),
-      linear-gradient(45deg, transparent 75%, var(--site-accent) 75.99%),
-      linear-gradient(-45deg, var(--site-accent) 40%, transparent 40.99%),
+    background-color: #a1a1aa;
+    background-image: linear-gradient(-45deg, transparent 65%, #a1a1aa 65.99%),
+      linear-gradient(45deg, transparent 75%, #a1a1aa 75.99%),
+      linear-gradient(-45deg, #a1a1aa 40%, transparent 40.99%),
       linear-gradient(
         45deg,
-        var(--site-accent) 30%,
+        #a1a1aa 30%,
         white 30.99%,
         white 40%,
         transparent 40.99%
       ),
-      linear-gradient(-45deg, white 50%, var(--site-accent) 50.99%);
+      linear-gradient(-45deg, white 50%, #a1a1aa 50.99%);
 }

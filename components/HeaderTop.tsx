@@ -13,9 +13,7 @@ import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import React from "react";
 import toast from "react-hot-toast";
-import { FaHeadphones } from "react-icons/fa6";
-import { FaRegEnvelope } from "react-icons/fa6";
-import { FaRegUser } from "react-icons/fa6";
+import { FaRegUser, FaWhatsapp } from "react-icons/fa6";
 import ThemeSelector from "./ThemeSelector";
 
 const authLinkClassName =
@@ -23,6 +21,8 @@ const authLinkClassName =
 
 const authPrimaryLinkClassName =
   "inline-flex items-center gap-x-2 rounded-md bg-[var(--site-accent)] px-3 py-1.5 font-semibold text-white transition hover:bg-[var(--site-accent-strong)]";
+
+const whatsappHref = "https://wa.me/96171089840";
 
 const HeaderTop = () => {
   const { data: session }: any = useSession();
@@ -34,16 +34,18 @@ const HeaderTop = () => {
   return (
     <div className="hidden min-h-10 border-b border-[var(--site-border)] bg-[var(--site-panel)] text-[var(--site-muted)] md:block max-lg:px-5">
       <div className="mx-auto flex min-h-10 max-w-screen-2xl justify-between gap-3 px-12 py-2 max-lg:flex-col max-lg:items-center max-lg:justify-center max-sm:px-0">
-        <ul className="flex h-full flex-wrap items-center justify-center gap-x-5 gap-y-2 max-sm:text-sm max-[370px]:gap-x-2">
-          <li className="flex items-center gap-x-2 font-semibold">
-            <FaHeadphones className="text-[var(--site-accent)]" />
-            <span>Gaming support</span>
-          </li>
-          <li className="flex items-center gap-x-2 font-semibold max-sm:hidden">
-            <FaRegEnvelope className="text-[var(--site-accent)] text-xl" />
-            <span>support@gearforge.test</span>
-          </li>
-        </ul>
+        <div className="flex h-full flex-wrap items-center justify-center gap-x-2 gap-y-2 text-sm font-semibold max-sm:text-sm">
+          <span>Need help?</span>
+          <a
+            href={whatsappHref}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-x-2 text-[var(--site-text)] transition hover:text-[var(--site-accent)]"
+          >
+            <FaWhatsapp className="text-[var(--site-accent)]" />
+            <span>Contact us on WhatsApp</span>
+          </a>
+        </div>
         <ul className="flex h-full flex-wrap items-center justify-center gap-x-3 gap-y-2 font-semibold max-sm:text-sm max-[370px]:gap-x-2">
           {!session ? ( 
           <>

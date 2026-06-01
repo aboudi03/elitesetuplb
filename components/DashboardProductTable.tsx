@@ -17,10 +17,14 @@ import CustomButton from "./CustomButton";
 import apiClient from "@/lib/api";
 import { sanitize } from "@/lib/sanitize";
 import DataTable, { DataTableColumn } from "./ui/DataTable";
+import InlineNumberEdit from "./ui/InlineNumberEdit";
+import InlineSelectEdit from "./ui/InlineSelectEdit";
+import toast from "react-hot-toast";
 
 const DashboardProductTable = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
 
   useEffect(() => {
     apiClient
@@ -35,29 +39,72 @@ const DashboardProductTable = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  const getTargetProducts = (product: Product) =>
+    selectedProductIds.includes(product.id)
+      ? products.filter((currentProduct) => selectedProductIds.includes(currentProduct.id))
+      : [product];
+
+  const updateProducts = async (
+    targetProducts: Product[],
+    updates: Partial<Pick<Product, "inStock" | "isActive">>
+  ) => {
+    const updatedProducts = await Promise.all(
+      targetProducts.map(async (product) => {
+        const payload = {
+          ...product,
+          ...updates,
+        };
+
+        const response = await apiClient.put(`/api/products/${product.id}`, payload);
+        const responseData = await response.json();
+
+        if (!response.ok) {
+          throw new Error(responseData?.details || responseData?.error || "Failed to update product");
+        }
+
+        return responseData;
+      })
+    );
+
+    setProducts((currentProducts) =>
+      currentProducts.map((currentProduct) => {
+        const updatedProduct = updatedProducts.find(
+          (product) => product.id === currentProduct.id
+        );
+        return updatedProduct ? { ...currentProduct, ...updatedProduct } : currentProduct;
+      })
+    );
+  };
+
   const columns: DataTableColumn<Product>[] = [
+    {
+      key: "image",
+      header: "Image",
+      className: "min-w-[96px]",
+      cell: (product) => (
+        <div className="avatar">
+          <div className="mask mask-squircle h-14 w-14">
+            <Image
+              width={56}
+              height={56}
+              src={product.mainImage ? `/${product.mainImage}` : "/product_placeholder.jpg"}
+              alt={sanitize(product.title) || "Product image"}
+              className="h-14 w-14 object-contain"
+            />
+          </div>
+        </div>
+      ),
+    },
     {
       key: "product",
       header: "Product",
       searchableText: (product) => `${product.title} ${product.manufacturer}`,
+      className: "min-w-[320px]",
       cell: (product) => (
-        <div className="flex items-center gap-3">
-          <div className="avatar">
-            <div className="mask mask-squircle h-12 w-12">
-              <Image
-                width={48}
-                height={48}
-                src={product.mainImage ? `/${product.mainImage}` : "/product_placeholder.jpg"}
-                alt={sanitize(product.title) || "Product image"}
-                className="h-12 w-12 object-contain"
-              />
-            </div>
-          </div>
-          <div>
-            <div className="font-bold">{sanitize(product.title)}</div>
-            <div className="text-sm text-[var(--site-muted)]">
-              {sanitize(product.manufacturer)}
-            </div>
+        <div>
+          <div className="text-lg font-semibold leading-6">{sanitize(product.title)}</div>
+          <div className="text-base text-[var(--site-muted)]">
+            {sanitize(product.manufacturer)}
           </div>
         </div>
       ),
@@ -66,36 +113,59 @@ const DashboardProductTable = () => {
       key: "stock",
       header: "Stock Availability",
       searchableText: (product) => String(product.inStock),
-      cell: (product) =>
-        product.inStock > 0 ? (
-          <span className="badge badge-success text-white badge-sm">
-            {product.inStock} in stock
-          </span>
-        ) : (
-          <span className="badge badge-error text-white badge-sm">Out of stock</span>
-        ),
+      className: "min-w-[240px]",
+      cell: (product) => (
+        <InlineNumberEdit
+          value={product.inStock}
+          label={`${sanitize(product.title)} stock`}
+          min={0}
+          onConfirm={async (nextStock) => {
+            const targetProducts = getTargetProducts(product);
+            await updateProducts(targetProducts, { inStock: nextStock });
+            toast.success(
+              targetProducts.length > 1
+                ? `Stock updated for ${targetProducts.length} products`
+                : "Stock updated"
+            );
+          }}
+        />
+      ),
     },
     {
       key: "visibility",
       header: "Visibility",
       searchableText: (product) => (product.isActive ? "enabled" : "disabled"),
-      cell: (product) =>
-        product.isActive ? (
-          <span className="badge badge-success text-white badge-sm">Enabled</span>
-        ) : (
-          <span className="badge badge-warning text-black badge-sm">Disabled</span>
-        ),
+      cell: (product) => (
+        <InlineSelectEdit
+          value={product.isActive ? "enabled" : "disabled"}
+          displayValue={product.isActive ? "Enabled" : "Disabled"}
+          options={[
+            { label: "Enabled", value: "enabled" },
+            { label: "Disabled", value: "disabled" },
+          ]}
+          onChange={async (value) => {
+            const targetProducts = getTargetProducts(product);
+            await updateProducts(targetProducts, { isActive: value === "enabled" });
+            toast.success(
+              targetProducts.length > 1
+                ? `Visibility updated for ${targetProducts.length} products`
+                : "Visibility updated"
+            );
+          }}
+        />
+      ),
     },
     {
       key: "price",
       header: "Price",
       accessor: (product) => `$${product.price}`,
+      className: "text-lg font-semibold",
     },
     {
       key: "actions",
       header: "",
       cell: (product) => (
-        <Link href={`/admin/products/${product.id}`} className="btn btn-ghost btn-xs">
+        <Link href={`/admin/products/${product.id}`} className="btn btn-ghost btn-sm">
           details
         </Link>
       ),
@@ -112,9 +182,12 @@ const DashboardProductTable = () => {
         loading={loading}
         emptyMessage="No products found."
         enableSelection
+        selectedIds={selectedProductIds}
+        onSelectionChange={setSelectedProductIds}
         enableSearch
         searchPlaceholder="Search products..."
         className="xl:ml-5 max-xl:mt-5"
+        tableClassName="text-base"
         actions={
           <Link href="/admin/products/new">
             <CustomButton

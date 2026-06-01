@@ -177,7 +177,7 @@ export default function DataTable<T>({
       {(title || description || actions || enableSearch) && (
         <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
           <div>
-            {title && <h1 className="text-3xl font-semibold">{title}</h1>}
+            {title && <h1 className="text-4xl font-semibold tracking-tight">{title}</h1>}
             {description && (
               <p className="mt-2 max-w-3xl text-sm text-[var(--site-muted)]">
                 {description}
@@ -191,7 +191,7 @@ export default function DataTable<T>({
                 value={currentSearch}
                 onChange={(event) => updateSearch(event.target.value)}
                 placeholder={searchPlaceholder}
-                className="min-h-10 rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 text-sm text-[var(--site-text)] outline-none transition focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent-soft)]"
+                className="min-h-11 rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 text-base text-[var(--site-text)] outline-none transition focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent-soft)]"
               />
             )}
             {actions}
@@ -201,7 +201,7 @@ export default function DataTable<T>({
 
       <div className="relative overflow-visible rounded-md border border-[var(--site-border)] bg-[var(--site-panel)]">
         <div className="overflow-x-auto">
-          <table className={`admin-data-table w-full min-w-max text-sm ${tableClassName}`}>
+          <table className={`admin-data-table w-full min-w-max text-base ${tableClassName}`}>
           <thead>
             <tr>
               {enableSelection && (
@@ -218,7 +218,7 @@ export default function DataTable<T>({
               {columns.map((column) => (
                 <th
                   key={column.key}
-                  className={`px-4 py-3 text-center text-xs font-semibold uppercase text-[var(--site-muted)] ${column.headerClassName || ""}`}
+                  className={`px-4 py-4 text-center text-sm font-semibold uppercase tracking-[0.08em] text-[var(--site-muted)] ${column.headerClassName || ""}`}
                 >
                   <div className="flex w-full items-center justify-center text-center">
                     {column.header}
@@ -266,7 +266,7 @@ export default function DataTable<T>({
                     {columns.map((column) => (
                       <td
                         key={column.key}
-                        className={`px-4 py-3 text-center align-middle ${column.className || ""}`}
+                        className={`px-4 py-4 text-center align-middle ${column.className || ""}`}
                       >
                         <div className="flex w-full items-center justify-center text-center">
                           {column.select ? (
