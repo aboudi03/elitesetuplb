@@ -86,6 +86,16 @@ async function runOnce(prefix, command, args, options = {}) {
 }
 
 async function main() {
+  const nodeEnv = process.env.NODE_ENV || "development";
+
+  if (nodeEnv !== "development") {
+    console.log(`[setup] Combined frontend/backend launcher is disabled when NODE_ENV=${nodeEnv}.`);
+    console.log("[setup] Run the frontend and backend in separate terminals/screens instead.");
+    console.log("[setup] frontend: npm run dev:frontend");
+    console.log("[setup] backend: npm run dev:backend");
+    process.exit(0);
+  }
+
   if (!process.env.DATABASE_URL) {
     console.log("[setup] DATABASE_URL is missing.");
     console.log("[setup] create a .env file in the main project folder.");
@@ -121,6 +131,15 @@ async function main() {
   } catch (error) {
     console.log("[prisma] generate failed. Continuing because Prisma Client may already be generated.");
     console.log("[prisma] if the app fails later, run: npx prisma generate");
+  }
+
+  try {
+    await runOnce("backend-prisma", npxCommand, ["prisma", "generate"], {
+      cwd: `${__dirname}/server`,
+    });
+  } catch (error) {
+    console.log("[backend-prisma] generate failed. Continuing because the backend Prisma Client may already be generated.");
+    console.log("[backend-prisma] if the server fails later, run: npm --prefix server exec prisma generate");
   }
 
   run("backend", npmCommand, ["--prefix", "server", "start"]);
