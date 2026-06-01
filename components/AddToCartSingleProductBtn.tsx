@@ -14,13 +14,14 @@
 import React from "react";
 import { useProductStore } from "@/app/_zustand/store";
 import toast from "react-hot-toast";
-
-
+import { trackCartAdd } from "@/lib/cartTracking";
+import { useSession } from "next-auth/react";
 
 const AddToCartSingleProductBtn = ({ product, quantityCount } : SingleProductBtnProps) => {
+  const { data: session } = useSession();
   const { addToCart, calculateTotals, products } = useProductStore();
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     const existingQuantity = products.find((item) => item.id === product.id)?.amount || 0;
     if (existingQuantity + quantityCount > product.inStock) {
       toast.error(`Only ${product.inStock} left in stock`);
@@ -36,6 +37,12 @@ const AddToCartSingleProductBtn = ({ product, quantityCount } : SingleProductBtn
       stock: product?.inStock,
     });
     calculateTotals();
+    await trackCartAdd({
+      productId: product.id,
+      productTitle: product.title,
+      quantity: quantityCount,
+      userId: (session?.user as { id?: string } | undefined)?.id,
+    });
     toast.success("Product added to the cart");
   };
   return (

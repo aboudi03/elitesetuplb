@@ -31,6 +31,8 @@ model Product {
 
   merchantId     String
   merchant       Merchant @relation(fields: [merchantId], references: [id])
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @default(now()) @updatedAt
   // Back relation for bulk upload items
   bulkUploadItems bulk_upload_item[]      @relation("ProductBulkItems")
 }
@@ -60,6 +62,8 @@ model User {
   email         String         @unique
   password      String?
   role          String?        @default("user")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @default(now()) @updatedAt
   Wishlist      Wishlist[]
   notifications Notification[]
   // Back relation for bulk upload batches
@@ -130,6 +134,22 @@ model ProductStockHistory {
   newStock        Int
   reason          String
   createdAt       DateTime @default(now())
+}
+
+model CartEvent {
+  id          String   @id @default(uuid())
+  productId   String
+  productTitle String?
+  userId      String?
+  sessionId   String?
+  quantity    Int      @default(1)
+  eventType   String   @default("ADD")
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([productId])
+  @@index([userId])
+  @@index([sessionId])
 }
 
 model customer_order_product {
