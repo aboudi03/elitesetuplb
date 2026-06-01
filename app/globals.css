@@ -138,6 +138,141 @@ body {
     }
 }
 
+.hero-edge-button {
+    width: 4.5rem;
+    height: 10rem;
+    border: 0;
+    background: transparent;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.hero-edge-button--previous {
+    border-radius: 0 999px 999px 0;
+}
+
+.hero-edge-button--next {
+    border-radius: 999px 0 0 999px;
+}
+
+.hero-edge-button__shape {
+    position: absolute;
+    top: 50%;
+    width: 3.2rem;
+    height: 3.2rem;
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.84);
+    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.08);
+    border-radius: 999px;
+    transform: translateY(-50%);
+    transition: width 320ms ease, height 320ms ease, background-color 320ms ease,
+      transform 320ms ease, border-color 320ms ease;
+}
+
+.hero-edge-button--previous .hero-edge-button__shape {
+    left: 1rem;
+}
+
+.hero-edge-button--next .hero-edge-button__shape {
+    right: 1rem;
+}
+
+.hero-edge-button__icon {
+    position: absolute;
+    top: 50%;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translateY(-50%);
+    transition: opacity 220ms ease, transform 320ms ease, color 220ms ease;
+}
+
+.hero-edge-button--previous .hero-edge-button__icon {
+    left: 2.15rem;
+}
+
+.hero-edge-button--next .hero-edge-button__icon {
+    right: 2.15rem;
+}
+
+.hero-edge-button__icon--base {
+    opacity: 1;
+}
+
+.hero-edge-button__icon--hover {
+    opacity: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .hero-edge-button:hover .hero-edge-button__shape {
+        width: 6.75rem;
+        height: 8rem;
+        background: rgba(255, 255, 255, 0.95);
+        border-color: rgba(255, 255, 255, 0.95);
+    }
+
+    .hero-edge-button--previous:hover .hero-edge-button__shape {
+        left: 0;
+        border-radius: 0 999px 999px 0;
+        transform: translateY(-50%);
+    }
+
+    .hero-edge-button--next:hover .hero-edge-button__shape {
+        right: 0;
+        border-radius: 999px 0 0 999px;
+        transform: translateY(-50%);
+    }
+
+    .hero-edge-button:hover .hero-edge-button__icon--base {
+        opacity: 0;
+        transform: translateY(-50%) scale(0.9);
+    }
+
+    .hero-edge-button:hover .hero-edge-button__icon--hover {
+        opacity: 1;
+        transform: translateY(-50%) scale(1);
+    }
+
+    .hero-edge-button--previous:hover .hero-edge-button__icon {
+        left: 2rem;
+    }
+
+    .hero-edge-button--next:hover .hero-edge-button__icon {
+        right: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-edge-button {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 999px;
+    }
+
+    .hero-edge-button__shape {
+        inset: 0;
+        width: auto;
+        height: auto;
+        border-color: var(--site-border);
+        background: color-mix(in srgb, var(--site-panel) 94%, transparent);
+        transform: none;
+    }
+
+    .hero-edge-button--previous .hero-edge-button__shape,
+    .hero-edge-button--next .hero-edge-button__shape,
+    .hero-edge-button--previous .hero-edge-button__icon,
+    .hero-edge-button--next .hero-edge-button__icon {
+        left: 50%;
+        right: auto;
+        transform: translate(-50%, -50%);
+    }
+
+    .hero-edge-button__icon--hover {
+        display: none;
+    }
+}
+
 /* Compatibility layer for older hardcoded Tailwind colors in pages/admin. */
 html[data-theme] .bg-white,
 html[data-theme] .bg-gray-50,

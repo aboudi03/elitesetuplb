@@ -3,9 +3,22 @@
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa6";
+import { FaAnglesLeft, FaAnglesRight, FaChevronLeft, FaChevronRight } from "react-icons/fa6";
+import config from "@/lib/config";
 
-const slides = [
+type HeroSlide = {
+  id?: string;
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  image: string;
+  productImage: string;
+  href: string;
+  isActive?: boolean;
+  sortOrder?: number;
+};
+
+const fallbackSlides: HeroSlide[] = [
   {
     eyebrow: "Audio drop",
     title: "HyperX Cloud III",
@@ -47,7 +60,52 @@ const heroCategories = [
 const Hero = () => {
   const [activeSlide, setActiveSlide] = useState(0);
   const [slideDirection, setSlideDirection] = useState<"next" | "previous">("next");
+  const [slides, setSlides] = useState<HeroSlide[]>(fallbackSlides);
   const autoplayTimerRef = useRef<number | null>(null);
+  const touchStartXRef = useRef<number | null>(null);
+  const touchDeltaXRef = useRef(0);
+
+  useEffect(() => {
+    const fetchHeroSlides = async () => {
+      try {
+        const response = await fetch(`${config.apiBaseUrl}/api/hero-slides`, {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+
+        if (Array.isArray(data) && data.length > 0) {
+          setSlides(
+            data.map((slide: any) => ({
+              id: slide.id,
+              eyebrow: slide.eyebrow,
+              title: slide.title,
+              subtitle: slide.subtitle,
+              image: `/${slide.backgroundImage}`,
+              productImage: `/${slide.productImage}`,
+              href: slide.href,
+              isActive: slide.isActive,
+              sortOrder: slide.sortOrder,
+            }))
+          );
+        }
+      } catch (error) {
+        console.error("Failed to load hero slides:", error);
+      }
+    };
+
+    fetchHeroSlides();
+  }, []);
+
+  useEffect(() => {
+    if (activeSlide >= slides.length) {
+      setActiveSlide(0);
+    }
+  }, [activeSlide, slides.length]);
 
   useEffect(() => {
     if (autoplayTimerRef.current) {
@@ -64,9 +122,9 @@ const Hero = () => {
         window.clearTimeout(autoplayTimerRef.current);
       }
     };
-  }, [activeSlide]);
+  }, [activeSlide, slides.length]);
 
-  const slide = slides[activeSlide];
+  const slide = slides[activeSlide] ?? fallbackSlides[0];
   const goToPreviousSlide = () => {
     setSlideDirection("previous");
     setActiveSlide((current) => (current - 1 + slides.length) % slides.length);
@@ -75,6 +133,29 @@ const Hero = () => {
   const goToNextSlide = () => {
     setSlideDirection("next");
     setActiveSlide((current) => (current + 1) % slides.length);
+  };
+
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    touchStartXRef.current = event.touches[0]?.clientX ?? null;
+    touchDeltaXRef.current = 0;
+  };
+
+  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (touchStartXRef.current === null) return;
+    touchDeltaXRef.current = (event.touches[0]?.clientX ?? 0) - touchStartXRef.current;
+  };
+
+  const handleTouchEnd = () => {
+    const swipeThreshold = 48;
+
+    if (touchDeltaXRef.current <= -swipeThreshold) {
+      goToNextSlide();
+    } else if (touchDeltaXRef.current >= swipeThreshold) {
+      goToPreviousSlide();
+    }
+
+    touchStartXRef.current = null;
+    touchDeltaXRef.current = 0;
   };
 
   return (
@@ -94,7 +175,13 @@ const Hero = () => {
       </nav>
 
       <div className="mx-auto max-w-screen-2xl px-4 pt-5 sm:px-6 lg:px-8">
-        <div className="relative min-h-[460px] overflow-hidden border border-[var(--site-border)] bg-[var(--site-panel)] max-md:min-h-[680px] max-sm:min-h-[640px]">
+        <div
+          className="relative min-h-[460px] overflow-hidden border border-[var(--site-border)] bg-[var(--site-panel)] max-md:min-h-[680px] max-sm:min-h-[640px]"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
+        >
           <div
             key={`background-${activeSlide}`}
             className={`absolute inset-0 ${
@@ -174,18 +261,30 @@ const Hero = () => {
           <button
             type="button"
             onClick={goToPreviousSlide}
-            className="absolute left-5 top-1/2 z-20 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--site-panel)] text-[var(--site-text)] shadow transition hover:bg-[var(--site-accent)] hover:text-white max-md:bottom-4 max-md:top-auto max-md:h-10 max-md:w-10 max-md:translate-y-0 max-sm:left-3"
+            className="hero-edge-button hero-edge-button--previous group absolute left-0 top-1/2 z-20 -translate-y-1/2 text-[var(--site-text)] max-md:bottom-4 max-md:left-4 max-md:translate-y-0 max-sm:left-3"
             aria-label="Previous promotion"
           >
-            <FaChevronLeft />
+            <span className="hero-edge-button__shape" aria-hidden="true" />
+            <span className="hero-edge-button__icon hero-edge-button__icon--base">
+              <FaChevronLeft />
+            </span>
+            <span className="hero-edge-button__icon hero-edge-button__icon--hover" aria-hidden="true">
+              <FaAnglesLeft />
+            </span>
           </button>
           <button
             type="button"
             onClick={goToNextSlide}
-            className="absolute right-5 top-1/2 z-20 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--site-panel)] text-[var(--site-text)] shadow transition hover:bg-[var(--site-accent)] hover:text-white max-md:bottom-4 max-md:top-auto max-md:h-10 max-md:w-10 max-md:translate-y-0 max-sm:right-3"
+            className="hero-edge-button hero-edge-button--next group absolute right-0 top-1/2 z-20 -translate-y-1/2 text-[var(--site-text)] max-md:bottom-4 max-md:right-4 max-md:translate-y-0 max-sm:right-3"
             aria-label="Next promotion"
           >
-            <FaChevronRight />
+            <span className="hero-edge-button__shape" aria-hidden="true" />
+            <span className="hero-edge-button__icon hero-edge-button__icon--base">
+              <FaChevronRight />
+            </span>
+            <span className="hero-edge-button__icon hero-edge-button__icon--hover" aria-hidden="true">
+              <FaAnglesRight />
+            </span>
           </button>
 
           <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 gap-2 max-md:bottom-7">

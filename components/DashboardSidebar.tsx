@@ -17,6 +17,7 @@ import { FaBagShopping } from "react-icons/fa6";
 import { FaStore } from "react-icons/fa6";
 import { MdCategory } from "react-icons/md";
 import { FaFileUpload } from "react-icons/fa";
+import { FaImages } from "react-icons/fa6";
 
 import Link from "next/link";
 
@@ -48,6 +49,12 @@ const DashboardSidebar = () => {
         <div className={itemClassName}>
           <FaFileUpload className="text-2xl" />{" "}
           <span className="font-normal">Bulk Upload</span>
+        </div>
+      </Link>
+      <Link href="/admin/hero-slides">
+        <div className={itemClassName}>
+          <FaImages className="text-2xl" />{" "}
+          <span className="font-normal">Hero Slides</span>
         </div>
       </Link>
       <Link href="/admin/categories">

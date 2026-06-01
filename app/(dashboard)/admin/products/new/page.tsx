@@ -1,6 +1,7 @@
 "use client";
 import { DashboardSidebar } from "@/components";
 import apiClient from "@/lib/api";
+import config from "@/lib/config";
 import { convertCategoryNameToURLFriendly as convertSlugToURLFriendly } from "@/utils/categoryFormating";
 import { sanitizeFormData } from "@/lib/form-sanitize";
 import Image from "next/image";
@@ -95,24 +96,27 @@ const AddNewProduct = () => {
     }
   };
 
-  const uploadFile = async (file: any) => {
+  const uploadFile = async (file: File) => {
     const formData = new FormData();
     formData.append("uploadedFile", file);
 
     try {
-      const response = await apiClient.post("/api/main-image", {
+      const response = await fetch(`${config.apiBaseUrl}/api/main-image`, {
         method: "POST",
         body: formData,
       });
 
       if (response.ok) {
         const data = await response.json();
+        return data.path as string;
       } else {
         console.error("File upload unsuccessfull");
       }
     } catch (error) {
       console.error("Error happend while sending request:", error);
     }
+
+    return "";
   };
 
   const fetchCategories = async () => {
@@ -298,9 +302,14 @@ const AddNewProduct = () => {
           <input
             type="file"
             className="file-input file-input-bordered file-input-lg w-full max-w-sm"
-            onChange={(e: any) => {
-              uploadFile(e.target.files[0]);
-              setProduct({ ...product, mainImage: e.target.files[0].name });
+            onChange={async (e: any) => {
+              const selectedFile = e.target.files[0];
+              if (!selectedFile) return;
+
+              const uploadedPath = await uploadFile(selectedFile);
+              if (uploadedPath) {
+                setProduct({ ...product, mainImage: uploadedPath });
+              }
             }}
           />
           {product?.mainImage && (

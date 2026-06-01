@@ -10,6 +10,7 @@ import {
 } from "../../../../../utils/categoryFormating";
 import { nanoid } from "nanoid";
 import apiClient from "@/lib/api";
+import config from "@/lib/config";
 
 interface DashboardProductDetailsProps {
   params: Promise<{ id: string }>;
@@ -82,18 +83,19 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
   };
 
   // functionality for uploading main image file
-  const uploadFile = async (file: any) => {
+  const uploadFile = async (file: File) => {
     const formData = new FormData();
     formData.append("uploadedFile", file);
 
     try {
-      const response = await apiClient.post("/api/main-image", {
+      const response = await fetch(`${config.apiBaseUrl}/api/main-image`, {
         method: "POST",
         body: formData,
       });
 
       if (response.ok) {
         const data = await response.json();
+        return data.path as string;
       } else {
         toast.error("File upload unsuccessful.");
       }
@@ -101,6 +103,8 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
       console.error("There was an error while during request sending:", error);
       toast.error("There was an error during request sending");
     }
+
+    return "";
   };
 
   // fetching main product data including other product images
@@ -287,13 +291,15 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
           <input
             type="file"
             className="file-input file-input-bordered file-input-lg w-full max-w-sm"
-            onChange={(e) => {
+            onChange={async (e) => {
               // @ts-ignore
               const selectedFile = e.target.files[0];
 
               if (selectedFile) {
-                uploadFile(selectedFile);
-                setProduct({ ...product!, mainImage: selectedFile.name });
+                const uploadedPath = await uploadFile(selectedFile);
+                if (uploadedPath) {
+                  setProduct({ ...product!, mainImage: uploadedPath });
+                }
               }
             }}
           />
