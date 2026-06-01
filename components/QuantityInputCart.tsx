@@ -17,22 +17,26 @@ import toast from "react-hot-toast";
 
 const QuantityInputCart = ({ product } : { product: ProductInCart }) => {
   const [quantityCount, setQuantityCount] = useState<number>(product.amount);
-  const { updateCartAmount, calculateTotals } = useProductStore();
+  const { updateCartAmount, calculateTotals, products } = useProductStore();
 
   const handleQuantityChange = (actionName: string): void => {
     if (actionName === "plus") {
-      if (product.stock && quantityCount >= product.stock) {
+      const quantityOfOtherVariants = products
+        .filter((item) => item.id === product.id && item.cartItemId !== product.cartItemId)
+        .reduce((sum, item) => sum + item.amount, 0);
+
+      if (product.stock && quantityOfOtherVariants + quantityCount >= product.stock) {
         toast.error(`Only ${product.stock} left in stock`);
         return;
       }
       setQuantityCount(() => quantityCount + 1);
-      updateCartAmount(product.id, quantityCount + 1);
+      updateCartAmount(product.cartItemId, quantityCount + 1);
       calculateTotals();
 
       
     } else if (actionName === "minus" && quantityCount !== 1) {
       setQuantityCount(() => quantityCount - 1);
-      updateCartAmount(product.id, quantityCount - 1);
+      updateCartAmount(product.cartItemId, quantityCount - 1);
       calculateTotals();
     }
   };

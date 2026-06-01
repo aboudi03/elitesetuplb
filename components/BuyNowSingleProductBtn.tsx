@@ -19,24 +19,31 @@ import { useSession } from "next-auth/react";
 const BuyNowSingleProductBtn = ({
   product,
   quantityCount,
+  selectedColor,
 }: SingleProductBtnProps) => {
   const router = useRouter();
   const { data: session } = useSession();
   const { addToCart, calculateTotals, products } = useProductStore();
+  const cartItemId = `${product.id}::${selectedColor || "default"}`;
 
   const handleAddToCart = async () => {
-    const existingQuantity = products.find((item) => item.id === product.id)?.amount || 0;
-    if (existingQuantity + quantityCount > product.inStock) {
+    const existingQuantityForProduct = products
+      .filter((item) => item.id === product.id)
+      .reduce((sum, item) => sum + item.amount, 0);
+
+    if (existingQuantityForProduct + quantityCount > product.inStock) {
       toast.error(`Only ${product.inStock} left in stock`);
       return;
     }
 
     addToCart({
+      cartItemId,
       id: product?.id.toString(),
       title: product?.title,
       price: product?.price,
       taxRate: product?.taxRate || 0,
       image: product?.mainImage,
+      selectedColor,
       amount: quantityCount,
       stock: product?.inStock,
     });

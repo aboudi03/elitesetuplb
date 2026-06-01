@@ -13,11 +13,54 @@ import React, { useState } from "react";
 import QuantityInput from "./QuantityInput";
 import AddToCartSingleProductBtn from "./AddToCartSingleProductBtn";
 import BuyNowSingleProductBtn from "./BuyNowSingleProductBtn";
+import { getProductColorsFromDescription } from "@/lib/productColors";
 
 const SingleProductDynamicFields = ({ product }: { product: Product }) => {
   const [quantityCount, setQuantityCount] = useState<number>(1);
+  const colorOptions = getProductColorsFromDescription(product.description);
+  const [selectedColor, setSelectedColor] = useState<string | undefined>(
+    colorOptions[0]?.label
+  );
+
   return (
     <>
+      {colorOptions.length > 0 && (
+        <div className="mb-5">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--site-muted)]">
+              Color
+            </span>
+            <span className="text-sm font-medium text-[var(--site-text)]">
+              {selectedColor}
+            </span>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-3">
+            {colorOptions.map((color) => {
+              const isSelected = selectedColor === color.label;
+              return (
+                <button
+                  key={color.key}
+                  type="button"
+                  aria-label={`Select ${color.label}`}
+                  aria-pressed={isSelected}
+                  onClick={() => setSelectedColor(color.label)}
+                  className={`group flex items-center gap-3 rounded-full border px-3 py-2 text-sm transition ${
+                    isSelected
+                      ? "border-[var(--site-accent)] bg-[var(--site-accent-soft)]"
+                      : "border-[var(--site-border)] bg-[var(--site-panel-soft)] hover:border-[var(--site-accent)]"
+                  }`}
+                >
+                  <span
+                    className="h-6 w-6 rounded-full border border-black/10 shadow-sm"
+                    style={{ backgroundColor: color.swatch }}
+                  />
+                  <span className="font-medium text-[var(--site-text)]">{color.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
       <QuantityInput
         quantityCount={quantityCount}
         setQuantityCount={setQuantityCount}
@@ -28,10 +71,12 @@ const SingleProductDynamicFields = ({ product }: { product: Product }) => {
           <AddToCartSingleProductBtn
             quantityCount={quantityCount}
             product={product}
+            selectedColor={selectedColor}
           />
           <BuyNowSingleProductBtn
             quantityCount={quantityCount}
             product={product}
+            selectedColor={selectedColor}
           />
         </div>
       )}

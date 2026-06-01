@@ -38,9 +38,9 @@ html[data-theme="dim"],
     --site-text: #b2ccd6;
     --site-muted: #8ea7b2;
     --site-border: #394150;
-    --site-accent: #ef445d;
-    --site-accent-strong: #d02f46;
-    --site-accent-soft: rgba(239, 68, 93, 0.16);
+    --site-accent: #e11d2e;
+    --site-accent-strong: #b31321;
+    --site-accent-soft: rgba(225, 29, 46, 0.18);
 }
 
 * {
@@ -159,6 +159,8 @@ body {
     background: transparent;
     overflow: hidden;
     isolation: isolate;
+    transform-style: preserve-3d;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .hero-edge-button--previous {
@@ -169,18 +171,75 @@ body {
     border-radius: 999px 0 0 999px;
 }
 
+.hero-edge-button__bubble,
 .hero-edge-button__shape {
     position: absolute;
     top: 50%;
+    border-radius: 999px;
+    pointer-events: none;
+}
+
+.hero-edge-button__bubble {
+    width: 3.6rem;
+    height: 3.6rem;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.06));
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow:
+      0 12px 34px rgba(15, 23, 42, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    opacity: 0;
+    transform: translateY(-50%) scale(0.88) translateZ(0);
+    transition:
+      opacity 260ms ease,
+      transform 340ms cubic-bezier(0.22, 1, 0.36, 1),
+      background 260ms ease,
+      border-color 260ms ease,
+      box-shadow 260ms ease;
+}
+
+.hero-edge-button__shape {
     width: 3.2rem;
     height: 3.2rem;
-    border: 1px solid rgba(255, 255, 255, 0.75);
-    background: rgba(255, 255, 255, 0.84);
-    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.44);
+    background: rgba(255, 255, 255, 0.38);
+    box-shadow:
+      0 14px 28px rgba(0, 0, 0, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -8px 14px rgba(255, 255, 255, 0.08);
+    transform: translateY(-50%) scale(1) translateZ(0);
+    transition:
+      width 340ms cubic-bezier(0.22, 1, 0.36, 1),
+      height 340ms cubic-bezier(0.22, 1, 0.36, 1),
+      background-color 320ms ease,
+      transform 220ms cubic-bezier(0.2, 0.9, 0.2, 1),
+      border-color 320ms ease,
+      box-shadow 220ms ease;
+}
+
+.hero-edge-button__ripple {
+    position: absolute;
+    top: 50%;
+    width: 3.4rem;
+    height: 3.4rem;
+    border: 2px solid rgba(255, 255, 255, 0.82);
     border-radius: 999px;
-    transform: translateY(-50%);
-    transition: width 320ms ease, height 320ms ease, background-color 320ms ease,
-      transform 320ms ease, border-color 320ms ease;
+    opacity: 0;
+    pointer-events: none;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.22),
+      0 0 24px rgba(255, 255, 255, 0.28);
+    transform: translateY(-50%) scale(0.62);
+}
+
+.hero-edge-button__ripple--play.hero-edge-button__ripple--one {
+    animation: heroArrowRipple 1450ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.hero-edge-button__ripple--play.hero-edge-button__ripple--two {
+    animation: heroArrowRipple 1850ms cubic-bezier(0.16, 1, 0.3, 1) 220ms forwards;
 }
 
 .hero-edge-button--previous .hero-edge-button__shape {
@@ -189,6 +248,16 @@ body {
 
 .hero-edge-button--next .hero-edge-button__shape {
     right: 1rem;
+}
+
+.hero-edge-button--previous .hero-edge-button__bubble,
+.hero-edge-button--previous .hero-edge-button__ripple {
+    left: 0.8rem;
+}
+
+.hero-edge-button--next .hero-edge-button__bubble,
+.hero-edge-button--next .hero-edge-button__ripple {
+    right: 0.8rem;
 }
 
 .hero-edge-button__icon {
@@ -218,12 +287,38 @@ body {
     opacity: 0;
 }
 
+@keyframes heroArrowRipple {
+    0% {
+        opacity: 0.9;
+        transform: translateY(-50%) scale(0.64);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-50%) scale(2.15);
+    }
+}
+
 @media (hover: hover) and (pointer: fine) {
+    .hero-edge-button:hover .hero-edge-button__bubble {
+        opacity: 1;
+        transform: translateY(-50%) scale(1.06);
+        border-color: rgba(255, 255, 255, 0.42);
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.14));
+        box-shadow:
+          0 16px 38px rgba(15, 23, 42, 0.2),
+          inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+
     .hero-edge-button:hover .hero-edge-button__shape {
         width: 6.75rem;
         height: 8rem;
-        background: rgba(255, 255, 255, 0.95);
-        border-color: rgba(255, 255, 255, 0.95);
+        background: rgba(255, 255, 255, 0.16);
+        border-color: rgba(255, 255, 255, 0.28);
+        box-shadow:
+          0 20px 45px rgba(15, 23, 42, 0.14),
+          inset 0 1px 0 rgba(255, 255, 255, 0.18),
+          inset 0 -18px 28px rgba(255, 255, 255, 0.04);
     }
 
     .hero-edge-button--previous:hover .hero-edge-button__shape {
@@ -255,6 +350,24 @@ body {
     .hero-edge-button--next:hover .hero-edge-button__icon {
         right: 2rem;
     }
+
+    .hero-edge-button:active .hero-edge-button__bubble {
+        opacity: 1;
+        transform: translateY(-50%) scale(0.96);
+    }
+
+    .hero-edge-button:active .hero-edge-button__shape {
+        transform: translateY(-50%) scale(0.94) translateZ(-8px);
+        box-shadow:
+          0 9px 18px rgba(15, 23, 42, 0.12),
+          inset 0 1px 0 rgba(255, 255, 255, 0.25),
+          inset 0 -10px 18px rgba(255, 255, 255, 0.04);
+    }
+
+    .hero-edge-button:active .hero-edge-button__icon {
+        transform: translateY(-50%) scale(0.88);
+    }
+
 }
 
 @media (max-width: 768px) {
@@ -264,22 +377,44 @@ body {
         border-radius: 999px;
     }
 
+    .hero-edge-button__bubble,
     .hero-edge-button__shape {
         inset: 0;
         width: auto;
         height: auto;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        transform: none;
+    }
+
+    .hero-edge-button__bubble {
+        opacity: 1;
+        border-color: color-mix(in srgb, var(--site-border) 54%, transparent);
+        background: color-mix(in srgb, var(--site-panel) 56%, transparent);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .hero-edge-button__shape {
         border-color: var(--site-border);
-        background: color-mix(in srgb, var(--site-panel) 94%, transparent);
+        background: color-mix(in srgb, var(--site-panel) 42%, transparent);
         transform: none;
     }
 
     .hero-edge-button--previous .hero-edge-button__shape,
     .hero-edge-button--next .hero-edge-button__shape,
+    .hero-edge-button--previous .hero-edge-button__bubble,
+    .hero-edge-button--next .hero-edge-button__bubble,
     .hero-edge-button--previous .hero-edge-button__icon,
     .hero-edge-button--next .hero-edge-button__icon {
         left: 50%;
         right: auto;
         transform: translate(-50%, -50%);
+    }
+
+    .hero-edge-button__ripple {
+        display: none;
     }
 
     .hero-edge-button__icon--hover {

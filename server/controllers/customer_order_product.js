@@ -3,7 +3,7 @@ const prisma = new PrismaClient();
 const { asyncHandler, AppError } = require("../utills/errorHandler");
 
 const createOrderProduct = asyncHandler(async (request, response) => {
-  const { customerOrderId, productId, quantity } = request.body;
+  const { customerOrderId, productId, quantity, selectedColor } = request.body;
   
   // Validate required fields
   if (!customerOrderId) {
@@ -52,7 +52,11 @@ const createOrderProduct = asyncHandler(async (request, response) => {
       data: {
         customerOrderId: customerOrderId,
         productId: productId,
-        quantity: requestedQuantity
+        quantity: requestedQuantity,
+        selectedColor:
+          typeof selectedColor === "string" && selectedColor.trim().length > 0
+            ? selectedColor.trim()
+            : null,
       }
     });
 
@@ -64,7 +68,7 @@ const createOrderProduct = asyncHandler(async (request, response) => {
 
 const updateProductOrder = asyncHandler(async (request, response) => {
   const { id } = request.params;
-  const { customerOrderId, productId, quantity } = request.body;
+  const { customerOrderId, productId, quantity, selectedColor } = request.body;
 
   if (!id) {
     throw new AppError("Order product ID is required", 400);
@@ -92,7 +96,13 @@ const updateProductOrder = asyncHandler(async (request, response) => {
     data: {
       customerOrderId: customerOrderId || existingOrder.customerOrderId,
       productId: productId || existingOrder.productId,
-      quantity: quantity !== undefined ? quantity : existingOrder.quantity
+      quantity: quantity !== undefined ? quantity : existingOrder.quantity,
+      selectedColor:
+        selectedColor === undefined
+          ? existingOrder.selectedColor
+          : typeof selectedColor === "string" && selectedColor.trim().length > 0
+          ? selectedColor.trim()
+          : null,
     }
   });
 
@@ -150,6 +160,7 @@ const getAllProductOrders = asyncHandler(async (request, response) => {
     select: {
       productId: true,
       quantity: true,
+      selectedColor: true,
       customerOrder: {
         select: {
           id: true,
@@ -189,12 +200,12 @@ const getAllProductOrders = asyncHandler(async (request, response) => {
     });
 
     if (ordersMap.has(id)) {
-      ordersMap.get(id).products.push({ ...product, quantity });
+      ordersMap.get(id).products.push({ ...product, quantity, selectedColor: order.selectedColor });
     } else {
       ordersMap.set(id, {
         customerOrderId: id,
         customerOrder: orderDetails,
-        products: [{ ...product, quantity }]
+        products: [{ ...product, quantity, selectedColor: order.selectedColor }]
       });
     }
   }

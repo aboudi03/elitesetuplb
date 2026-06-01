@@ -270,7 +270,12 @@ const CheckoutPage = () => {
           quantity: products[i].amount
         });
         
-        await addOrderProduct(orderId, products[i].id, products[i].amount);
+        await addOrderProduct(
+          orderId,
+          products[i].id,
+          products[i].amount,
+          products[i].selectedColor
+        );
         console.log(`✅ Product ${i + 1} added successfully`);
       }
 
@@ -337,7 +342,8 @@ const CheckoutPage = () => {
   const addOrderProduct = async (
     orderId: string,
     productId: string,
-    productQuantity: number
+    productQuantity: number,
+    selectedColor?: string
   ) => {
     try {
       console.log("️ Adding product to order:", {
@@ -350,6 +356,7 @@ const CheckoutPage = () => {
         customerOrderId: orderId,
         productId: productId,
         quantity: productQuantity,
+        selectedColor,
       });
 
       console.log("📡 Product order response:", response);
@@ -408,7 +415,7 @@ const CheckoutPage = () => {
               className="divide-y divide-[var(--site-border)] text-sm font-medium text-[var(--site-text)]"
             >
               {products.map((product) => (
-                <li key={product?.id} className="flex items-start space-x-4 py-6">
+                <li key={product?.cartItemId} className="flex items-start space-x-4 py-6">
                   <Image
                     src={product?.image ? `/${product?.image}` : "/product_placeholder.jpg"}
                     alt={product?.title}
@@ -419,6 +426,9 @@ const CheckoutPage = () => {
                   <div className="flex-auto space-y-1">
                     <h3>{product?.title}</h3>
                     <p className="text-[var(--site-muted)]">x{product?.amount}</p>
+                    {product.selectedColor && (
+                      <p className="text-[var(--site-muted)]">Color: {product.selectedColor}</p>
+                    )}
                   </div>
                   <p className="flex-none text-base font-medium">
                     ${product?.price}

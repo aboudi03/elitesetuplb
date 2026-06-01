@@ -16,8 +16,8 @@ export const CartModule = () => {
   const taxTotal = calculateCartTax(products);
   const orderTotal = calculateCartGrandTotal(products, total);
 
-  const handleRemoveItem = (id: string) => {
-    removeFromCart(id);
+  const handleRemoveItem = (cartItemId: string) => {
+    removeFromCart(cartItemId);
     calculateTotals();
     toast.success("Product removed from the cart");
   };
@@ -34,7 +34,7 @@ export const CartModule = () => {
           className="divide-y divide-[var(--site-border)] border-b border-t border-[var(--site-border)]"
         >
           {products.map((product) => (
-            <li key={product.id} className="flex py-6 sm:py-10">
+            <li key={product.cartItemId} className="flex py-6 sm:py-10">
               <div className="flex-shrink-0">
                 <Image
                   width={192}
@@ -67,13 +67,18 @@ export const CartModule = () => {
                     <p className="mt-1 text-sm font-medium text-[var(--site-accent)]">
                       ${product.price}
                     </p>
+                    {product.selectedColor && (
+                      <p className="mt-2 text-sm text-[var(--site-muted)]">
+                        Color: <span className="font-medium text-[var(--site-text)]">{product.selectedColor}</span>
+                      </p>
+                    )}
                   </div>
 
                   <div className="mt-4 sm:mt-0 sm:pr-9">
                     <QuantityInputCart product={product} />
                     <div className="absolute right-0 top-0">
                       <button
-                        onClick={() => handleRemoveItem(product.id)}
+                        onClick={() => handleRemoveItem(product.cartItemId)}
                         type="button"
                         className="-m-2 inline-flex p-2 text-[var(--site-muted)] hover:text-[var(--site-accent)]"
                       >

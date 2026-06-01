@@ -2,11 +2,13 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 export type ProductInCart = {
+  cartItemId: string;
   id: string;
   title: string;
   price: number;
   taxRate?: number;
   image: string;
+  selectedColor?: string;
   amount: number;
   stock?: number;
 };
@@ -19,8 +21,8 @@ export type State = {
 
 export type Actions = {
   addToCart: (newProduct: ProductInCart) => void;
-  removeFromCart: (id: string) => void;
-  updateCartAmount: (id: string, quantity: number) => void;
+  removeFromCart: (cartItemId: string) => void;
+  updateCartAmount: (cartItemId: string, quantity: number) => void;
   calculateTotals: () => void;
   clearCart: () => void;
 };
@@ -40,13 +42,13 @@ export const useProductStore = create<State & Actions>()(
       addToCart: (newProduct) => {
         set((state) => {
           const cartItem = state.products.find(
-            (item) => item.id === newProduct.id
+            (item) => item.cartItemId === newProduct.cartItemId
           );
           if (!cartItem) {
             return { products: [...state.products, newProduct] };
           } else {
             state.products.map((product) => {
-              if (product.id === cartItem.id) {
+              if (product.cartItemId === cartItem.cartItemId) {
                 product.amount += newProduct.amount;
               }
             });
@@ -64,10 +66,10 @@ export const useProductStore = create<State & Actions>()(
           };
         });
       },
-      removeFromCart: (id) => {
+      removeFromCart: (cartItemId) => {
         set((state) => {
           state.products = state.products.filter(
-            (product: ProductInCart) => product.id !== id
+            (product: ProductInCart) => product.cartItemId !== cartItemId
           );
           return { products: state.products };
         });
@@ -89,15 +91,15 @@ export const useProductStore = create<State & Actions>()(
           };
         });
       },
-      updateCartAmount: (id, amount) => {
+      updateCartAmount: (cartItemId, amount) => {
         set((state) => {
-          const cartItem = state.products.find((item) => item.id === id);
+          const cartItem = state.products.find((item) => item.cartItemId === cartItemId);
 
           if (!cartItem) {
             return { products: [...state.products] };
           } else {
             state.products.map((product) => {
-              if (product.id === cartItem.id) {
+              if (product.cartItemId === cartItem.cartItemId) {
                 product.amount = amount;
               }
             });
@@ -109,6 +111,21 @@ export const useProductStore = create<State & Actions>()(
     }),
     {
       name: "products-storage",
+      version: 2,
+      migrate: (persistedState: any) => {
+        if (!persistedState?.products) {
+          return persistedState;
+        }
+
+        return {
+          ...persistedState,
+          products: persistedState.products.map((product: ProductInCart & { cartItemId?: string }) => ({
+            ...product,
+            cartItemId:
+              product.cartItemId || `${product.id}::${product.selectedColor || "default"}`,
+          })),
+        };
+      },
       storage: createJSONStorage(() =>
         typeof window !== "undefined" ? sessionStorage : createNoopStorage()
       ),

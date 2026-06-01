@@ -13,6 +13,7 @@ interface OrderProduct {
   customerOrderId: string;
   productId: string;
   quantity: number;
+  selectedColor?: string | null;
   product: {
     id: string;
     slug: string;
@@ -421,6 +422,11 @@ const AdminSingleOrder = () => {
                         {product?.product?.title}
                       </Link>
                       <p className="mt-1 text-sm text-[var(--site-muted)]">${product?.product?.price} each</p>
+                      {product?.selectedColor && (
+                        <p className="mt-1 text-sm text-[var(--site-muted)]">
+                          Color: <span className="font-medium text-[var(--site-text)]">{product.selectedColor}</span>
+                        </p>
+                      )}
                     </div>
                     <div className="rounded-full border border-[var(--site-border)] bg-[var(--site-panel)] px-3 py-1 text-sm font-semibold">
                       x{product?.quantity}

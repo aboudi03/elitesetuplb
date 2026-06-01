@@ -160,6 +160,7 @@ model customer_order_product {
   product         Product        @relation(fields: [productId], references: [id])
   productId       String
   quantity        Int
+  selectedColor   String?
 }
 
 model Category {

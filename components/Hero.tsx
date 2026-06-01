@@ -16,6 +16,8 @@ type HeroSlide = {
   href: string;
   isActive?: boolean;
   sortOrder?: number;
+  productWrapClassName?: string;
+  productImageClassName?: string;
 };
 
 const fallbackSlides: HeroSlide[] = [
@@ -23,25 +25,37 @@ const fallbackSlides: HeroSlide[] = [
     eyebrow: "Audio drop",
     title: "HyperX Cloud III",
     subtitle: "Comfortable wired headset with clear voice, deep game audio, and a clean black setup look.",
-    image: "/pexels-format-1029757.jpg",
+    image: "/hyperxbackg.png",
     productImage: "https://hyperx.com/cdn/shop/files/hyperx_cloud_iii_black_66x0048_main_1_c352faf1-cd4b-4be0-b3cb-2d49d3581ae9_1024x1024.jpg?v=1775587372",
     href: "/shop/gaming-headsets",
+    productWrapClassName:
+      "right-[9%] bottom-2 h-[74%] max-md:bottom-16 max-md:h-[34%] max-sm:bottom-14 max-sm:h-[30%]",
+    productImageClassName:
+      "max-h-full w-auto object-contain drop-shadow-[0_28px_35px_rgba(0,0,0,0.34)]",
   },
   {
     eyebrow: "Pro wireless mice",
     title: "Logitech G Pro Wireless",
     subtitle: "Lightweight wireless control for fast flicks, clean aim, and competitive desk setups.",
-    image: "/pexels-lex-photography-1109543.jpg",
+    image: "/logitechbackg.png",
     productImage: "https://s24.q4cdn.com/131595232/files/doc_multimedia/2018/08/1/Low_Resolution_JPG-PRO_Wireless_Top_BB.jpg",
     href: "/shop/gaming-mice",
+    productWrapClassName:
+      "right-[11%] bottom-8 h-[62%] max-md:bottom-16 max-md:h-[30%] max-sm:bottom-14 max-sm:h-[26%]",
+    productImageClassName:
+      "max-h-full w-auto object-contain drop-shadow-[0_26px_34px_rgba(2,12,27,0.4)]",
   },
   {
     eyebrow: "RGB keyboards",
     title: "HyperX Alloy Origins",
     subtitle: "Mechanical switches, compact aluminum build, and bright RGB for your main setup.",
-    image: "/pexels-pixabay-163007.jpg",
+    image: "/hyperxbackg2.png",
     productImage: "https://row.hyperx.com/cdn/shop/products/hyperx_alloy_origins_pbt_hx_aqua_tw_angle_2_1024x1024.jpg?v=1666376510",
     href: "/shop/gaming-keyboards",
+    productWrapClassName:
+      "right-[7%] bottom-5 h-[64%] max-md:bottom-16 max-md:h-[31%] max-sm:bottom-14 max-sm:h-[27%]",
+    productImageClassName:
+      "max-h-full w-auto object-contain drop-shadow-[0_30px_38px_rgba(0,0,0,0.38)]",
   },
 ];
 
@@ -61,6 +75,8 @@ const Hero = () => {
   const [activeSlide, setActiveSlide] = useState(0);
   const [slideDirection, setSlideDirection] = useState<"next" | "previous">("next");
   const [slides, setSlides] = useState<HeroSlide[]>(fallbackSlides);
+  const [previousRippleKey, setPreviousRippleKey] = useState(0);
+  const [nextRippleKey, setNextRippleKey] = useState(0);
   const autoplayTimerRef = useRef<number | null>(null);
   const touchStartXRef = useRef<number | null>(null);
   const touchDeltaXRef = useRef(0);
@@ -90,6 +106,10 @@ const Hero = () => {
               href: slide.href,
               isActive: slide.isActive,
               sortOrder: slide.sortOrder,
+              productWrapClassName:
+                "right-[12%] bottom-4 h-[72%] max-md:bottom-16 max-md:h-[34%] max-sm:bottom-14 max-sm:h-[30%]",
+              productImageClassName:
+                "max-h-full w-auto object-contain drop-shadow-[0_28px_35px_rgba(0,0,0,0.3)]",
             }))
           );
         }
@@ -126,11 +146,13 @@ const Hero = () => {
 
   const slide = slides[activeSlide] ?? fallbackSlides[0];
   const goToPreviousSlide = () => {
+    setPreviousRippleKey((current) => current + 1);
     setSlideDirection("previous");
     setActiveSlide((current) => (current - 1 + slides.length) % slides.length);
   };
 
   const goToNextSlide = () => {
+    setNextRippleKey((current) => current + 1);
     setSlideDirection("next");
     setActiveSlide((current) => (current + 1) % slides.length);
   };
@@ -242,7 +264,10 @@ const Hero = () => {
 
           <div
             key={`product-${activeSlide}`}
-            className={`absolute bottom-4 right-[12%] z-10 flex h-[72%] items-end max-md:bottom-16 max-md:left-0 max-md:right-0 max-md:h-[34%] max-md:justify-center max-sm:bottom-14 max-sm:h-[30%] ${
+            className={`absolute z-10 flex items-end max-md:left-0 max-md:right-0 max-md:justify-center ${
+              slide.productWrapClassName ||
+              "right-[12%] bottom-4 h-[72%] max-md:bottom-16 max-md:h-[34%] max-sm:bottom-14 max-sm:h-[30%]"
+            } ${
               slideDirection === "next"
                 ? "animate-[heroProductNext_850ms_cubic-bezier(0.22,1,0.36,1)_both]"
                 : "animate-[heroProductPrevious_850ms_cubic-bezier(0.22,1,0.36,1)_both]"
@@ -254,7 +279,10 @@ const Hero = () => {
               height={520}
               alt={slide.title}
               priority
-              className="max-h-full w-auto object-contain drop-shadow-[0_28px_35px_rgba(0,0,0,0.3)]"
+              className={
+                slide.productImageClassName ||
+                "max-h-full w-auto object-contain drop-shadow-[0_28px_35px_rgba(0,0,0,0.3)]"
+              }
             />
           </div>
 
@@ -264,7 +292,22 @@ const Hero = () => {
             className="hero-edge-button hero-edge-button--previous group absolute left-0 top-1/2 z-20 -translate-y-1/2 text-[var(--site-text)] max-md:bottom-4 max-md:left-4 max-md:translate-y-0 max-sm:left-3"
             aria-label="Previous promotion"
           >
+            <span className="hero-edge-button__bubble" aria-hidden="true" />
             <span className="hero-edge-button__shape" aria-hidden="true" />
+            {previousRippleKey > 0 && (
+              <>
+                <span
+                  key={`previous-ripple-one-${previousRippleKey}`}
+                  className="hero-edge-button__ripple hero-edge-button__ripple--one hero-edge-button__ripple--play"
+                  aria-hidden="true"
+                />
+                <span
+                  key={`previous-ripple-two-${previousRippleKey}`}
+                  className="hero-edge-button__ripple hero-edge-button__ripple--two hero-edge-button__ripple--play"
+                  aria-hidden="true"
+                />
+              </>
+            )}
             <span className="hero-edge-button__icon hero-edge-button__icon--base">
               <FaChevronLeft />
             </span>
@@ -278,7 +321,22 @@ const Hero = () => {
             className="hero-edge-button hero-edge-button--next group absolute right-0 top-1/2 z-20 -translate-y-1/2 text-[var(--site-text)] max-md:bottom-4 max-md:right-4 max-md:translate-y-0 max-sm:right-3"
             aria-label="Next promotion"
           >
+            <span className="hero-edge-button__bubble" aria-hidden="true" />
             <span className="hero-edge-button__shape" aria-hidden="true" />
+            {nextRippleKey > 0 && (
+              <>
+                <span
+                  key={`next-ripple-one-${nextRippleKey}`}
+                  className="hero-edge-button__ripple hero-edge-button__ripple--one hero-edge-button__ripple--play"
+                  aria-hidden="true"
+                />
+                <span
+                  key={`next-ripple-two-${nextRippleKey}`}
+                  className="hero-edge-button__ripple hero-edge-button__ripple--two hero-edge-button__ripple--play"
+                  aria-hidden="true"
+                />
+              </>
+            )}
             <span className="hero-edge-button__icon hero-edge-button__icon--base">
               <FaChevronRight />
             </span>

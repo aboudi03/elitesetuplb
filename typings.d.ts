@@ -84,6 +84,7 @@ interface Order {
 interface SingleProductBtnProps {
   product: Product;
   quantityCount: number;
+  selectedColor?: string;
 }
 
 
