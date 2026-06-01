@@ -97,14 +97,16 @@ const AdminSingleOrder = () => {
   const [statusHistory, setStatusHistory] = useState<StatusHistoryItem[]>([]);
   const [stockHistory, setStockHistory] = useState<StockHistoryItem[]>([]);
   const params = useParams<{ id: string }>();
-
   const router = useRouter();
+
+  const fieldClassName =
+    "block w-full rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 py-3 text-base text-[var(--site-text)] shadow-sm outline-none transition focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent-soft)]";
+  const sectionClassName =
+    "rounded-3xl border border-[var(--site-border)] bg-[var(--site-panel)] p-6 shadow-sm";
 
   useEffect(() => {
     const fetchOrderData = async () => {
-      const response = await apiClient.get(
-        `/api/orders/${params?.id}`
-      );
+      const response = await apiClient.get(`/api/orders/${params?.id}`);
       const data: Order & {
         statusHistory?: StatusHistoryItem[];
         stockHistory?: StockHistoryItem[];
@@ -115,9 +117,7 @@ const AdminSingleOrder = () => {
     };
 
     const fetchOrderProducts = async () => {
-      const response = await apiClient.get(
-        `/api/order-product/${params?.id}`
-      );
+      const response = await apiClient.get(`/api/order-product/${params?.id}`);
       const data: OrderProduct[] = await response.json();
       setOrderProducts(data);
     };
@@ -157,7 +157,8 @@ const AdminSingleOrder = () => {
         return;
       }
 
-      apiClient.put(`/api/orders/${order?.id}`, order)
+      apiClient
+        .put(`/api/orders/${order?.id}`, order)
         .then(async (response) => {
           if (response.status === 200) {
             const updatedOrder = await response.json();
@@ -183,14 +184,8 @@ const AdminSingleOrder = () => {
       method: "DELETE",
     };
 
-    apiClient.delete(
-      `/api/order-product/${order?.id}`,
-      requestOptions
-    ).then((response) => {
-      apiClient.delete(
-        `/api/orders/${order?.id}`,
-        requestOptions
-      ).then((response) => {
+    apiClient.delete(`/api/order-product/${order?.id}`, requestOptions).then(() => {
+      apiClient.delete(`/api/orders/${order?.id}`, requestOptions).then(() => {
         toast.success("Order deleted successfully");
         router.push("/admin/orders");
       });
@@ -198,231 +193,252 @@ const AdminSingleOrder = () => {
   };
 
   return (
-    <div className="bg-[var(--site-bg)] text-[var(--site-text)] flex justify-start max-w-screen-2xl mx-auto xl:h-full max-xl:flex-col max-xl:gap-y-5">
+    <div className="mx-auto flex max-w-screen-2xl justify-start gap-y-5 bg-[var(--site-bg)] text-[var(--site-text)] xl:h-full max-xl:flex-col">
       <DashboardSidebar />
-      <div className="flex flex-col gap-y-7 xl:ml-5 w-full max-xl:px-5">
-        <h1 className="text-3xl font-semibold">Order details</h1>
-        <div className="mt-5">
-          <label className="w-full">
+      <div className="w-full xl:ml-5 max-xl:px-5">
+        <div className="mb-8 rounded-[2rem] border border-[var(--site-border)] bg-[linear-gradient(135deg,var(--site-panel),var(--site-panel-soft))] px-6 py-8 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <span className="text-xl font-bold">Order number:</span>
-              <span className="text-base"> #{order?.orderNumber || order?.id.slice(0, 8)}</span>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--site-muted)]">
+                Orders
+              </p>
+              <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+                Order {order?.orderNumber || order?.id.slice(0, 8)}
+              </h1>
+              <p className="mt-3 text-base text-[var(--site-muted)]">
+                Review customer information, update status, and track fulfillment activity in a cleaner workspace.
+              </p>
             </div>
-            <div className="mt-1">
-              <span className="text-sm font-bold text-[var(--site-muted)]">Internal ID:</span>
-              <span className="text-sm text-[var(--site-muted)]"> {order?.id}</span>
+            <div className="rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel)] px-5 py-4 text-sm text-[var(--site-muted)] shadow-sm">
+              <p>
+                <span className="font-semibold text-[var(--site-text)]">Internal ID:</span> {order?.id}
+              </p>
+              <p className="mt-2">
+                <span className="font-semibold text-[var(--site-text)]">Placed:</span>{" "}
+                {order?.dateTime ? new Date(order.dateTime).toLocaleString() : "-"}
+              </p>
             </div>
-          </label>
-        </div>
-        <div className="flex gap-x-2 max-sm:flex-col">
-          <div>
-            <label className="form-control w-full max-w-xs">
-              <div className="label">
-                <span className="label-text">Name:</span>
-              </div>
-              <input
-                type="text"
-                className="input input-bordered w-full max-w-xs"
-                value={order?.name}
-                onChange={(e) => setOrder({ ...order, name: e.target.value })}
-              />
-            </label>
-          </div>
-          <div>
-            <label className="form-control w-full max-w-xs">
-              <div className="label">
-                <span className="label-text">Lastname:</span>
-              </div>
-              <input
-                type="text"
-                className="input input-bordered w-full max-w-xs"
-                value={order?.lastname}
-                onChange={(e) =>
-                  setOrder({ ...order, lastname: e.target.value })
-                }
-              />
-            </label>
           </div>
         </div>
 
-        <div>
-          <label className="form-control w-full max-w-xs">
-            <div className="label">
-              <span className="label-text">Phone number:</span>
-            </div>
-            <input
-              type="text"
-              className="input input-bordered w-full max-w-xs"
-              value={order?.phone}
-              onChange={(e) => setOrder({ ...order, phone: e.target.value })}
-            />
-          </label>
-        </div>
-
-        <div>
-          <label className="form-control w-full max-w-xs">
-            <div className="label">
-              <span className="label-text">Email adress:</span>
-            </div>
-            <input
-              type="email"
-              className="input input-bordered w-full max-w-xs"
-              value={order?.email}
-              onChange={(e) => setOrder({ ...order, email: e.target.value })}
-            />
-          </label>
-        </div>
-
-        <div>
-          <label className="form-control w-full max-w-xs">
-            <div className="label">
-              <span className="label-text">Company (optional):</span>
-            </div>
-            <input
-              type="text"
-              className="input input-bordered w-full max-w-xs"
-              value={order?.company}
-              onChange={(e) => setOrder({ ...order, company: e.target.value })}
-            />
-          </label>
-        </div>
-
-        <div className="flex gap-x-2 max-sm:flex-col">
-          <div>
-            <label className="form-control w-full max-w-xs">
-              <div className="label">
-                <span className="label-text">Address:</span>
-              </div>
-              <input
-                type="text"
-                className="input input-bordered w-full max-w-xs"
-                value={order?.adress}
-                onChange={(e) => setOrder({ ...order, adress: e.target.value })}
-              />
-            </label>
-          </div>
-
-          <div>
-            <label className="form-control w-full max-w-xs">
-              <div className="label">
-                <span className="label-text">Apartment, suite, etc. :</span>
-              </div>
-              <input
-                type="text"
-                className="input input-bordered w-full max-w-xs"
-                value={order?.apartment}
-                onChange={(e) =>
-                  setOrder({ ...order, apartment: e.target.value })
-                }
-              />
-            </label>
-          </div>
-        </div>
-
-        <div className="flex gap-x-2 max-sm:flex-col">
-          <div>
-            <label className="form-control w-full max-w-xs">
-              <div className="label">
-                <span className="label-text">City:</span>
-              </div>
-              <input
-                type="text"
-                className="input input-bordered w-full max-w-xs"
-                value={order?.city}
-                onChange={(e) => setOrder({ ...order, city: e.target.value })}
-              />
-            </label>
-          </div>
-        </div>
-
-        <div>
-          <label className="form-control w-full max-w-xs">
-            <div className="label">
-              <span className="label-text">Order status</span>
-            </div>
-            <select
-              className="select select-bordered"
-              value={order?.status}
-              onChange={(e) =>
-                setOrder({
-                  ...order,
-                  status: e.target.value,
-                })
-              }
-            >
-              {statusOptions.map((status) => (
-                <option key={status.id} value={status.code}>
-                  {status.name} ({status.groupCode})
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <div>
-          <label className="form-control">
-            <div className="label">
-              <span className="label-text">Order notice:</span>
-            </div>
-            <textarea
-              className="textarea textarea-bordered h-24"
-              value={order?.orderNotice || ""}
-              onChange={(e) =>
-                setOrder({ ...order, orderNotice: e.target.value })
-              }
-            ></textarea>
-          </label>
-        </div>
-        <div>
-          {orderProducts?.map((product) => (
-            <div className="flex items-center gap-x-4" key={product?.id}>
-              <Image
-                src={product?.product?.mainImage ? `/${product?.product?.mainImage}` : "/product_placeholder.jpg"}
-                alt={product?.product?.title}
-                width={50}
-                height={50}
-                className="w-auto h-auto"
-              />
-              <div>
-                <Link href={`/product/${product?.product?.slug}`}>
-                  {product?.product?.title}
-                </Link>
-                <p>
-                  ${product?.product?.price} * {product?.quantity} items
+        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+          <div className="space-y-6">
+            <section className={sectionClassName}>
+              <div className="mb-6">
+                <h2 className="text-2xl font-semibold">Customer details</h2>
+                <p className="mt-2 text-sm text-[var(--site-muted)]">
+                  Manage contact and delivery information without hunting through a long vertical form.
                 </p>
               </div>
-            </div>
-          ))}
-          <div className="flex flex-col gap-y-2 mt-10">
-            <p className="text-2xl">Subtotal: ${order?.total}</p>
-            <p className="text-2xl">Tax 20%: ${order?.total / 5}</p>
-            <p className="text-2xl">Shipping: $5</p>
-            <p className="text-3xl font-semibold">
-              Total: ${order?.total + order?.total / 5 + 5}
-            </p>
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">Name</span>
+                  <input
+                    type="text"
+                    className={fieldClassName}
+                    value={order?.name}
+                    onChange={(e) => setOrder({ ...order, name: e.target.value })}
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">Last name</span>
+                  <input
+                    type="text"
+                    className={fieldClassName}
+                    value={order?.lastname}
+                    onChange={(e) => setOrder({ ...order, lastname: e.target.value })}
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">Phone number</span>
+                  <input
+                    type="text"
+                    className={fieldClassName}
+                    value={order?.phone}
+                    onChange={(e) => setOrder({ ...order, phone: e.target.value })}
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">Email address</span>
+                  <input
+                    type="email"
+                    className={fieldClassName}
+                    value={order?.email}
+                    onChange={(e) => setOrder({ ...order, email: e.target.value })}
+                  />
+                </label>
+
+                <label className="block md:col-span-2">
+                  <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">Company</span>
+                  <input
+                    type="text"
+                    className={fieldClassName}
+                    value={order?.company}
+                    onChange={(e) => setOrder({ ...order, company: e.target.value })}
+                  />
+                </label>
+
+                <label className="block md:col-span-2">
+                  <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">Address</span>
+                  <input
+                    type="text"
+                    className={fieldClassName}
+                    value={order?.adress}
+                    onChange={(e) => setOrder({ ...order, adress: e.target.value })}
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">Apartment, suite, etc.</span>
+                  <input
+                    type="text"
+                    className={fieldClassName}
+                    value={order?.apartment}
+                    onChange={(e) => setOrder({ ...order, apartment: e.target.value })}
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">City</span>
+                  <input
+                    type="text"
+                    className={fieldClassName}
+                    value={order?.city}
+                    onChange={(e) => setOrder({ ...order, city: e.target.value })}
+                  />
+                </label>
+              </div>
+            </section>
+
+            <section className={sectionClassName}>
+              <div className="mb-6">
+                <h2 className="text-2xl font-semibold">Order note</h2>
+                <p className="mt-2 text-sm text-[var(--site-muted)]">
+                  Save internal context or customer notes directly with the order.
+                </p>
+              </div>
+              <textarea
+                className={`${fieldClassName} min-h-[180px]`}
+                value={order?.orderNotice || ""}
+                onChange={(e) => setOrder({ ...order, orderNotice: e.target.value })}
+              />
+            </section>
           </div>
-          <div className="flex gap-x-2 max-sm:flex-col mt-5">
-            <button
-              type="button"
-              className="uppercase bg-[var(--site-accent)] px-10 py-5 text-lg border border-black border-gray-300 font-bold text-white shadow-sm hover:bg-[var(--site-accent-strong)] hover:text-white focus:outline-none focus:ring-2"
-              onClick={updateOrder}
-            >
-              Update order
-            </button>
-            <button
-              type="button"
-              className="uppercase bg-red-600 px-10 py-5 text-lg border border-black border-gray-300 font-bold text-white shadow-sm hover:bg-red-700 hover:text-white focus:outline-none focus:ring-2"
-              onClick={deleteOrder}
-            >
-              Delete order
-            </button>
-          </div>
-          <div className="mt-10 grid gap-6 lg:grid-cols-2">
-            <section className="rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] p-4">
+
+          <div className="space-y-6">
+            <section className={sectionClassName}>
+              <div className="mb-6">
+                <h2 className="text-2xl font-semibold">Order control</h2>
+                <p className="mt-2 text-sm text-[var(--site-muted)]">
+                  Change status, confirm totals, and apply updates from one focused panel.
+                </p>
+              </div>
+
+              <div className="space-y-5">
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">Order status</span>
+                  <select
+                    className={fieldClassName}
+                    value={order?.status}
+                    onChange={(e) => setOrder({ ...order, status: e.target.value })}
+                  >
+                    {statusOptions.map((status) => (
+                      <option key={status.id} value={status.code}>
+                        {status.name} ({status.groupCode})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <div className="rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-5">
+                  <div className="flex items-center justify-between text-base">
+                    <span className="text-[var(--site-muted)]">Subtotal</span>
+                    <span className="font-semibold">${order?.total}</span>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-base">
+                    <span className="text-[var(--site-muted)]">Tax</span>
+                    <span className="font-semibold">Calculated per product at checkout</span>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-base">
+                    <span className="text-[var(--site-muted)]">Shipping</span>
+                    <span className="font-semibold">$5</span>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between border-t border-[var(--site-border)] pt-4 text-lg">
+                    <span className="font-semibold">Estimated total</span>
+                    <span className="text-2xl font-semibold">${order?.total + 5}</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    className="inline-flex min-h-14 items-center justify-center rounded-xl bg-[var(--site-accent)] px-8 text-base font-bold uppercase tracking-[0.12em] text-white shadow-sm transition hover:bg-[var(--site-accent-strong)] focus:outline-none focus:ring-2"
+                    onClick={updateOrder}
+                  >
+                    Update order
+                  </button>
+                  <button
+                    type="button"
+                    className="inline-flex min-h-14 items-center justify-center rounded-xl bg-red-600 px-8 text-base font-bold uppercase tracking-[0.12em] text-white shadow-sm transition hover:bg-red-700 focus:outline-none focus:ring-2"
+                    onClick={deleteOrder}
+                  >
+                    Delete order
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            <section className={sectionClassName}>
+              <div className="mb-6">
+                <h2 className="text-2xl font-semibold">Order items</h2>
+                <p className="mt-2 text-sm text-[var(--site-muted)]">
+                  Review linked products, quantities, and quick storefront access.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                {orderProducts?.map((product) => (
+                  <div
+                    className="flex items-center gap-4 rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-4"
+                    key={product?.id}
+                  >
+                    <Image
+                      src={product?.product?.mainImage ? `/${product?.product?.mainImage}` : "/product_placeholder.jpg"}
+                      alt={product?.product?.title}
+                      width={64}
+                      height={64}
+                      className="h-16 w-16 rounded-xl object-contain"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <Link
+                        href={`/product/${product?.product?.slug}`}
+                        className="text-lg font-semibold hover:text-[var(--site-accent)]"
+                      >
+                        {product?.product?.title}
+                      </Link>
+                      <p className="mt-1 text-sm text-[var(--site-muted)]">${product?.product?.price} each</p>
+                    </div>
+                    <div className="rounded-full border border-[var(--site-border)] bg-[var(--site-panel)] px-3 py-1 text-sm font-semibold">
+                      x{product?.quantity}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className={sectionClassName}>
               <h2 className="text-xl font-semibold">Order status history</h2>
               <div className="mt-4 space-y-3">
                 {statusHistory.length > 0 ? (
                   statusHistory.map((item) => (
-                    <div key={item.id} className="text-sm text-[var(--site-muted)]">
+                    <div
+                      key={item.id}
+                      className="rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-4 text-sm text-[var(--site-muted)]"
+                    >
                       <p className="font-medium text-[var(--site-text)]">
                         {item.previousStatus || "none"} to {item.newStatus}
                       </p>
@@ -438,12 +454,15 @@ const AdminSingleOrder = () => {
               </div>
             </section>
 
-            <section className="rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] p-4">
+            <section className={sectionClassName}>
               <h2 className="text-xl font-semibold">Product stock history</h2>
               <div className="mt-4 space-y-3">
                 {stockHistory.length > 0 ? (
                   stockHistory.map((item) => (
-                    <div key={item.id} className="text-sm text-[var(--site-muted)]">
+                    <div
+                      key={item.id}
+                      className="rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-4 text-sm text-[var(--site-muted)]"
+                    >
                       <p className="font-medium text-[var(--site-text)]">
                         {item.quantityChange > 0 ? "+" : ""}
                         {item.quantityChange} stock
@@ -468,4 +487,3 @@ const AdminSingleOrder = () => {
 };
 
 export default AdminSingleOrder;
-

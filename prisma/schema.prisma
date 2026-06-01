@@ -19,6 +19,7 @@ model Product {
   title          String
   mainImage      String
   price          Int                      @default(0)
+  taxRate        Float                    @default(0)
   rating         Int                      @default(0)
   description    String
   manufacturer   String

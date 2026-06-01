@@ -7,11 +7,14 @@ import Link from "next/link";
 import { FaCheck, FaCircleQuestion, FaClock, FaXmark } from "react-icons/fa6";
 import QuantityInputCart from "@/components/QuantityInputCart";
 import { sanitize } from "@/lib/sanitize";
+import { calculateCartGrandTotal, calculateCartTax } from "@/lib/cartPricing";
 
 export const CartModule = () => {
 
   const { products, removeFromCart, calculateTotals, total } =
     useProductStore();
+  const taxTotal = calculateCartTax(products);
+  const orderTotal = calculateCartGrandTotal(products, total);
 
   const handleRemoveItem = (id: string) => {
     removeFromCart(id);
@@ -162,7 +165,7 @@ export const CartModule = () => {
               </a>
             </dt>
             <dd className="text-sm font-medium text-[var(--site-text)]">
-              ${total / 5}
+              ${taxTotal.toFixed(2)}
             </dd>
           </div>
           <div className="flex items-center justify-between border-t border-[var(--site-border)] pt-4">
@@ -170,7 +173,7 @@ export const CartModule = () => {
               Order total
             </dt>
             <dd className="text-base font-medium text-[var(--site-text)]">
-              ${total === 0 ? 0 : Math.round(total + total / 5 + 5)}
+              ${orderTotal}
             </dd>
           </div>
         </dl>

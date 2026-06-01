@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import apiClient from "@/lib/api";
+import { calculateCartGrandTotal, calculateCartTax } from "@/lib/cartPricing";
 
 const inputClassName =
   "block w-full rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 py-2 text-[var(--site-text)] shadow-sm outline-none focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent)] sm:text-sm disabled:cursor-not-allowed disabled:opacity-60";
@@ -29,7 +30,8 @@ const CheckoutPage = () => {
   const { products, total, clearCart } = useProductStore();
   const router = useRouter();
 
-  const orderGrandTotal = total === 0 ? 0 : Math.round(total + total / 5 + 5);
+  const orderTaxTotal = calculateCartTax(products);
+  const orderGrandTotal = calculateCartGrandTotal(products, total);
 
   const normalizeLebanesePhone = (value: string) => {
     let digits = value.replace(/\D/g, "");
@@ -436,7 +438,7 @@ const CheckoutPage = () => {
               </div>
               <div className="flex items-center justify-between">
                 <dt className="text-[var(--site-muted)]">Taxes</dt>
-                <dd>${total / 5}</dd>
+                <dd>${orderTaxTotal.toFixed(2)}</dd>
               </div>
               <div className="flex items-center justify-between border-t border-[var(--site-border)] pt-6">
                 <dt className="text-base">Total</dt>

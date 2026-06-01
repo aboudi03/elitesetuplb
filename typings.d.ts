@@ -11,6 +11,7 @@ interface Product {
   category: {name: string}?;
   inStock: number;
   isActive: boolean;
+  taxRate?: number;
 }
 
 interface Merchant {

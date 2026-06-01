@@ -241,6 +241,23 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
             />
           </label>
         </div>
+        <div>
+          <label className="form-control w-full max-w-xs">
+            <div className="label">
+              <span className="label-text">Tax % (optional):</span>
+            </div>
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              className="input input-bordered w-full max-w-xs"
+              value={product?.taxRate ?? 0}
+              onChange={(e) =>
+                setProduct({ ...product!, taxRate: Math.max(0, Number(e.target.value) || 0) })
+              }
+            />
+          </label>
+        </div>
         {/* Product inStock select input div - end */}
         <div>
           <label className="form-control w-full max-w-xs">

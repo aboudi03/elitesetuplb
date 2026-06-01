@@ -32,6 +32,7 @@ const AddToCartSingleProductBtn = ({ product, quantityCount } : SingleProductBtn
       id: product?.id.toString(),
       title: product?.title,
       price: product?.price,
+      taxRate: product?.taxRate || 0,
       image: product?.mainImage,
       amount: quantityCount,
       stock: product?.inStock,

@@ -111,7 +111,7 @@ const DashboardSidebar = () => {
           />
         </button>
         {ordersOpen && (
-          <div className="xl:border-l xl:border-[var(--site-border)] xl:ml-7 max-xl:flex max-xl:gap-2">
+          <div className="xl:border-l xl:border-[var(--site-border)] xl:ml-7 max-xl:flex max-xl:flex-col max-xl:gap-2">
             <Link href="/admin/orders" onClick={handleLinkClick}>
               <div className={childItemClassName}>
                 <FaBagShopping />
@@ -143,7 +143,7 @@ const DashboardSidebar = () => {
           />
         </button>
         {productsOpen && (
-          <div className="xl:border-l xl:border-[var(--site-border)] xl:ml-7 max-xl:flex max-xl:gap-2">
+          <div className="xl:border-l xl:border-[var(--site-border)] xl:ml-7 max-xl:flex max-xl:flex-col max-xl:gap-2">
             <Link href="/admin/products" onClick={handleLinkClick}>
               <div className={childItemClassName}>
                 <FaTable />
