@@ -22,8 +22,6 @@ const CheckoutPage = () => {
     adress: "",
     apartment: "",
     city: "",
-    country: "",
-    postalCode: "",
     orderNotice: "",
   });
   
@@ -34,11 +32,22 @@ const CheckoutPage = () => {
   const orderGrandTotal = total === 0 ? 0 : Math.round(total + total / 5 + 5);
 
   const normalizeLebanesePhone = (value: string) => {
-    const cleaned = value.replace(/[^0-9+]/g, "");
-    if (cleaned.startsWith("00")) {
-      return `+${cleaned.slice(2)}`;
+    let digits = value.replace(/\D/g, "");
+
+    if (digits.startsWith("00")) {
+      digits = digits.slice(2);
     }
-    return cleaned;
+
+    if (digits.startsWith("961")) {
+      digits = digits.slice(3);
+    }
+
+    // Local 3xxxxxx inputs should become 03xxxxxx.
+    if (digits.length === 7 && digits.startsWith("3")) {
+      digits = `0${digits}`;
+    }
+
+    return digits;
   };
 
   const validateCartStock = async () => {
@@ -90,7 +99,7 @@ const CheckoutPage = () => {
     
     // Lebanese phone validation
     const normalizedPhone = normalizeLebanesePhone(checkoutForm.phone);
-    const lebanesePhoneRegex = /^(\+961|961|0)?[0-9]{7,8}$/;
+    const lebanesePhoneRegex = /^[0-9]{8}$/;
     if (!checkoutForm.phone.trim() || !lebanesePhoneRegex.test(normalizedPhone)) {
       errors.push("Please enter a valid Lebanese phone number");
     }
@@ -184,11 +193,9 @@ const CheckoutPage = () => {
         company: checkoutForm.company.trim(),
         adress: checkoutForm.adress.trim(),
         apartment: checkoutForm.apartment.trim(),
-        postalCode: checkoutForm.postalCode.trim(),
         status: "pending",
         total: total,
         city: checkoutForm.city.trim(),
-        country: checkoutForm.country.trim(),
         orderNotice: checkoutForm.orderNotice.trim(),
         userId: userId // Add user ID for notifications
       };
@@ -277,8 +284,6 @@ const CheckoutPage = () => {
         adress: "",
         apartment: "",
         city: "",
-        country: "",
-        postalCode: "",
         orderNotice: "",
       });
       clearCart();
@@ -693,58 +698,6 @@ const CheckoutPage = () => {
                         setCheckoutForm({
                           ...checkoutForm,
                           city: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="region"
-                    className="block text-sm font-medium text-[var(--site-muted)]"
-                  >
-                    Country (optional)
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      id="region"
-                      name="region"
-                      autoComplete="address-level1"
-                      disabled={isSubmitting}
-                      className={inputClassName}
-                      value={checkoutForm.country}
-                      onChange={(e) =>
-                        setCheckoutForm({
-                          ...checkoutForm,
-                          country: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="postal-code"
-                    className="block text-sm font-medium text-[var(--site-muted)]"
-                  >
-                    Postal code (optional)
-                  </label>
-                  <div className="mt-1">
-                    <input
-                      type="text"
-                      id="postal-code"
-                      name="postal-code"
-                      autoComplete="postal-code"
-                      disabled={isSubmitting}
-                      className={inputClassName}
-                      value={checkoutForm.postalCode}
-                      onChange={(e) =>
-                        setCheckoutForm({
-                          ...checkoutForm,
-                          postalCode: e.target.value,
                         })
                       }
                     />

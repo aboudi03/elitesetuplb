@@ -120,10 +120,10 @@ async function createCustomerOrder(request, response) {
           company: validatedData.company,
           adress: validatedData.adress,
           apartment: validatedData.apartment,
-          postalCode: validatedData.postalCode,
+          postalCode: "",
           status: validatedData.status,
           city: validatedData.city,
-          country: validatedData.country,
+          country: "",
           orderNotice: validatedData.orderNotice,
           total: validatedData.total,
           dateTime: new Date()
@@ -312,10 +312,10 @@ async function updateCustomerOrder(request, response) {
           company: validatedData.company,
           adress: validatedData.adress,
           apartment: validatedData.apartment,
-          postalCode: validatedData.postalCode,
+          postalCode: "",
           status: validatedData.status,
           city: validatedData.city,
-          country: validatedData.country,
+          country: "",
           orderNotice: validatedData.orderNotice,
           total: validatedData.total,
         },
@@ -578,8 +578,47 @@ async function getAllOrders(request, response) {
       prisma.customer_order.count()
     ]);
 
+    const orderIds = orders.map((order) => order.id);
+    const history = orderIds.length
+      ? await prisma.orderStatusHistory.findMany({
+          where: {
+            customerOrderId: {
+              in: orderIds,
+            },
+          },
+          select: {
+            customerOrderId: true,
+            newStatus: true,
+          },
+        })
+      : [];
+
+    const historyCountsByOrderId = history.reduce((accumulator, item) => {
+      const currentCounts = accumulator[item.customerOrderId] || {
+        failedHistoryCount: 0,
+        cancelledHistoryCount: 0,
+      };
+
+      if (item.newStatus === "failed") {
+        currentCounts.failedHistoryCount += 1;
+      }
+
+      if (item.newStatus === "cancelled") {
+        currentCounts.cancelledHistoryCount += 1;
+      }
+
+      accumulator[item.customerOrderId] = currentCounts;
+      return accumulator;
+    }, {});
+
     return response.json({
-      orders,
+      orders: orders.map((order) => ({
+        ...order,
+        ...(historyCountsByOrderId[order.id] || {
+          failedHistoryCount: 0,
+          cancelledHistoryCount: 0,
+        }),
+      })),
       pagination: {
         page,
         limit,

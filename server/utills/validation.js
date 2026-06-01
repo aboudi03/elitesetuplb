@@ -211,25 +211,31 @@ const orderValidation = {
       throw new ValidationError('Phone number is required', 'phone');
     }
 
-    const cleanedPhone = phone.replace(/[^0-9+]/g, '');
+    let cleanedPhone = phone.replace(/\D/g, '');
 
     if (cleanedPhone.length > 16) {
       throw new ValidationError('Phone number must be less than 20 characters', 'phone');
     }
 
-    const normalized = cleanedPhone.startsWith('00') ? `+${cleanedPhone.slice(2)}` : cleanedPhone;
-    const lebanesePatterns = [
-      /^\+961[0-9]{7,8}$/,
-      /^961[0-9]{7,8}$/,
-      /^0[0-9]{7,8}$/,
-      /^[0-9]{7,8}$/,
-    ];
+    if (cleanedPhone.startsWith('00')) {
+      cleanedPhone = cleanedPhone.slice(2);
+    }
 
-    if (!lebanesePatterns.some((pattern) => pattern.test(normalized))) {
+    if (cleanedPhone.startsWith('961')) {
+      cleanedPhone = cleanedPhone.slice(3);
+    }
+
+    // Local 3xxxxxx inputs should become 03xxxxxx, but 70xxxxxx-style
+    // mobile numbers are already correct and must stay as-is.
+    if (cleanedPhone.length === 7 && cleanedPhone.startsWith('3')) {
+      cleanedPhone = `0${cleanedPhone}`;
+    }
+
+    if (!/^[0-9]{8}$/.test(cleanedPhone)) {
       throw new ValidationError('Please enter a valid Lebanese phone number', 'phone');
     }
 
-    return normalized;
+    return cleanedPhone;
   },
 
   // Validate address fields - UPDATED for apartment (1 character minimum)
@@ -415,12 +421,10 @@ const validateOrderData = (orderData) => {
     'apartment'
   );
   validatedData.city = safeValidate(orderValidation.validateName, orderData.city, 'city');
-  validatedData.country = safeValidate(
-    (value) => orderValidation.validateOptionalAddress(value, 'country', 2),
-    orderData.country,
-    'country'
-  );
-  validatedData.postalCode = safeValidate(orderValidation.validatePostalCode, orderData.postalCode, 'postalCode');
+  // Country and postal code are no longer collected at checkout.
+  // Keep them normalized as empty strings for the existing schema.
+  validatedData.country = '';
+  validatedData.postalCode = '';
   validatedData.total = safeValidate(orderValidation.validateTotal, orderData.total, 'total');
   validatedData.status = safeValidate(orderValidation.validateStatus, orderData.status || 'pending', 'status');
   

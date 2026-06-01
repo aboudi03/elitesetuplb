@@ -54,6 +54,28 @@ interface StockHistoryItem {
   createdAt: string;
 }
 
+const getApiErrorMessage = (errorData: any, fallback: string) => {
+  if (typeof errorData?.details === "string" && errorData.details.trim()) {
+    return errorData.details;
+  }
+
+  if (Array.isArray(errorData?.details) && errorData.details.length > 0) {
+    return errorData.details
+      .map((detail: any) => detail?.message || detail?.field || JSON.stringify(detail))
+      .join(", ");
+  }
+
+  if (errorData?.details && typeof errorData.details === "object") {
+    return errorData.details.message || JSON.stringify(errorData.details);
+  }
+
+  if (typeof errorData?.error === "string" && errorData.error.trim()) {
+    return errorData.error;
+  }
+
+  return fallback;
+};
+
 const AdminSingleOrder = () => {
   const [orderProducts, setOrderProducts] = useState<OrderProduct[]>();
   const [statusOptions, setStatusOptions] = useState<OrderStatusOption[]>([]);
@@ -67,9 +89,7 @@ const AdminSingleOrder = () => {
     lastname: "",
     name: "",
     phone: "",
-    postalCode: "",
     city: "",
-    country: "",
     orderNotice: "",
     status: "processing",
     total: 0,
@@ -147,7 +167,7 @@ const AdminSingleOrder = () => {
             toast.success("Order updated successfuly");
           } else {
             const errorData = await response.json();
-            throw Error(errorData.details || "There was an error while updating a order");
+            throw Error(getApiErrorMessage(errorData, "There was an error while updating a order"));
           }
         })
         .catch((error) =>
@@ -310,38 +330,6 @@ const AdminSingleOrder = () => {
                 className="input input-bordered w-full max-w-xs"
                 value={order?.city}
                 onChange={(e) => setOrder({ ...order, city: e.target.value })}
-              />
-            </label>
-          </div>
-
-          <div>
-            <label className="form-control w-full max-w-xs">
-              <div className="label">
-                <span className="label-text">Country:</span>
-              </div>
-              <input
-                type="text"
-                className="input input-bordered w-full max-w-xs"
-                value={order?.country}
-                onChange={(e) =>
-                  setOrder({ ...order, country: e.target.value })
-                }
-              />
-            </label>
-          </div>
-
-          <div>
-            <label className="form-control w-full max-w-xs">
-              <div className="label">
-                <span className="label-text">Postal Code:</span>
-              </div>
-              <input
-                type="text"
-                className="input input-bordered w-full max-w-xs"
-                value={order?.postalCode}
-                onChange={(e) =>
-                  setOrder({ ...order, postalCode: e.target.value })
-                }
               />
             </label>
           </div>

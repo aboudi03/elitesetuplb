@@ -14,6 +14,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import apiClient from "@/lib/api";
 import toast from "react-hot-toast";
+import DataTable, { DataTableColumn } from "./ui/DataTable";
 
 interface OrderStatusOption {
   id: string;
@@ -22,26 +23,70 @@ interface OrderStatusOption {
   groupCode: string;
 }
 
+const formatOrderDate = (value: string) => {
+  const date = new Date(Date.parse(value));
+
+  if (Number.isNaN(date.getTime())) {
+    return { dateLabel: "-", timeLabel: "" };
+  }
+
+  return {
+    dateLabel: `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`,
+    timeLabel: date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+  };
+};
+
+const getApiErrorMessage = (errorData: any, fallback: string) => {
+  if (typeof errorData?.details === "string" && errorData.details.trim()) {
+    return errorData.details;
+  }
+
+  if (Array.isArray(errorData?.details) && errorData.details.length > 0) {
+    return errorData.details
+      .map((detail: any) => detail?.message || detail?.field || JSON.stringify(detail))
+      .join(", ");
+  }
+
+  if (errorData?.details && typeof errorData.details === "object") {
+    return errorData.details.message || JSON.stringify(errorData.details);
+  }
+
+  if (typeof errorData?.error === "string" && errorData.error.trim()) {
+    return errorData.error;
+  }
+
+  return fallback;
+};
+
 const AdminOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [statusOptions, setStatusOptions] = useState<OrderStatusOption[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      const response = await apiClient.get("/api/orders");
-      const data = await response.json();
-      
-      setOrders(data?.orders);
+    const fetchData = async () => {
+      try {
+        const [ordersResponse, statusesResponse] = await Promise.all([
+          apiClient.get("/api/orders"),
+          apiClient.get("/api/order-statuses"),
+        ]);
+        const ordersData = await ordersResponse.json();
+        const statusesData = await statusesResponse.json();
+
+        setOrders(ordersData?.orders || []);
+        setStatusOptions(statusesData?.statuses || []);
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to load orders");
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const fetchStatuses = async () => {
-      const response = await apiClient.get("/api/order-statuses");
-      const data = await response.json();
-      setStatusOptions(data?.statuses || []);
-    };
-
-    fetchOrders();
-    fetchStatuses();
+    fetchData();
   }, []);
 
   const updateOrderStatus = async (order: Order, status: string) => {
@@ -61,7 +106,7 @@ const AdminOrders = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.details || "Failed to update order status");
+        throw new Error(getApiErrorMessage(errorData, "Failed to update order status"));
       }
 
       const updatedOrder = await response.json();
@@ -83,101 +128,101 @@ const AdminOrders = () => {
     }
   };
 
+  const columns: DataTableColumn<Order>[] = [
+    {
+      key: "order",
+      header: "Order",
+      searchableText: (order) => `${order.orderNumber || ""} ${order.id}`,
+      cell: (order) => (
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="font-bold">{order.orderNumber || order.id.slice(0, 8)}</p>
+          {(order.failedHistoryCount || 0) > 0 && (
+            <span className="rounded-md border border-green-200 bg-green-50 px-2 py-1 text-xs font-semibold text-green-700">
+              F: {order.failedHistoryCount}
+            </span>
+          )}
+          {(order.cancelledHistoryCount || 0) > 0 && (
+            <span className="rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-xs font-semibold text-orange-700">
+              C: {order.cancelledHistoryCount}
+            </span>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: "customer",
+      header: "Customer",
+      searchableText: (order) => `${order.name} ${order.lastname}`,
+      cell: (order) => (
+        <div>
+          <div className="font-bold">{order.name}</div>
+          <div className="text-sm text-[var(--site-muted)]">{order.lastname}</div>
+        </div>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      select: {
+        value: (order) => order.status,
+        options: statusOptions.map((status) => ({
+          label: status.name,
+          value: status.code,
+        })),
+        onChange: updateOrderStatus,
+        className: "min-w-40",
+      },
+    },
+    {
+      key: "total",
+      header: "Subtotal",
+      accessor: (order) => `$${order.total}`,
+    },
+    {
+      key: "date",
+      header: "Date",
+      cell: (order) => {
+        const { dateLabel, timeLabel } = formatOrderDate(order.dateTime);
+
+        return (
+          <div className="text-center">
+            <div className="font-medium">{dateLabel}</div>
+            {timeLabel && (
+              <div className="text-xs text-[var(--site-muted)]">{timeLabel}</div>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: "actions",
+      header: "",
+      cell: (order) => (
+        <Link href={`/admin/orders/${order.id}`} className="btn btn-ghost btn-xs">
+          details
+        </Link>
+      ),
+    },
+  ];
+
   return (
-    <div className="xl:ml-5 w-full max-xl:mt-5 ">
-      <h1 className="text-3xl font-semibold text-center mb-5">All orders</h1>
-      <div className="overflow-x-auto">
-        <table className="table table-md table-pin-cols">
-          {/* head */}
-          <thead>
-            <tr>
-              <th>
-                <label>
-                  <input type="checkbox" className="checkbox" />
-                </label>
-              </th>
-              <th>Order ID</th>
-              <th>Name and country</th>
-              <th>Status</th>
-              <th>Subtotal</th>
-              <th>Date</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {/* row 1 */}
-            {orders && orders.length > 0 &&
-              orders.map((order) => (
-                <tr key={order?.id}>
-                  <th>
-                    <label>
-                      <input type="checkbox" className="checkbox" />
-                    </label>
-                  </th>
-
-                  <td>
-                    <div>
-                      <p className="font-bold">
-                        #{order?.orderNumber || order?.id.slice(0, 8)}
-                      </p>
-                      <p className="text-xs text-[var(--site-muted)]">{order?.id}</p>
-                    </div>
-                  </td>
-
-                  <td>
-                    <div className="flex items-center gap-5">
-                      <div>
-                        <div className="font-bold">{order?.name}</div>
-                        <div className="text-sm opacity-50">{order?.country}</div>
-                      </div>
-                    </div>
-                  </td>
-
-                  <td>
-                    <select
-                      className="select select-bordered select-sm min-w-40"
-                      value={order?.status}
-                      onChange={(event) => updateOrderStatus(order, event.target.value)}
-                    >
-                      {statusOptions.map((status) => (
-                        <option key={status.id} value={status.code}>
-                          {status.name}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-
-                  <td>
-                    <p>${order?.total}</p>
-                  </td>
-
-                  <td>{ new Date(Date.parse(order?.dateTime)).toDateString() }</td>
-                  <th>
-                    <Link
-                      href={`/admin/orders/${order?.id}`}
-                      className="btn btn-ghost btn-xs"
-                    >
-                      details
-                    </Link>
-                  </th>
-                </tr>
-              ))}
-          </tbody>
-          {/* foot */}
-          <tfoot>
-            <tr>
-              <th></th>
-              <th>Order ID</th>
-              <th>Name and country</th>
-              <th>Status</th>
-              <th>Subtotal</th>
-              <th>Date</th>
-              <th></th>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </div>
+    <DataTable
+      title="All orders"
+      data={orders}
+      columns={columns}
+      getRowId={(order) => order.id}
+      loading={loading}
+      emptyMessage="No orders found."
+      enableSelection
+      enableSearch
+      searchPlaceholder="Search by order number or customer..."
+      className="w-full xl:ml-5 max-xl:mt-5"
+      actions={
+        <span className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700">
+          Orders: {orders.length}
+        </span>
+      }
+    />
   );
 };
 

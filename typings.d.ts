@@ -70,12 +70,14 @@ interface Order {
   lastname: string;
   name: string;
   phone: string;
-  postalCode: string;
+  postalCode?: string;
   status: string;
   city: string;
-  country: string;
+  country?: string;
   orderNotice: string?;
   total: number;
+  failedHistoryCount?: number;
+  cancelledHistoryCount?: number;
 }
 
 interface SingleProductBtnProps {

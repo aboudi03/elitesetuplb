@@ -29,6 +29,20 @@ html[data-theme="dark"] {
     --site-accent-soft: rgba(239, 35, 60, 0.16);
 }
 
+html[data-theme="dim"],
+[data-theme="dim"] {
+    color-scheme: dark;
+    --site-bg: #20252e;
+    --site-panel: #2a303c;
+    --site-panel-soft: #242933;
+    --site-text: #b2ccd6;
+    --site-muted: #8ea7b2;
+    --site-border: #394150;
+    --site-accent: #9fe88d;
+    --site-accent-strong: #86d576;
+    --site-accent-soft: rgba(159, 232, 141, 0.14);
+}
+
 * {
     border-color: var(--site-border);
 }
@@ -445,6 +459,82 @@ html[data-theme] .theme-hover-row:hover a {
 html[data-theme] .table tbody tr:hover .badge,
 html[data-theme] table tbody tr:hover .badge {
     color: white;
+}
+
+html[data-theme] .table tbody tr:hover select,
+html[data-theme] table tbody tr:hover select,
+html[data-theme] .theme-hover-row:hover select,
+html[data-theme] .admin-data-table tbody tr:hover select {
+    background-color: var(--site-panel);
+    color: var(--site-text);
+    border-color: var(--site-border);
+}
+
+html[data-theme] select option {
+    background-color: var(--site-panel);
+    color: var(--site-text);
+}
+
+html[data-theme] .admin-data-table {
+    background-color: var(--site-panel);
+    color: var(--site-text);
+}
+
+html[data-theme] .admin-data-table thead {
+    background-color: var(--site-panel-soft);
+}
+
+html[data-theme] .admin-data-table tbody tr:hover {
+    background-color: color-mix(in srgb, var(--site-panel-soft) 86%, var(--site-text) 6%);
+}
+
+html[data-theme] .admin-data-table tbody tr:hover :where(td, th, a, p, span, div) {
+    color: inherit;
+}
+
+.admin-table-select {
+    background-color: #16161d;
+    color: #f7f7f8;
+    border-color: #2a2a35;
+    color-scheme: dark;
+}
+
+.admin-table-select:hover,
+.admin-table-select:focus {
+    background-color: #1b1b24;
+    color: #f7f7f8;
+    border-color: var(--site-accent);
+}
+
+.admin-table-select:disabled {
+    background-color: #14141a;
+    color: #8f90a0;
+    border-color: #23232c;
+}
+
+.admin-table-select option {
+    background-color: #16161d;
+    color: #f7f7f8;
+}
+
+.admin-table-select-menu {
+    background-color: #16161d;
+    color: #f7f7f8;
+}
+
+.admin-table-select-option {
+    background-color: transparent;
+    color: #f7f7f8;
+    cursor: pointer;
+}
+
+.admin-table-select-option--active {
+    background-color: rgba(239, 35, 60, 0.18);
+    color: #ffffff;
+}
+
+.admin-table-select-option--selected {
+    font-weight: 600;
 }
 
 .range{

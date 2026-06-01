@@ -5,7 +5,7 @@ import { FaCheck, FaMoon, FaSun } from "react-icons/fa6";
 
 const themes = [
   { value: "light", label: "White", icon: FaSun },
-  { value: "dark", label: "Dark", icon: FaMoon },
+  { value: "dim", label: "Dim", icon: FaMoon },
 ];
 
 const ThemeSelector = () => {
