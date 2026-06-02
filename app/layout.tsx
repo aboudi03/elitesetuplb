@@ -10,12 +10,33 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Providers from "@/Providers";
 import SessionTimeoutWrapper from "@/components/SessionTimeoutWrapper";
+import { absoluteUrl, STORE_NAME } from "@/lib/seo";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Elite Setup",
-  description: "Gaming peripherals, desk gear, and performance essentials.",
+  metadataBase: new URL(absoluteUrl("/")),
+  title: {
+    default: `${STORE_NAME} | Electronics Store in Lebanon`,
+    template: `%s | ${STORE_NAME}`,
+  },
+  description:
+    "Shop electronics, gaming PCs, laptops, PC parts, accessories, and setup essentials in Lebanon.",
+  applicationName: STORE_NAME,
+  openGraph: {
+    type: "website",
+    siteName: STORE_NAME,
+    title: `${STORE_NAME} | Electronics Store in Lebanon`,
+    description:
+      "Shop electronics, gaming PCs, laptops, PC parts, accessories, and setup essentials in Lebanon.",
+    url: absoluteUrl("/"),
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${STORE_NAME} | Electronics Store in Lebanon`,
+    description:
+      "Shop electronics, gaming PCs, laptops, PC parts, accessories, and setup essentials in Lebanon.",
+  },
 };
 
 export default async function RootLayout({

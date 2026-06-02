@@ -8,8 +8,10 @@ import {
   Products,
   SortBy,
 } from "@/components";
+import type { Metadata } from "next";
 import React from "react";
 import { sanitize } from "@/lib/sanitize";
+import { absoluteUrl, STORE_NAME, toTitleCase } from "@/lib/seo";
 
 // improve readabillity of category text, for example category text "smart-watches" will be "smart watches"
 const improveCategoryText = (text: string): string => {
@@ -21,6 +23,44 @@ const improveCategoryText = (text: string): string => {
     return text;
   }
 };
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug?: string[] }>;
+}): Promise<Metadata> {
+  const awaitedParams = await params;
+  const categorySlug = awaitedParams?.slug?.[0];
+  const categoryName = categorySlug ? toTitleCase(categorySlug) : "All Products";
+  const title =
+    categorySlug === undefined
+      ? "Shop Electronics in Lebanon"
+      : `${categoryName} in Lebanon`;
+  const description =
+    categorySlug === undefined
+      ? `Shop electronics, gaming PCs, laptops, PC parts, accessories, and setup essentials from ${STORE_NAME} in Lebanon.`
+      : `Shop ${categoryName.toLowerCase()} in Lebanon from ${STORE_NAME}. Browse prices, stock, and setup essentials online.`;
+  const url = absoluteUrl(categorySlug ? `/shop/${categorySlug}` : "/shop");
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: url,
+    },
+    openGraph: {
+      title,
+      description,
+      url,
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+    },
+  };
+}
 
 const ShopPage = async ({ params, searchParams }: { params: Promise<{ slug?: string[] }>, searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) => {
   // Await both params and searchParams

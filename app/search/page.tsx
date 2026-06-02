@@ -1,11 +1,20 @@
 import { ProductItem, SectionTitle } from "@/components";
 import apiClient from "@/lib/api";
+import type { Metadata } from "next";
 import React from "react";
 import { sanitize } from "@/lib/sanitize";
 
 interface Props {
   searchParams: { search: string };
 }
+
+export const metadata: Metadata = {
+  title: "Search",
+  robots: {
+    index: false,
+    follow: true,
+  },
+};
 
 // sending api request for search results for a given search text
 const SearchPage = async ({ searchParams }: Props) => {
