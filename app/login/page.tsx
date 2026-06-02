@@ -173,7 +173,7 @@ const LoginPage = () => {
               </p>
 
               <div className="mt-6 border-t border-[var(--site-border)] pt-6 text-center">
-                <p className="text-sm text-[var(--site-muted)]">New to GearForge?</p>
+                <p className="text-sm text-[var(--site-muted)]">New to Elite Setup?</p>
                 <Link
                   href="/register"
                   className="mt-3 inline-flex w-full items-center justify-center rounded-md border border-[var(--site-accent)] bg-[var(--site-accent-soft)] px-4 py-2 text-sm font-bold text-[var(--site-accent)] transition hover:bg-[var(--site-accent)] hover:text-white"

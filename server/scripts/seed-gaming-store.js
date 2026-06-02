@@ -119,7 +119,7 @@ async function ensureMerchant() {
     data: {
       name: "Peripheral Test Supplier",
       description: "Sample supplier for Logitech and HyperX gaming peripherals.",
-      email: "supplier@test.gearforge.local",
+      email: "supplier@test.elitesetup.local",
       phone: "+961 00 000 000",
       address: "Demo warehouse",
       status: "ACTIVE",

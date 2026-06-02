@@ -89,12 +89,12 @@ export const navigation = {
     { name: "Register Discounts", href: "#" },
   ],
   about: [
-    { name: "About GearForge", href: "#" },
+    { name: "About Elite Setup", href: "#" },
     { name: "Work With Us", href: "#" },
     { name: "Company Profile", href: "#" },
   ],
   buy: [
-    { name: "GearForge Loyalty Card", href: "#" },
+    { name: "Elite Setup Loyalty Card", href: "#" },
     { name: "Terms Of Use", href: "#" },
     { name: "Privacy Policy", href: "#" },
     { name: "Complaints", href: "#" },
@@ -102,7 +102,7 @@ export const navigation = {
   ],
   help: [
     { name: "Contact", href: "#" },
-    { name: "How to Buy at GearForge", href: "#" },
+    { name: "How to Buy at Elite Setup", href: "#" },
     { name: "FAQ", href: "#" },
   ],
 };

@@ -104,7 +104,7 @@ const RegisterPage = () => {
       <div className="flex min-h-full flex-1 flex-col justify-center px-4 py-12 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center justify-center">
           <h2 className="mt-6 text-center text-2xl font-black uppercase leading-9 tracking-tight">
-            Create your GearForge account
+            Create your Elite Setup account
           </h2>
         </div>
 

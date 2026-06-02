@@ -23,6 +23,7 @@ import { useWishlistStore } from "@/app/_zustand/wishlistStore";
 import { FaRegUser } from "react-icons/fa6";
 import { FaRightFromBracket } from "react-icons/fa6";
 import ThemeSelector from "./ThemeSelector";
+import EliteSetupLogo from "./EliteSetupLogo";
 
 const Header = () => {
   const { data: session, status } = useSession();
@@ -40,12 +41,10 @@ const Header = () => {
       {pathname.startsWith("/admin") === false && (
         <div className="mx-auto flex min-h-24 max-w-screen-2xl items-center justify-between gap-8 px-16 py-5 max-[1320px]:px-16 max-lg:flex-col max-lg:justify-center max-lg:gap-y-5 max-md:min-h-0 max-md:gap-3 max-md:px-4 max-md:py-3">
           <div className="flex w-full items-center justify-between gap-3 lg:w-auto">
-            <Link href="/" className="flex items-center gap-3 text-2xl font-black uppercase tracking-normal text-[var(--site-text)] max-sm:text-xl">
-              <span className="flex h-11 w-11 items-center justify-center rounded-md bg-[var(--site-accent)] text-white max-sm:h-9 max-sm:w-9">
-                GF
-              </span>
-              <span>GearForge</span>
-            </Link>
+            <EliteSetupLogo
+              iconClassName="h-11 w-11 max-sm:h-9 max-sm:w-9"
+              textClassName="font-bold"
+            />
 
             <div className="hidden items-center gap-2 max-md:flex">
               <NotificationBell />
@@ -83,12 +82,10 @@ const Header = () => {
       )}
       {pathname.startsWith("/admin") === true && (
         <div className="mx-auto flex h-24 max-w-screen-2xl items-center justify-between gap-4 bg-[var(--site-panel)] px-16 max-[1320px]:px-10 max-sm:h-auto max-sm:flex-col max-sm:py-4 max-[400px]:px-5">
-          <Link href="/" className="flex items-center gap-3 text-2xl font-black uppercase text-[var(--site-text)] max-sm:text-xl">
-            <span className="flex h-11 w-11 items-center justify-center rounded-md bg-[var(--site-accent)] text-white max-sm:h-9 max-sm:w-9">
-              GF
-            </span>
-            <span>GearForge</span>
-          </Link>
+          <EliteSetupLogo
+            iconClassName="h-11 w-11 max-sm:h-9 max-sm:w-9"
+            textClassName="font-bold"
+          />
           <div className="flex gap-x-5 items-center">
             <NotificationBell />
             <div className="dropdown dropdown-end">

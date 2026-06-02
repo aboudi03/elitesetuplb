@@ -100,7 +100,7 @@ const PcBuilderExperience = () => {
     );
 
     const message = [
-      "Hello GearForge,",
+      "Hello Elite Setup,",
       "I would like a price and availability check for this custom PC build.",
       "",
       "Selected parts:",

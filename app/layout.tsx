@@ -14,8 +14,8 @@ import SessionTimeoutWrapper from "@/components/SessionTimeoutWrapper";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "GearForge",
-  description: "Gaming peripherals and performance gear.",
+  title: "Elite Setup",
+  description: "Gaming peripherals, desk gear, and performance essentials.",
 };
 
 export default async function RootLayout({

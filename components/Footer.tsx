@@ -10,6 +10,7 @@
 
 import { navigation } from "@/lib/utils";
 import React from "react";
+import EliteSetupLogo from "./EliteSetupLogo";
 
 const Footer = () => {
   return (
@@ -21,12 +22,7 @@ const Footer = () => {
         <div className="mx-auto max-w-screen-2xl px-6 lg:px-8 pt-16 pb-14">
           <div className="xl:grid xl:grid-cols-3 xl:gap-8">
             <div>
-              <div className="flex items-center gap-3 text-2xl font-black uppercase text-[var(--site-text)]">
-                <span className="flex h-11 w-11 items-center justify-center rounded-md bg-[var(--site-accent)] text-white">
-                  GF
-                </span>
-                <span>GearForge</span>
-              </div>
+              <EliteSetupLogo iconClassName="h-12 w-12" textClassName="font-bold" />
               <p className="mt-5 max-w-sm text-sm leading-6 text-[var(--site-muted)]">
                 Gaming peripherals, desk gear, and performance essentials for sharper setups.
               </p>

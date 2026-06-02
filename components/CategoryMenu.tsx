@@ -24,9 +24,6 @@ const CategoryMenu = () => {
               Browse categories
             </h2>
           </div>
-          <p className="max-w-xl text-sm text-[var(--site-muted)]">
-            Simple category blocks for the products you will actually sell: mice, keyboards, headsets, PCs, and desk gear.
-          </p>
         </div>
       <div className="grid grid-cols-5 gap-4 max-lg:grid-cols-3 max-md:grid-cols-2 max-[450px]:grid-cols-1">
         {categoryMenuList.map((item) => (

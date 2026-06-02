@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "electronic-ecommerce-shop-with-dashboard",
+      "name": "elite-setup-store",
       "dependencies": {
         "@headlessui/react": "^1.7.18",
         "@prisma/client": "^5.10.2",

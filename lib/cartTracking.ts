@@ -1,6 +1,6 @@
 import apiClient from "./api";
 
-const CART_SESSION_STORAGE_KEY = "gearforge-cart-session-id";
+const CART_SESSION_STORAGE_KEY = "elite-setup-cart-session-id";
 
 const createSessionId = () =>
   `cart_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
