@@ -14,8 +14,11 @@ npm ci
 echo "Installing backend dependencies..."
 npm --prefix server ci
 
-echo "Generating Prisma client..."
+echo "Generating root Prisma client..."
 npx prisma generate
+
+echo "Generating backend Prisma client..."
+npm --prefix server exec prisma generate
 
 echo "Applying Prisma migrations..."
 npx prisma migrate deploy
