@@ -10,7 +10,6 @@
 // Output: products table
 // *********************
 
-import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import CustomButton from "./CustomButton";
@@ -19,6 +18,7 @@ import { sanitize } from "@/lib/sanitize";
 import DataTable, { DataTableColumn } from "./ui/DataTable";
 import InlineNumberEdit from "./ui/InlineNumberEdit";
 import InlineSelectEdit from "./ui/InlineSelectEdit";
+import HoverImagePreview from "./ui/HoverImagePreview";
 import toast from "react-hot-toast";
 
 const DashboardProductTable = () => {
@@ -80,19 +80,13 @@ const DashboardProductTable = () => {
     {
       key: "image",
       header: "Image",
-      className: "min-w-[96px]",
+      className: "min-w-[110px]",
       cell: (product) => (
-        <div className="avatar">
-          <div className="mask mask-squircle h-14 w-14">
-            <Image
-              width={56}
-              height={56}
-              src={product.mainImage ? `/${product.mainImage}` : "/product_placeholder.jpg"}
-              alt={sanitize(product.title) || "Product image"}
-              className="h-14 w-14 object-contain"
-            />
-          </div>
-        </div>
+        <HoverImagePreview
+          src={product.mainImage ? `/${product.mainImage}` : "/product_placeholder.jpg"}
+          alt={sanitize(product.title) || "Product image"}
+          thumbnailClassName="mask mask-squircle h-14 w-14 overflow-hidden bg-[var(--site-panel-soft)]"
+        />
       ),
     },
     {

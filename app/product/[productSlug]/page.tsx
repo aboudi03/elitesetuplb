@@ -70,7 +70,7 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
             <h1 className="break-words text-3xl max-sm:text-2xl">{sanitize(product?.title)}</h1>
             <p className="text-xl font-semibold">${product?.price}</p>
             <StockAvailabillity stock={product?.inStock} inStock={product?.inStock} />
-            {product?.inStock > 0 && <UrgencyText stock={product?.inStock} />}
+            {product?.inStock > 0 && product?.inStock < 5 && <UrgencyText stock={product?.inStock} />}
             <div className="flex flex-col gap-y-2 max-[500px]:items-center">
               <p className="text-lg">
                 SKU: <span className="ml-1">abccd-18</span>

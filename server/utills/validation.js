@@ -134,6 +134,10 @@ const paymentValidation = {
 
 // Order validation utilities
 const orderValidation = {
+  isValidLebanesePhone: (phone) => {
+    return /^(03\d{6}|(?:70|71|76|78|79|81)\d{6})$/.test(phone);
+  },
+
   // Validate email format - FIXED: Check XSS patterns first
   validateEmail: (email) => {
     if (!email || typeof email !== 'string') {
@@ -231,7 +235,7 @@ const orderValidation = {
       cleanedPhone = `0${cleanedPhone}`;
     }
 
-    if (!/^[0-9]{8}$/.test(cleanedPhone)) {
+    if (!orderValidation.isValidLebanesePhone(cleanedPhone)) {
       throw new ValidationError('Please enter a valid Lebanese phone number', 'phone');
     }
 
