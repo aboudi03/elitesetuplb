@@ -20,9 +20,11 @@ const CartElement = () => {
     <div className="relative">
             <Link href="/cart" className="flex h-9 w-9 items-center justify-center rounded-md text-[var(--site-text)] transition hover:bg-[var(--site-panel-soft)] hover:text-[var(--site-accent)] md:h-auto md:w-auto md:rounded-none">
               <FaCartShopping className="text-xl md:text-2xl" />
-              <span className="absolute right-0 top-0 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--site-accent)] text-[11px] font-bold text-white md:right-[-22px] md:top-[-17px] md:h-6 md:w-6 md:text-base">
-                { allQuantity }
-              </span>
+              {allQuantity > 0 && (
+                <span className="absolute right-0 top-0 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--site-accent)] text-[11px] font-bold text-white md:right-[-22px] md:top-[-17px] md:h-6 md:w-6 md:text-base">
+                  {allQuantity}
+                </span>
+              )}
             </Link>
           </div>
   )

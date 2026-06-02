@@ -16,10 +16,8 @@ import SearchInput from "./SearchInput";
 import Link from "next/link";
 import CartElement from "./CartElement";
 import NotificationBell from "./NotificationBell";
-import HeartElement from "./HeartElement";
 import { signOut, useSession } from "next-auth/react";
 import toast from "react-hot-toast";
-import { useWishlistStore } from "@/app/_zustand/wishlistStore";
 import { FaRegUser } from "react-icons/fa6";
 import { FaRightFromBracket } from "react-icons/fa6";
 import ThemeSelector from "./ThemeSelector";
@@ -28,7 +26,6 @@ import EliteSetupLogo from "./EliteSetupLogo";
 const Header = () => {
   const { data: session, status } = useSession();
   const pathname = usePathname();
-  const { wishQuantity } = useWishlistStore();
 
   const handleLogout = () => {
     setTimeout(() => signOut(), 1000);
@@ -48,7 +45,6 @@ const Header = () => {
 
             <div className="hidden items-center gap-2 max-md:flex">
               <NotificationBell />
-              <HeartElement wishQuantity={wishQuantity} />
               <CartElement />
               {session?.user ? (
                 <button
@@ -75,7 +71,6 @@ const Header = () => {
           <SearchInput />
           <div className="flex items-center gap-x-10 max-md:hidden">
             <NotificationBell />
-            <HeartElement wishQuantity={wishQuantity} />
             <CartElement />
           </div>
         </div>

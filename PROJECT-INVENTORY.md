@@ -1,4 +1,4 @@
-# GearForge Project Inventory
+# Elite Setup Project Inventory
 
 This document explains what this project contains, what features already exist, what pages are available, and what parts are worth keeping or changing while converting it into your own gaming peripherals ecommerce store.
 
@@ -104,7 +104,7 @@ Current sections:
 - `CategoryMenu`
 - `ProductsSection`
 
-The home page has been converted toward GearForge/gaming peripherals:
+The home page has been converted toward Elite Setup/gaming peripherals:
 
 - slideshow-style hero
 - quick category blocks
@@ -1042,7 +1042,7 @@ server/utills/validation.js
 
 Current brand direction:
 
-- GearForge
+- Elite Setup
 - gaming peripherals
 - white theme as main customer theme
 - dark theme as alternate
@@ -1096,7 +1096,7 @@ Current assets are mixed:
 
 For a real gaming peripherals shop, replace or clean:
 
-- old Singitronic logos
+- old Elite Setup predecessor logos
 - unrelated electronics assets
 - old apartment/service images
 - printer/tablet/camera assets if not needed
