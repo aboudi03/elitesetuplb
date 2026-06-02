@@ -636,10 +636,21 @@ html[data-theme] .admin-data-table thead {
 
 html[data-theme] .admin-data-table tbody tr:hover {
     background-color: color-mix(in srgb, var(--site-panel-soft) 86%, var(--site-text) 6%);
+    color: var(--site-text);
 }
 
-html[data-theme] .admin-data-table tbody tr:hover :where(td, th, a, p, span, div) {
-    color: inherit;
+html[data-theme] .admin-data-table tbody tr:hover :where(td, th, a, p, span, div, button) {
+    color: var(--site-text);
+}
+
+html[data-theme] .admin-data-table tbody tr:hover :where(.text-\[var\(--site-muted\)\]) {
+    color: var(--site-muted);
+}
+
+html[data-theme] .admin-data-table tbody tr:hover a,
+html[data-theme] .admin-data-table tbody tr:hover button {
+    color: var(--site-accent);
+    text-decoration-color: var(--site-accent);
 }
 
 .admin-table-select {

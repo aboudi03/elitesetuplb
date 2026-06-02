@@ -1,5 +1,6 @@
 "use client";
 import { DashboardSidebar } from "@/components";
+import ProductResearchAssistant from "@/components/ProductResearchAssistant";
 import apiClient from "@/lib/api";
 import config from "@/lib/config";
 import { sanitizeFormData } from "@/lib/form-sanitize";
@@ -132,6 +133,16 @@ const AddNewProduct = () => {
       });
   };
 
+  const applyResearchFields = (fields: Partial<Product>) => {
+    setProduct((currentProduct) => ({
+      ...currentProduct,
+      ...fields,
+      slug: fields.title
+        ? convertSlugToURLFriendly(fields.title.toLowerCase())
+        : currentProduct.slug,
+    }));
+  };
+
   useEffect(() => {
     fetchCategories();
     fetchMerchants();
@@ -150,6 +161,14 @@ const AddNewProduct = () => {
             Create a polished product entry with identity, pricing, stock, tax, visibility, and
             image preview in one comfortable workflow.
           </p>
+        </div>
+
+        <div className="mb-6">
+          <ProductResearchAssistant
+            initialQuery={product.title}
+            categories={categories}
+            onApply={applyResearchFields}
+          />
         </div>
 
         <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">

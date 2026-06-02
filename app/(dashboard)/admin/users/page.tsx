@@ -1,5 +1,6 @@
 "use client";
 import { CustomButton, DashboardSidebar } from "@/components";
+import ViewActionLink from "@/components/ui/ViewActionLink";
 import apiClient from "@/lib/api";
 import { nanoid } from "nanoid";
 import Link from "next/link";
@@ -71,12 +72,10 @@ const DashboardUsers = () => {
                       <p>{user?.role}</p>
                     </td>
                     <th>
-                      <Link
+                      <ViewActionLink
                         href={`/admin/users/${user?.id}`}
-                        className="btn btn-ghost btn-xs"
-                      >
-                        details
-                      </Link>
+                        label="View user details"
+                      />
                     </th>
                   </tr>
                 ))}

@@ -11,10 +11,10 @@
 // *********************
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import apiClient from "@/lib/api";
 import toast from "react-hot-toast";
 import DataTable, { DataTableColumn } from "./ui/DataTable";
+import ViewActionLink from "./ui/ViewActionLink";
 
 interface OrderStatusOption {
   id: string;
@@ -198,9 +198,7 @@ const AdminOrders = () => {
       key: "actions",
       header: "",
       cell: (order) => (
-        <Link href={`/admin/orders/${order.id}`} className="btn btn-ghost btn-xs">
-          details
-        </Link>
+        <ViewActionLink href={`/admin/orders/${order.id}`} label="View order details" />
       ),
     },
   ];

@@ -19,6 +19,7 @@ import DataTable, { DataTableColumn } from "./ui/DataTable";
 import InlineNumberEdit from "./ui/InlineNumberEdit";
 import InlineSelectEdit from "./ui/InlineSelectEdit";
 import HoverImagePreview from "./ui/HoverImagePreview";
+import ViewActionLink from "./ui/ViewActionLink";
 import toast from "react-hot-toast";
 
 const DashboardProductTable = () => {
@@ -159,9 +160,7 @@ const DashboardProductTable = () => {
       key: "actions",
       header: "",
       cell: (product) => (
-        <Link href={`/admin/products/${product.id}`} className="btn btn-ghost btn-sm">
-          details
-        </Link>
+        <ViewActionLink href={`/admin/products/${product.id}`} label="View product details" />
       ),
     },
   ];

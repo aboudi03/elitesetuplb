@@ -1,5 +1,6 @@
 "use client";
-import { CustomButton, DashboardSidebar, SectionTitle } from "@/components";
+import { DashboardSidebar } from "@/components";
+import ProductResearchAssistant from "@/components/ProductResearchAssistant";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState, use } from "react";
@@ -24,6 +25,10 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
   const [categories, setCategories] = useState<Category[]>();
   const [otherImages, setOtherImages] = useState<OtherImages[]>([]);
   const router = useRouter();
+  const fieldClassName =
+    "block w-full rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 py-3 text-base text-[var(--site-text)] shadow-sm outline-none transition focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent-soft)]";
+  const sectionClassName =
+    "rounded-3xl border border-[var(--site-border)] bg-[var(--site-panel)] p-6 shadow-sm";
 
   // functionality for deleting product
   const deleteProduct = async () => {
@@ -137,253 +142,319 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
       });
   };
 
+  const applyResearchFields = (fields: Partial<Product>) => {
+    setProduct((currentProduct) => {
+      if (!currentProduct) return currentProduct;
+
+      return {
+        ...currentProduct,
+        ...fields,
+        slug: fields.title
+          ? convertSlugToURLFriendly(fields.title.toLowerCase())
+          : currentProduct.slug,
+      };
+    });
+  };
+
   useEffect(() => {
     fetchCategories();
     fetchProductData();
   }, [id]);
 
   return (
-    <div className="bg-[var(--site-bg)] text-[var(--site-text)] flex justify-start max-w-screen-2xl mx-auto xl:h-full max-xl:flex-col max-xl:gap-y-5">
+    <div className="mx-auto flex max-w-screen-2xl justify-start bg-[var(--site-bg)] text-[var(--site-text)] xl:h-full max-xl:flex-col">
       <DashboardSidebar />
-      <div className="flex flex-col gap-y-7 xl:ml-5 w-full max-xl:px-5">
-        <h1 className="text-3xl font-semibold">Product details</h1>
-        {/* Product name input div - start */}
-        
-        <div>
-          <label className="form-control w-full max-w-xs">
-            <div className="label">
-              <span className="label-text">Product name:</span>
+      <div className="w-full xl:ml-5 max-xl:px-5">
+        <div className="mb-8 rounded-[2rem] border border-[var(--site-border)] bg-[linear-gradient(135deg,var(--site-panel),var(--site-panel-soft))] px-6 py-8 shadow-sm">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--site-muted)]">
+            Catalog
+          </p>
+          <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h1 className="text-4xl font-semibold tracking-tight">Product details</h1>
+              <p className="mt-3 max-w-2xl text-base leading-7 text-[var(--site-muted)]">
+                Edit storefront content, pricing, inventory, visibility, and product media from
+                one organized workspace.
+              </p>
             </div>
-            <input
-              type="text"
-              className="input input-bordered w-full max-w-xs"
-              value={product?.title || ""}
-              onChange={(e) =>
-                setProduct({ ...product!, title: e.target.value })
-              }
-            />
-          </label>
-        </div>
-        {/* Product name input div - end */}
-        {/* Product price input div - start */}
-
-        <div>
-          <label className="form-control w-full max-w-xs">
-            <div className="label">
-              <span className="label-text">Product price:</span>
-            </div>
-            <input
-              type="text"
-              className="input input-bordered w-full max-w-xs"
-              value={product?.price || ""}
-              onChange={(e) =>
-                setProduct({ ...product!, price: Number(e.target.value) })
-              }
-            />
-          </label>
-        </div>
-        {/* Product price input div - end */}
-        {/* Product manufacturer input div - start */}
-        <div>
-          <label className="form-control w-full max-w-xs">
-            <div className="label">
-              <span className="label-text">Manufacturer:</span>
-            </div>
-            <input
-              type="text"
-              className="input input-bordered w-full max-w-xs"
-              value={product?.manufacturer || ""}
-              onChange={(e) =>
-                setProduct({ ...product!, manufacturer: e.target.value })
-              }
-            />
-          </label>
-        </div>
-        {/* Product manufacturer input div - end */}
-        {/* Product slug input div - start */}
-
-        <div>
-          <label className="form-control w-full max-w-xs">
-            <div className="label">
-              <span className="label-text">Slug:</span>
-            </div>
-            <input
-              type="text"
-              className="input input-bordered w-full max-w-xs"
-              value={
-                product?.slug ? convertSlugToURLFriendly(product?.slug) : ""
-              }
-              onChange={(e) =>
-                setProduct({
-                  ...product!,
-                  slug: convertSlugToURLFriendly(e.target.value),
-                })
-              }
-            />
-          </label>
-        </div>
-        {/* Product slug input div - end */}
-        {/* Product inStock select input div - start */}
-
-        <div>
-          <label className="form-control w-full max-w-xs">
-            <div className="label">
-              <span className="label-text">Stock quantity:</span>
-            </div>
-            <input
-              type="number"
-              min={0}
-              className="input input-bordered w-full max-w-xs"
-              value={product?.inStock ?? 1}
-              onChange={(e) => {
-                setProduct({ ...product!, inStock: Math.max(0, Number(e.target.value)) });
-              }}
-            />
-          </label>
-        </div>
-        <div>
-          <label className="form-control w-full max-w-xs">
-            <div className="label">
-              <span className="label-text">Tax % (optional):</span>
-            </div>
-            <input
-              type="number"
-              min={0}
-              step="0.01"
-              className="input input-bordered w-full max-w-xs"
-              value={product?.taxRate ?? 0}
-              onChange={(e) =>
-                setProduct({ ...product!, taxRate: Math.max(0, Number(e.target.value) || 0) })
-              }
-            />
-          </label>
-        </div>
-        {/* Product inStock select input div - end */}
-        <div>
-          <label className="form-control w-full max-w-xs">
-            <div className="label">
-              <span className="label-text">Product visibility:</span>
-            </div>
-            <select
-              className="select select-bordered"
-              value={product?.isActive ? "enabled" : "disabled"}
-              onChange={(e) => {
-                setProduct({ ...product!, isActive: e.target.value === "enabled" });
-              }}
+            <span
+              className={`rounded-xl border px-4 py-2 text-sm font-bold uppercase tracking-[0.1em] ${
+                product?.isActive
+                  ? "border-green-200 bg-green-50 text-green-700"
+                  : "border-gray-200 bg-gray-50 text-gray-600"
+              }`}
             >
-              <option value="enabled">Enabled - visible to customers</option>
-              <option value="disabled">Disabled - hidden from customers</option>
-            </select>
-          </label>
+              {product?.isActive ? "Visible" : "Hidden"}
+            </span>
+          </div>
         </div>
-        {/* Product category select input div - start */}
-        <div>
-          <label className="form-control w-full max-w-xs">
-            <div className="label">
-              <span className="label-text">Category:</span>
-            </div>
-            <select
-              className="select select-bordered"
-              value={product?.categoryId || ""}
-              onChange={(e) =>
-                setProduct({
-                  ...product!,
-                  categoryId: e.target.value,
-                })
-              }
-            >
-              {categories &&
-                categories.map((category: Category) => (
-                  <option key={category?.id} value={category?.id}>
-                    {formatCategoryName(category?.name)}
-                  </option>
-                ))}
-            </select>
-          </label>
-        </div>
-        {/* Product category select input div - end */}
 
-        {/* Main image file upload div - start */}
-        <div>
-          <input
-            type="file"
-            className="file-input file-input-bordered file-input-lg w-full max-w-sm"
-            onChange={async (e) => {
-              // @ts-ignore
-              const selectedFile = e.target.files[0];
-
-              if (selectedFile) {
-                const uploadedPath = await uploadFile(selectedFile);
-                if (uploadedPath) {
-                  setProduct({ ...product!, mainImage: uploadedPath });
-                }
-              }
-            }}
+        <div className="mb-6">
+          <ProductResearchAssistant
+            initialQuery={product?.title || ""}
+            categories={categories || []}
+            onApply={applyResearchFields}
           />
-          {product?.mainImage && (
-            <Image
-              src={`/` + product?.mainImage}
-              alt={product?.title}
-              className="w-auto h-auto mt-2"
-              width={100}
-              height={100}
-            />
-          )}
         </div>
-        {/* Main image file upload div - end */}
-        {/* Other images file upload div - start */}
-        <div className="flex gap-x-1">
-          {otherImages &&
-            otherImages.map((image) => (
-              <Image
-                src={`/${image.image}`}
-                key={nanoid()}
-                alt="product image"
-                width={100}
-                height={100}
-                className="w-auto h-auto"
-              />
-            ))}
-        </div>
-        {/* Other images file upload div - end */}
-        {/* Product description div - start */}
-        <div>
-          <label className="form-control">
-            <div className="label">
-              <span className="label-text">Product description:</span>
+
+        <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+          <section className={sectionClassName}>
+            <div className="mb-6">
+              <h2 className="text-2xl font-semibold">Core details</h2>
+              <p className="mt-2 text-sm text-[var(--site-muted)]">
+                Control how this product appears in the storefront and search.
+              </p>
             </div>
-            <textarea
-              className="textarea textarea-bordered h-24"
-              value={product?.description || ""}
-              onChange={(e) =>
-                setProduct({ ...product!, description: e.target.value })
-              }
-            ></textarea>
-          </label>
+
+            <div className="grid gap-5 md:grid-cols-2">
+              <label className="block md:col-span-2">
+                <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
+                  Product name
+                </span>
+                <input
+                  type="text"
+                  className={fieldClassName}
+                  value={product?.title || ""}
+                  onChange={(e) => setProduct({ ...product!, title: e.target.value })}
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
+                  Manufacturer
+                </span>
+                <input
+                  type="text"
+                  className={fieldClassName}
+                  value={product?.manufacturer || ""}
+                  onChange={(e) => setProduct({ ...product!, manufacturer: e.target.value })}
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
+                  Category
+                </span>
+                <select
+                  className={fieldClassName}
+                  value={product?.categoryId || ""}
+                  onChange={(e) =>
+                    setProduct({
+                      ...product!,
+                      categoryId: e.target.value,
+                    })
+                  }
+                >
+                  {categories &&
+                    categories.map((category: Category) => (
+                      <option key={category?.id} value={category?.id}>
+                        {formatCategoryName(category?.name)}
+                      </option>
+                    ))}
+                </select>
+              </label>
+
+              <label className="block md:col-span-2">
+                <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
+                  Slug
+                </span>
+                <input
+                  type="text"
+                  className={fieldClassName}
+                  value={product?.slug ? convertSlugToURLFriendly(product?.slug) : ""}
+                  onChange={(e) =>
+                    setProduct({
+                      ...product!,
+                      slug: convertSlugToURLFriendly(e.target.value),
+                    })
+                  }
+                />
+              </label>
+
+              <label className="block md:col-span-2">
+                <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
+                  Product description
+                </span>
+                <textarea
+                  className={`${fieldClassName} min-h-[220px]`}
+                  value={product?.description || ""}
+                  onChange={(e) => setProduct({ ...product!, description: e.target.value })}
+                />
+              </label>
+            </div>
+          </section>
+
+          <div className="space-y-6">
+            <section className={sectionClassName}>
+              <div className="mb-6">
+                <h2 className="text-2xl font-semibold">Commercial settings</h2>
+                <p className="mt-2 text-sm text-[var(--site-muted)]">
+                  Manage price, tax, stock, and storefront visibility.
+                </p>
+              </div>
+
+              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-1">
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
+                    Price
+                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    className={fieldClassName}
+                    value={product?.price ?? 0}
+                    onChange={(e) => setProduct({ ...product!, price: Number(e.target.value) })}
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
+                    Tax % (optional)
+                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    className={fieldClassName}
+                    value={product?.taxRate ?? 0}
+                    onChange={(e) =>
+                      setProduct({
+                        ...product!,
+                        taxRate: Math.max(0, Number(e.target.value) || 0),
+                      })
+                    }
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
+                    Stock quantity
+                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    className={fieldClassName}
+                    value={product?.inStock ?? 1}
+                    onChange={(e) =>
+                      setProduct({
+                        ...product!,
+                        inStock: Math.max(0, Number(e.target.value)),
+                      })
+                    }
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
+                    Visibility
+                  </span>
+                  <select
+                    className={fieldClassName}
+                    value={product?.isActive ? "enabled" : "disabled"}
+                    onChange={(e) =>
+                      setProduct({ ...product!, isActive: e.target.value === "enabled" })
+                    }
+                  >
+                    <option value="enabled">Enabled - visible to customers</option>
+                    <option value="disabled">Disabled - hidden from customers</option>
+                  </select>
+                </label>
+              </div>
+            </section>
+
+            <section className={sectionClassName}>
+              <div className="mb-6">
+                <h2 className="text-2xl font-semibold">Main image</h2>
+                <p className="mt-2 text-sm text-[var(--site-muted)]">
+                  Upload or import the primary image customers see first.
+                </p>
+              </div>
+
+              <div className="space-y-5">
+                <input
+                  type="file"
+                  className="file-input file-input-bordered file-input-lg w-full"
+                  onChange={async (e) => {
+                    const selectedFile = e.target.files?.[0];
+
+                    if (selectedFile) {
+                      const uploadedPath = await uploadFile(selectedFile);
+                      if (uploadedPath) {
+                        setProduct({ ...product!, mainImage: uploadedPath });
+                      }
+                    }
+                  }}
+                />
+                <div className="flex min-h-[260px] items-center justify-center rounded-2xl border border-dashed border-[var(--site-border)] bg-[var(--site-panel-soft)] p-6">
+                  {product?.mainImage ? (
+                    <Image
+                      src={`/` + product?.mainImage}
+                      alt={product?.title || "Product preview"}
+                      className="h-auto max-h-[240px] w-auto object-contain"
+                      width={240}
+                      height={240}
+                    />
+                  ) : (
+                    <p className="text-center text-sm text-[var(--site-muted)]">
+                      Add an image to preview it here.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            {otherImages.length > 0 && (
+              <section className={sectionClassName}>
+                <div className="mb-5">
+                  <h2 className="text-2xl font-semibold">Gallery</h2>
+                  <p className="mt-2 text-sm text-[var(--site-muted)]">
+                    Existing secondary product images.
+                  </p>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  {otherImages.map((image) => (
+                    <div
+                      key={image.imageID}
+                      className="flex aspect-square items-center justify-center rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-2"
+                    >
+                      <Image
+                        src={`/${image.image}`}
+                        alt="Product gallery image"
+                        width={120}
+                        height={120}
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            <section className={sectionClassName}>
+              <h2 className="text-2xl font-semibold">Actions</h2>
+              <div className="mt-5 grid gap-3">
+                <button
+                  type="button"
+                  onClick={updateProduct}
+                  className="inline-flex min-h-14 items-center justify-center rounded-xl bg-[var(--site-accent)] px-8 text-base font-bold uppercase tracking-[0.12em] text-white shadow-sm transition hover:bg-[var(--site-accent-strong)] focus:outline-none focus:ring-2"
+                >
+                  Update product
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex min-h-14 items-center justify-center rounded-xl bg-red-600 px-8 text-base font-bold uppercase tracking-[0.12em] text-white shadow-sm transition hover:bg-red-700 focus:outline-none focus:ring-2"
+                  onClick={deleteProduct}
+                >
+                  Delete product
+                </button>
+              </div>
+              <p className="mt-4 text-sm leading-6 text-red-500">
+                Products connected to order records cannot be deleted until those records are
+                removed.
+              </p>
+            </section>
+          </div>
         </div>
-        {/* Product description div - end */}
-        {/* Action buttons div - start */}
-        <div className="flex gap-x-2 max-sm:flex-col">
-          <button
-            type="button"
-            onClick={updateProduct}
-            className="uppercase bg-[var(--site-accent)] px-10 py-5 text-lg border border-black border-gray-300 font-bold text-white shadow-sm hover:bg-[var(--site-accent-strong)] hover:text-white focus:outline-none focus:ring-2"
-          >
-            Update product
-          </button>
-          <button
-            type="button"
-            className="uppercase bg-red-600 px-10 py-5 text-lg border border-black border-gray-300 font-bold text-white shadow-sm hover:bg-red-700 hover:text-white focus:outline-none focus:ring-2"
-            onClick={deleteProduct}
-          >
-            Delete product
-          </button>
-        </div>
-        {/* Action buttons div - end */}
-        <p className="text-xl max-sm:text-lg text-error">
-          To delete the product you first need to delete all its records in
-          orders (customer_order_product table).
-        </p>
       </div>
     </div>
   );

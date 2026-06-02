@@ -1,5 +1,6 @@
 "use client";
 import { CustomButton, DashboardSidebar } from "@/components";
+import ViewActionLink from "@/components/ui/ViewActionLink";
 import { nanoid } from "nanoid";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
@@ -70,12 +71,10 @@ const DashboardCategory = () => {
                     </td>
 
                     <th>
-                      <Link
+                      <ViewActionLink
                         href={`/admin/categories/${category?.id}`}
-                        className="btn btn-ghost btn-xs"
-                      >
-                        details
-                      </Link>
+                        label="View category details"
+                      />
                     </th>
                   </tr>
                 ))}
