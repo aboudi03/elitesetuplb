@@ -12,8 +12,37 @@ import React from "react";
 import CategoryItem from "./CategoryItem";
 import Image from "next/image";
 import { categoryMenuList } from "@/lib/utils";
+import apiClient from "@/lib/api";
+import { formatCategoryName } from "@/utils/categoryFormating";
 
-const CategoryMenu = () => {
+const CategoryMenu = async () => {
+  let dynamicCategories: Category[] = [];
+
+  try {
+    const response = await apiClient.get("/api/categories?menu=true", {
+      cache: "no-store",
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      dynamicCategories = Array.isArray(data) ? data : [];
+    }
+  } catch (error) {
+    console.error("Failed to load category menu:", error);
+  }
+
+  const menuItems =
+    dynamicCategories.length > 0
+      ? dynamicCategories
+          .filter((category) => category.menuImage)
+          .map((category) => ({
+            id: category.id,
+            title: formatCategoryName(category.name),
+            href: `/shop/${category.name}`,
+            src: category.menuImage as string,
+          }))
+      : categoryMenuList;
+
   return (
     <section className="bg-[var(--site-bg)] px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-screen-2xl">
@@ -26,7 +55,7 @@ const CategoryMenu = () => {
           </div>
         </div>
       <div className="grid grid-cols-5 gap-4 max-lg:grid-cols-3 max-md:grid-cols-2 max-[450px]:grid-cols-1">
-        {categoryMenuList.map((item) => (
+        {menuItems.map((item) => (
           <CategoryItem title={item.title} key={item.id} href={item.href}>
             <Image
               src={item.src}

@@ -52,6 +52,7 @@ interface OtherImages {
 interface Category {
   id: string;
   name: string;
+  menuImage?: string | null;
   parentId?: string | null;
   parent?: { id: string; name: string } | null;
   children?: Category[];

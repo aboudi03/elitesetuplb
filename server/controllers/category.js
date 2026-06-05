@@ -10,6 +10,14 @@ function normalizeParentId(value) {
   return trimmedValue.length > 0 ? trimmedValue : null;
 }
 
+function normalizeMenuImage(value) {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  if (typeof value !== "string") return null;
+  const trimmedValue = value.trim();
+  return trimmedValue.length > 0 ? trimmedValue : null;
+}
+
 async function getNextSortOrder(parentId) {
   const lastSibling = await prisma.category.findFirst({
     where: {
@@ -45,6 +53,7 @@ async function isDescendantCategory(categoryId, potentialParentId) {
 const createCategory = asyncHandler(async (request, response) => {
   const { name } = request.body;
   const parentId = normalizeParentId(request.body.parentId);
+  const menuImage = normalizeMenuImage(request.body.menuImage);
 
   if (!name || name.trim().length === 0) {
     throw new AppError("Category name is required", 400);
@@ -63,6 +72,7 @@ const createCategory = asyncHandler(async (request, response) => {
   const category = await prisma.category.create({
     data: {
       name: name.trim(),
+      menuImage,
       parentId,
       sortOrder: await getNextSortOrder(parentId),
     },
@@ -74,6 +84,7 @@ const updateCategory = asyncHandler(async (request, response) => {
   const { id } = request.params;
   const { name } = request.body;
   const parentId = normalizeParentId(request.body.parentId);
+  const menuImage = normalizeMenuImage(request.body.menuImage);
 
   if (!id) {
     throw new AppError("Category ID is required", 400);
@@ -122,6 +133,7 @@ const updateCategory = asyncHandler(async (request, response) => {
     },
     data: {
       name: name.trim(),
+      menuImage,
       parentId,
       sortOrder: nextSortOrder,
     },
@@ -257,6 +269,20 @@ const getCategory = asyncHandler(async (request, response) => {
 
 const getAllCategories = asyncHandler(async (request, response) => {
   const treeMode = String(request.query.tree || "").toLowerCase() === "true";
+  const menuMode = String(request.query.menu || "").toLowerCase() === "true";
+
+  if (menuMode) {
+    const categories = await prisma.category.findMany({
+      where: {
+        menuImage: {
+          not: null,
+        },
+      },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    });
+
+    return response.json(categories);
+  }
 
   if (treeMode) {
     const categories = await prisma.category.findMany({

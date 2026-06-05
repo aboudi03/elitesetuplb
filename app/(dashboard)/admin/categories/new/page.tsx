@@ -1,16 +1,45 @@
 "use client";
 import { DashboardSidebar } from "@/components";
+import apiClient, { getRuntimeApiBaseUrl } from "@/lib/api";
+import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { convertCategoryNameToURLFriendly } from "../../../../../utils/categoryFormating";
-import apiClient from "@/lib/api";
 
 const DashboardNewCategoryPage = () => {
   const [categoryInput, setCategoryInput] = useState({
     name: "",
     parentId: "",
+    menuImage: "",
   });
   const [categories, setCategories] = useState<Category[]>([]);
+  const previewImageSrc =
+    categoryInput.menuImage.startsWith("http://") || categoryInput.menuImage.startsWith("https://")
+      ? categoryInput.menuImage
+      : `/${categoryInput.menuImage}`.replace("//", "/");
+
+  const uploadFile = async (file: File) => {
+    const formData = new FormData();
+    formData.append("uploadedFile", file);
+
+    try {
+      const response = await fetch(`${getRuntimeApiBaseUrl()}/api/main-image`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Upload failed");
+      }
+
+      const data = await response.json();
+      return data.path as string;
+    } catch (error) {
+      console.error("Error uploading category image:", error);
+      toast.error("Failed to upload category image");
+      return "";
+    }
+  };
 
   const addNewCategory = async () => {
     if (categoryInput.name.length > 0) {
@@ -18,6 +47,7 @@ const DashboardNewCategoryPage = () => {
         const response = await apiClient.post(`/api/categories`, {
           name: convertCategoryNameToURLFriendly(categoryInput.name),
           parentId: categoryInput.parentId || null,
+          menuImage: categoryInput.menuImage || null,
         });
 
         if (response.status === 201) {
@@ -26,6 +56,7 @@ const DashboardNewCategoryPage = () => {
           setCategoryInput({
             name: "",
             parentId: "",
+            menuImage: "",
           });
         } else {
           const errorData = await response.json();
@@ -91,6 +122,58 @@ const DashboardNewCategoryPage = () => {
               ))}
             </select>
           </label>
+        </div>
+
+        <div className="max-w-md space-y-4">
+          <label className="form-control w-full">
+            <div className="label">
+              <span className="label-text">Homepage category image:</span>
+            </div>
+            <input
+              type="file"
+              className="file-input file-input-bordered w-full"
+              onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
+                const selectedFile = e.target.files?.[0];
+                if (!selectedFile) return;
+
+                const uploadedPath = await uploadFile(selectedFile);
+                if (uploadedPath) {
+                  setCategoryInput((current) => ({ ...current, menuImage: uploadedPath }));
+                }
+              }}
+            />
+          </label>
+
+          <label className="form-control w-full">
+            <div className="label">
+              <span className="label-text">Or image path:</span>
+            </div>
+            <input
+              type="text"
+              className="input input-bordered w-full"
+              placeholder="uploads/category-icon.png"
+              value={categoryInput.menuImage}
+              onChange={(e) =>
+                setCategoryInput({ ...categoryInput, menuImage: e.target.value })
+              }
+            />
+          </label>
+
+          <div className="flex min-h-[180px] items-center justify-center rounded-2xl border border-dashed border-[var(--site-border)] bg-[var(--site-panel-soft)] p-4">
+            {categoryInput.menuImage ? (
+              <Image
+                src={previewImageSrc}
+                alt="Category preview"
+                width={120}
+                height={120}
+                className="h-24 w-24 object-contain"
+              />
+            ) : (
+              <p className="text-sm text-[var(--site-muted)]">
+                Add an image if this category should appear in the homepage category grid.
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="flex gap-x-2">

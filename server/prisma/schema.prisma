@@ -165,12 +165,13 @@ model customer_order_product {
 }
 
 model Category {
-  id        String    @id @default(uuid())
-  name      String    @unique
+  id        String     @id @default(uuid())
+  name      String     @unique
+  menuImage String?
   parentId  String?
-  parent    Category? @relation("CategoryChildren", fields: [parentId], references: [id], onDelete: SetNull)
+  parent    Category?  @relation("CategoryChildren", fields: [parentId], references: [id], onDelete: SetNull)
   children  Category[] @relation("CategoryChildren")
-  sortOrder Int       @default(0)
+  sortOrder Int        @default(0)
   products  Product[] // Define a one-to-many relationship
 }
 

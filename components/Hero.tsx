@@ -202,22 +202,30 @@ const Hero = () => {
   return (
     <section className="bg-[var(--site-bg)] pb-8">
       <nav className="border-b border-[var(--site-border)] bg-[var(--site-panel)]">
-        <div className="mx-auto flex max-w-screen-2xl items-center justify-center gap-9 overflow-x-auto px-4 py-3 text-sm font-semibold text-[var(--site-text)] max-lg:justify-start">
+        <div className="mx-auto flex max-w-screen-2xl items-center justify-center gap-9 overflow-x-auto px-4 py-3 text-sm font-semibold text-[var(--site-text)] max-lg:justify-start lg:overflow-visible">
           {heroCategories.map((category) => {
             const hasChildren = Array.isArray(category.children) && category.children.length > 0;
 
             return (
-              <div key={category.id} className="group relative">
+              <div key={category.id} className="group relative shrink-0">
                 <Link
                   href={category.href}
-                  className="whitespace-nowrap transition hover:text-[var(--site-accent)]"
+                  className="inline-flex items-center gap-2 whitespace-nowrap transition hover:text-[var(--site-accent)]"
                 >
                   {category.label}
+                  {hasChildren && (
+                    <span
+                      aria-hidden="true"
+                      className="text-xs font-black leading-none transition-transform duration-200 group-hover:-rotate-180 group-focus-within:-rotate-180"
+                    >
+                      ^
+                    </span>
+                  )}
                 </Link>
 
                 {hasChildren && (
-                  <div className="absolute left-1/2 top-full z-30 hidden min-w-[220px] -translate-x-1/2 pt-4 group-hover:block max-lg:hidden">
-                    <div className="rounded-xl border border-[var(--site-border)] bg-[var(--site-panel)] p-2 shadow-[0_18px_45px_rgba(0,0,0,0.16)]">
+                  <div className="absolute left-0 top-full z-30 hidden min-w-[240px] pt-3 group-hover:block group-focus-within:block max-lg:hidden">
+                    <div className="rounded-lg border border-[var(--site-border)] bg-[var(--site-panel)] p-2 shadow-[0_18px_45px_rgba(0,0,0,0.16)]">
                       {category.children!.map((childCategory) => (
                         <Link
                           key={childCategory.id}

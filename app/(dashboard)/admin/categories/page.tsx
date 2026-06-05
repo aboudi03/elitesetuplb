@@ -229,6 +229,9 @@ const DashboardCategory = () => {
                     Slug
                   </th>
                   <th className="px-4 py-4 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--site-muted)]">
+                    Homepage image
+                  </th>
+                  <th className="px-4 py-4 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--site-muted)]">
                     Children
                   </th>
                   <th className="px-4 py-4 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--site-muted)]">
@@ -242,13 +245,13 @@ const DashboardCategory = () => {
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-10 text-center text-[var(--site-muted)]">
+                    <td colSpan={8} className="px-4 py-10 text-center text-[var(--site-muted)]">
                       Loading categories...
                     </td>
                   </tr>
                 ) : categoryRows.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-10 text-center text-[var(--site-muted)]">
+                    <td colSpan={8} className="px-4 py-10 text-center text-[var(--site-muted)]">
                       No categories found.
                     </td>
                   </tr>
@@ -342,6 +345,15 @@ const DashboardCategory = () => {
                         </td>
                         <td className="px-4 py-4 align-middle text-sm text-[var(--site-muted)]">
                           /shop/{category.name}
+                        </td>
+                        <td className="px-4 py-4 align-middle text-sm text-[var(--site-muted)]">
+                          {category.menuImage ? (
+                            <span className="inline-flex items-center rounded-full bg-[var(--site-accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--site-accent)]">
+                              Set
+                            </span>
+                          ) : (
+                            "Not shown"
+                          )}
                         </td>
                         <td className="px-4 py-4 align-middle text-sm font-semibold">
                           {category._count?.children || 0}

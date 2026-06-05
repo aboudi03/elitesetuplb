@@ -28,7 +28,7 @@ interface ImageItem {
 }
 
 interface SingleProductPageProps {
-  params: Promise<{  productSlug: string, id: string }>;
+  params: Promise<{ productSlug: string }>;
 }
 
 async function getProductBySlug(productSlug: string) {
@@ -97,15 +97,16 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
   // sending API request for a single product with a given product slug
   const product = await getProductBySlug(paramsAwaited?.productSlug);
 
-  // sending API request for more than 1 product image if it exists
-  const imagesData = await apiClient.get(
-    `/api/images/${paramsAwaited?.id}`
-  );
-  const images = await imagesData.json();
-
   if (!product || product.error) {
     notFound();
   }
+
+  // sending API request for more than 1 product image if it exists
+  const imagesData = await apiClient.get(`/api/images/${product.id}`, {
+    cache: "no-store",
+  });
+  const rawImages = imagesData.ok ? await imagesData.json() : [];
+  const images: ImageItem[] = Array.isArray(rawImages) ? rawImages : [];
 
   const productSchema = {
     "@context": "https://schema.org",
