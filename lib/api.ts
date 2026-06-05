@@ -5,17 +5,7 @@ export function getRuntimeApiBaseUrl() {
     return config.apiBaseUrl;
   }
 
-  try {
-    const apiUrl = new URL(config.apiBaseUrl);
-
-    if (["localhost", "127.0.0.1", "::1"].includes(apiUrl.hostname)) {
-      apiUrl.hostname = window.location.hostname;
-    }
-
-    return apiUrl.toString().replace(/\/+$/, "");
-  } catch {
-    return config.apiBaseUrl;
-  }
+  return "";
 }
 
 export const apiClient = {
