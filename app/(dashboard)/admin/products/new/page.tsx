@@ -5,11 +5,29 @@ import apiClient, { getRuntimeApiBaseUrl } from "@/lib/api";
 import { sanitizeFormData } from "@/lib/form-sanitize";
 import { convertCategoryNameToURLFriendly as convertSlugToURLFriendly } from "@/utils/categoryFormating";
 import Image from "next/image";
+import { nanoid } from "nanoid";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
+const createEmptyProduct = () => ({
+  id: nanoid(),
+  merchantId: "",
+  title: "",
+  price: 0,
+  taxRate: 0,
+  manufacturer: "",
+  inStock: 1,
+  mainImage: "",
+  description: "",
+  slug: "",
+  categoryId: "",
+  isActive: true,
+  featured: false,
+});
+
 const AddNewProduct = () => {
   const [product, setProduct] = useState<{
+    id: string;
     merchantId?: string;
     title: string;
     price: number;
@@ -22,20 +40,7 @@ const AddNewProduct = () => {
     categoryId: string;
     isActive: boolean;
     featured: boolean;
-  }>({
-    merchantId: "",
-    title: "",
-    price: 0,
-    taxRate: 0,
-    manufacturer: "",
-    inStock: 1,
-    mainImage: "",
-    description: "",
-    slug: "",
-    categoryId: "",
-    isActive: true,
-    featured: false,
-  });
+  }>(createEmptyProduct);
   const [categories, setCategories] = useState<Category[]>([]);
   const [merchants, setMerchants] = useState<Merchant[]>([]);
 
@@ -60,24 +65,15 @@ const AddNewProduct = () => {
       const sanitizedProduct = sanitizeFormData(product);
       const response = await apiClient.post(`/api/products`, sanitizedProduct);
 
-      if (response.status === 201) {
-        await response.json();
-        toast.success("Product added successfully");
-        setProduct({
-          merchantId: merchants[0]?.id || "",
-          title: "",
-          price: 0,
-          taxRate: 0,
-          manufacturer: "",
-          inStock: 1,
-          mainImage: "",
-          description: "",
-          slug: "",
-          categoryId: categories[0]?.id || "",
-          isActive: true,
-          featured: false,
-        });
-      } else {
+        if (response.status === 201) {
+          await response.json();
+          toast.success("Product added successfully");
+          setProduct({
+            ...createEmptyProduct(),
+            merchantId: merchants[0]?.id || "",
+            categoryId: categories[0]?.id || "",
+          });
+        } else {
         const errorData = await response.json();
         toast.error(errorData.error || errorData.message || "Failed to add product");
       }
@@ -104,6 +100,7 @@ const AddNewProduct = () => {
   const uploadFile = async (file: File) => {
     const formData = new FormData();
     formData.append("uploadedFile", file);
+    formData.append("productId", product.id);
 
     try {
       const response = await fetch(`${getRuntimeApiBaseUrl()}/api/main-image`, {

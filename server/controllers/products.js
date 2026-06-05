@@ -297,6 +297,7 @@ const getAllProductsOld = asyncHandler(async (request, response) => {
 
 const createProduct = asyncHandler(async (request, response) => {
   const {
+    id,
     merchantId,
     slug,
     title,
@@ -336,6 +337,7 @@ const createProduct = asyncHandler(async (request, response) => {
 
   const product = await prisma.product.create({
     data: {
+      ...(id ? { id } : {}),
       merchantId,
       slug,
       title,

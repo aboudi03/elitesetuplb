@@ -90,6 +90,7 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
   const uploadFile = async (file: File) => {
     const formData = new FormData();
     formData.append("uploadedFile", file);
+    formData.append("productId", id);
 
     try {
       const response = await fetch(`${getRuntimeApiBaseUrl()}/api/main-image`, {
