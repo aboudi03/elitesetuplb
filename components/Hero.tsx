@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
 import { FaAnglesLeft, FaAnglesRight, FaChevronLeft, FaChevronRight } from "react-icons/fa6";
-import config from "@/lib/config";
+import apiClient from "@/lib/api";
 import {
   fallbackNavbarCategories,
   type NavbarCategoryItem,
@@ -79,7 +79,7 @@ const Hero = () => {
   useEffect(() => {
     const fetchNavbarCategories = async () => {
       try {
-        const response = await fetch(`${config.apiBaseUrl}/api/navbar-categories`, {
+        const response = await fetch("/api/navbar-categories", {
           cache: "no-store",
         });
 
@@ -103,7 +103,7 @@ const Hero = () => {
   useEffect(() => {
     const fetchHeroSlides = async () => {
       try {
-        const response = await fetch(`${config.apiBaseUrl}/api/hero-slides`, {
+        const response = await apiClient.get("/api/hero-slides", {
           cache: "no-store",
         });
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { DashboardSidebar } from "@/components";
-import config from "@/lib/config";
+import { getRuntimeApiBaseUrl } from "@/lib/api";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -51,7 +51,7 @@ const HeroSlidesAdminPage = () => {
 
   const fetchSlides = async () => {
     try {
-      const response = await fetch(`${config.apiBaseUrl}/api/hero-slides?mode=admin`, {
+      const response = await fetch(`${getRuntimeApiBaseUrl()}/api/hero-slides?mode=admin`, {
         cache: "no-store",
       });
       const data = await response.json();
@@ -84,7 +84,7 @@ const HeroSlidesAdminPage = () => {
     const formData = new FormData();
     formData.append("uploadedFile", file);
 
-    const response = await fetch(`${config.apiBaseUrl}/api/main-image`, {
+    const response = await fetch(`${getRuntimeApiBaseUrl()}/api/main-image`, {
       method: "POST",
       body: formData,
     });
@@ -111,8 +111,8 @@ const HeroSlidesAdminPage = () => {
 
     try {
       const endpoint = slide.id
-        ? `${config.apiBaseUrl}/api/hero-slides/${slide.id}`
-        : `${config.apiBaseUrl}/api/hero-slides`;
+        ? `${getRuntimeApiBaseUrl()}/api/hero-slides/${slide.id}`
+        : `${getRuntimeApiBaseUrl()}/api/hero-slides`;
       const method = slide.id ? "PUT" : "POST";
 
       const response = await fetch(endpoint, {
@@ -145,7 +145,7 @@ const HeroSlidesAdminPage = () => {
     if (!slideId) return;
 
     try {
-      const response = await fetch(`${config.apiBaseUrl}/api/hero-slides/${slideId}`, {
+      const response = await fetch(`${getRuntimeApiBaseUrl()}/api/hero-slides/${slideId}`, {
         method: "DELETE",
       });
 

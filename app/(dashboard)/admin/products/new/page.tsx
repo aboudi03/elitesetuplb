@@ -1,8 +1,7 @@
 "use client";
 import { DashboardSidebar } from "@/components";
 import ProductResearchAssistant from "@/components/ProductResearchAssistant";
-import apiClient from "@/lib/api";
-import config from "@/lib/config";
+import apiClient, { getRuntimeApiBaseUrl } from "@/lib/api";
 import { sanitizeFormData } from "@/lib/form-sanitize";
 import { convertCategoryNameToURLFriendly as convertSlugToURLFriendly } from "@/utils/categoryFormating";
 import Image from "next/image";
@@ -107,7 +106,7 @@ const AddNewProduct = () => {
     formData.append("uploadedFile", file);
 
     try {
-      const response = await fetch(`${config.apiBaseUrl}/api/main-image`, {
+      const response = await fetch(`${getRuntimeApiBaseUrl()}/api/main-image`, {
         method: "POST",
         body: formData,
       });

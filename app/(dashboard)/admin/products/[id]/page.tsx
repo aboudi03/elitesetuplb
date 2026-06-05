@@ -10,8 +10,7 @@ import {
   formatCategoryName,
 } from "../../../../../utils/categoryFormating";
 import { nanoid } from "nanoid";
-import apiClient from "@/lib/api";
-import config from "@/lib/config";
+import apiClient, { getRuntimeApiBaseUrl } from "@/lib/api";
 
 interface DashboardProductDetailsProps {
   params: Promise<{ id: string }>;
@@ -93,7 +92,7 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
     formData.append("uploadedFile", file);
 
     try {
-      const response = await fetch(`${config.apiBaseUrl}/api/main-image`, {
+      const response = await fetch(`${getRuntimeApiBaseUrl()}/api/main-image`, {
         method: "POST",
         body: formData,
       });

@@ -1,6 +1,6 @@
 import config from './config';
 
-function getRuntimeApiBaseUrl() {
+export function getRuntimeApiBaseUrl() {
   if (typeof window === "undefined") {
     return config.apiBaseUrl;
   }
