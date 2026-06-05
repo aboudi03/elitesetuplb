@@ -9,6 +9,7 @@
 // *********************
 
 import { navigation } from "@/lib/utils";
+import Link from "next/link";
 import React from "react";
 
 const hiddenFooterLinks = new Set([
@@ -27,9 +28,9 @@ const Footer = () => {
         <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="grid gap-8 sm:grid-cols-3">
             <div>
-              <h3 className="text-sm font-bold leading-6 text-[var(--site-accent)]">
+              <Link href="/about-us" className="text-sm font-bold leading-6 text-[var(--site-accent)] hover:underline">
                 About Us
-              </h3>
+              </Link>
               <ul role="list" className="mt-3 space-y-2.5">
                 {navigation.about.map((item) => (
                   <li key={item.name}>
@@ -44,9 +45,9 @@ const Footer = () => {
               </ul>
             </div>
             <div>
-              <h3 className="text-sm font-bold leading-6 text-[var(--site-accent)]">
+              <Link href="/buying" className="text-sm font-bold leading-6 text-[var(--site-accent)] hover:underline">
                 Buying
-              </h3>
+              </Link>
               <ul role="list" className="mt-3 space-y-2.5">
                 {navigation.buy.filter((item) => !hiddenFooterLinks.has(item.name)).map((item) => (
                   <li key={item.name}>
@@ -61,9 +62,9 @@ const Footer = () => {
               </ul>
             </div>
             <div>
-              <h3 className="text-sm font-bold leading-6 text-[var(--site-accent)]">
+              <Link href="/support" className="text-sm font-bold leading-6 text-[var(--site-accent)] hover:underline">
                 Support
-              </h3>
+              </Link>
               <ul role="list" className="mt-3 space-y-2.5">
                 {navigation.help.filter((item) => !hiddenFooterLinks.has(item.name)).map((item) => (
                   <li key={item.name}>

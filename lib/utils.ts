@@ -126,21 +126,21 @@ export const navigation = {
     { name: "Register Discounts", href: "#" },
   ],
   about: [
-    { name: "About Elite Setup", href: `mailto:${contactEmails.info}` },
-    { name: "Work With Us", href: `mailto:${contactEmails.info}` },
-    { name: "Company Profile", href: `mailto:${contactEmails.info}` },
+    { name: "About Elite Setup", href: "/about-elite-setup" },
+    { name: "Work With Us", href: "/work-with-us" },
+    { name: "Company Profile", href: "/company-profile" },
   ],
   buy: [
     { name: "Elite Setup Loyalty Card", href: "#" },
-    { name: "Terms Of Use", href: "#" },
-    { name: "Privacy Policy", href: "#" },
+    { name: "Terms Of Use", href: "/terms-of-use" },
+    { name: "Privacy Policy", href: "/privacy-policy" },
     { name: "Complaints", href: "#" },
-    { name: "Partners", href: "#" },
+    { name: "Partners", href: "/partners" },
   ],
   help: [
-    { name: "Contact", href: `mailto:${contactEmails.support}` },
+    { name: "Contact", href: "/contact" },
     { name: "How to Buy at Elite Setup", href: "#" },
-    { name: "FAQ", href: "#" },
+    { name: "FAQ", href: "/faq" },
   ],
 };
 
