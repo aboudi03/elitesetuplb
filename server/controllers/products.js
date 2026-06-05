@@ -5,6 +5,7 @@ const { asyncHandler, handleServerError, AppError } = require("../utills/errorHa
 const ALLOWED_FILTER_TYPES = ['price', 'rating', 'category', 'inStock', 'outOfStock'];
 const ALLOWED_OPERATORS = ['gte', 'lte', 'gt', 'lt', 'equals', 'contains'];
 const ALLOWED_SORT_VALUES = ['defaultSort', 'titleAsc', 'titleDesc', 'lowPrice', 'highPrice'];
+const FEATURED_PRODUCTS_LIMIT = 12;
 
 function normalizeBoolean(value, defaultValue = true) {
   if (typeof value === "boolean") return value;
@@ -44,6 +45,24 @@ function validateAndSanitizeFilterValue(filterType, filterValue) {
   }
 }
 
+async function ensureFeaturedSlotOrThrow(nextFeaturedValue, productIdToExclude = null) {
+  if (!nextFeaturedValue) return;
+
+  const featuredProductsCount = await prisma.product.count({
+    where: {
+      featured: true,
+      ...(productIdToExclude ? { id: { not: productIdToExclude } } : {}),
+    },
+  });
+
+  if (featuredProductsCount >= FEATURED_PRODUCTS_LIMIT) {
+    throw new AppError(
+      "Featured limit reached. Unselect one featured product to add this one.",
+      400
+    );
+  }
+}
+
 // Security: Safe filter object builder
 function buildSafeFilterObject(filterArray) {
   const filterObj = {};
@@ -79,6 +98,7 @@ function buildSafeFilterObject(filterArray) {
 
 const getAllProducts = asyncHandler(async (request, response) => {
   const mode = request.query.mode || "";
+  const featuredOnly = normalizeBoolean(request.query.featured, false);
   
   // checking if we are on the admin products page because we don't want to have filtering, sorting and pagination there
   if(mode === "admin"){
@@ -197,13 +217,15 @@ const getAllProducts = asyncHandler(async (request, response) => {
 
     let products;
 
+    const baseWhereClause = featuredOnly
+      ? { ...whereClause, featured: true }
+      : whereClause;
+
     if (Object.keys(filterObj).length === 0) {
       products = await prisma.product.findMany({
         skip: (validatedPage - 1) * 10,
         take: 12,
-        where: {
-          isActive: true,
-        },
+        where: featuredOnly ? { isActive: true, featured: true } : { isActive: true },
         include: {
           category: {
             select: {
@@ -211,7 +233,7 @@ const getAllProducts = asyncHandler(async (request, response) => {
             },
           },
         },
-        orderBy: sortObj,
+        orderBy: Object.keys(sortObj).length > 0 ? sortObj : featuredOnly ? { createdAt: "desc" } : undefined,
       });
     } else {
       // Security: Handle category filter with proper validation
@@ -227,14 +249,14 @@ const getAllProducts = asyncHandler(async (request, response) => {
             },
           },
           where: {
-            ...whereClause,
+            ...baseWhereClause,
             category: {
               name: {
                 equals: filterObj.category.equals,
               },
             },
           },
-          orderBy: sortObj,
+          orderBy: Object.keys(sortObj).length > 0 ? sortObj : featuredOnly ? { createdAt: "desc" } : undefined,
         });
       } else {
         products = await prisma.product.findMany({
@@ -247,8 +269,8 @@ const getAllProducts = asyncHandler(async (request, response) => {
               },
             },
           },
-          where: whereClause,
-          orderBy: sortObj,
+          where: baseWhereClause,
+          orderBy: Object.keys(sortObj).length > 0 ? sortObj : featuredOnly ? { createdAt: "desc" } : undefined,
         });
       }
     }
@@ -286,6 +308,7 @@ const createProduct = asyncHandler(async (request, response) => {
     categoryId,
     inStock,
     isActive = true,
+    featured = false,
   } = request.body;
 
   if (!title) {
@@ -309,6 +332,8 @@ const createProduct = asyncHandler(async (request, response) => {
     throw new AppError("Missing required field: categoryId", 400);
   }
 
+  await ensureFeaturedSlotOrThrow(normalizeBoolean(featured, false));
+
   const product = await prisma.product.create({
     data: {
       merchantId,
@@ -323,6 +348,7 @@ const createProduct = asyncHandler(async (request, response) => {
       categoryId,
       inStock,
       isActive: normalizeBoolean(isActive, true),
+      featured: normalizeBoolean(featured, false),
     },
   });
   return response.status(201).json(product);
@@ -344,6 +370,7 @@ const updateProduct = asyncHandler(async (request, response) => {
     categoryId,
     inStock,
     isActive,
+    featured,
   } = request.body;
 
   // Basic validation
@@ -360,6 +387,15 @@ const updateProduct = asyncHandler(async (request, response) => {
 
   if (!existingProduct) {
     throw new AppError("Product not found", 404);
+  }
+
+  const nextFeaturedValue =
+    featured === undefined
+      ? existingProduct.featured
+      : normalizeBoolean(featured, existingProduct.featured);
+
+  if (nextFeaturedValue && !existingProduct.featured) {
+    await ensureFeaturedSlotOrThrow(true, id);
   }
 
   // Updating found product
@@ -380,6 +416,7 @@ const updateProduct = asyncHandler(async (request, response) => {
       categoryId: categoryId,
       inStock: inStock,
       isActive: isActive === undefined ? existingProduct.isActive : normalizeBoolean(isActive, existingProduct.isActive),
+      featured: nextFeaturedValue,
     },
   });
 

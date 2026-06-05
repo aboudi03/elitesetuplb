@@ -8,12 +8,31 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import apiClient from "@/lib/api";
 import { calculateCartGrandTotal, calculateCartTax } from "@/lib/cartPricing";
+import { pcBuilderWhatsAppNumber } from "@/lib/pc-builder";
 
 const inputClassName =
   "block w-full rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 py-2 text-[var(--site-text)] shadow-sm outline-none focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent)] sm:text-sm disabled:cursor-not-allowed disabled:opacity-60";
 
 const isValidLebanesePhone = (phone: string) =>
   /^(03\d{6}|(?:70|71|76|78|79|81)\d{6})$/.test(phone);
+
+const deliveryFee = 5;
+
+type CheckoutSuccessSummary = {
+  orderId: string;
+  customerName: string;
+  items: Array<{
+    cartItemId?: string;
+    title: string;
+    amount: number;
+    price: number;
+    selectedColor?: string;
+  }>;
+  subtotal: number;
+  deliveryFee: number;
+  taxes: number;
+  total: number;
+};
 
 const CheckoutPage = () => {
   const { data: session } = useSession();
@@ -30,11 +49,13 @@ const CheckoutPage = () => {
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successSummary, setSuccessSummary] = useState<CheckoutSuccessSummary | null>(null);
   const { products, total, clearCart } = useProductStore();
   const router = useRouter();
 
   const orderTaxTotal = calculateCartTax(products);
   const orderGrandTotal = calculateCartGrandTotal(products, total);
+  const whatsappHref = `https://wa.me/${pcBuilderWhatsAppNumber}`;
 
   const normalizeLebanesePhone = (value: string) => {
     let digits = value.replace(/\D/g, "");
@@ -283,6 +304,22 @@ const CheckoutPage = () => {
 
       console.log(" All products added successfully!");
 
+      const completedOrderSummary: CheckoutSuccessSummary = {
+        orderId,
+        customerName: `${checkoutForm.name.trim()} ${checkoutForm.lastname.trim()}`.trim(),
+        items: products.map((product) => ({
+          cartItemId: product.cartItemId,
+          title: product.title,
+          amount: product.amount,
+          price: product.price,
+          selectedColor: product.selectedColor,
+        })),
+        subtotal: total,
+        deliveryFee,
+        taxes: orderTaxTotal,
+        total: orderGrandTotal,
+      };
+
       // Clear form and cart
       setCheckoutForm({
         name: "",
@@ -304,11 +341,8 @@ const CheckoutPage = () => {
       } catch (error) {
         console.log('Note: Could not trigger notification refresh');
       }
-      
-      toast.success("Order created successfully! We will review it and contact you for payment.");
-      setTimeout(() => {
-        router.push("/");
-      }, 1000);
+
+      setSuccessSummary(completedOrderSummary);
     } catch (error: any) {
       console.error("💥 Error in makePurchase:", error);
       
@@ -391,6 +425,11 @@ const CheckoutPage = () => {
       router.push("/cart");
     }
   }, []);
+
+  const closeSuccessDialog = () => {
+    setSuccessSummary(null);
+    router.push("/");
+  };
 
   return (
     <div className="bg-[var(--site-bg)] text-[var(--site-text)]">
@@ -585,21 +624,95 @@ const CheckoutPage = () => {
 
             {/* Payment Notice */}
             <section className="mt-10">
-              <div className="rounded-md border border-[var(--site-accent)] bg-[var(--site-accent-soft)] p-4">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-[var(--site-accent)]" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
+              <div className="rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
                     <h3 className="text-sm font-medium text-[var(--site-text)]">
-                      Payment Information
+                      Payment method
                     </h3>
-                    <div className="mt-2 text-sm text-[var(--site-muted)]">
-                      <p>Payment will be processed after order confirmation. You will be contacted for payment details.</p>
-                    </div>
+                    <p className="mt-1 text-sm text-[var(--site-muted)]">
+                      Choose how you want to pay for this order.
+                    </p>
                   </div>
+                  <span className="inline-flex items-center rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-600">
+                    <svg
+                      className="mr-1.5 h-3.5 w-3.5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.704 5.29a1 1 0 010 1.42l-7.2 7.2a1 1 0 01-1.415 0l-3.2-3.2a1 1 0 111.414-1.42l2.493 2.494 6.493-6.494a1 1 0 011.415 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Available
+                  </span>
+                </div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <label className="flex cursor-pointer items-start gap-3 rounded-md border border-[var(--site-accent)] bg-[var(--site-accent-soft)] px-4 py-3">
+                    <input
+                      type="radio"
+                      name="payment-method"
+                      value="cash-on-delivery"
+                      defaultChecked
+                      readOnly
+                      className="mt-1 h-4 w-4 border-[var(--site-accent)] text-[var(--site-accent)] focus:ring-[var(--site-accent)]"
+                    />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-[var(--site-text)]">
+                          Cash on delivery
+                        </span>
+                        <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-600">
+                          <svg
+                            className="mr-1 h-3 w-3"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                            aria-hidden="true"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M16.704 5.29a1 1 0 010 1.42l-7.2 7.2a1 1 0 01-1.415 0l-3.2-3.2a1 1 0 111.414-1.42l2.493 2.494 6.493-6.494a1 1 0 011.415 0z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          Active
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-[var(--site-muted)]">
+                        Pay in cash when your order arrives.
+                      </p>
+                    </div>
+                  </label>
+
+                  <label className="flex items-start gap-3 rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 py-3 opacity-70">
+                    <input
+                      type="radio"
+                      name="payment-method"
+                      value="wish"
+                      disabled
+                      className="mt-1 h-4 w-4 cursor-not-allowed border-[var(--site-border)] text-[var(--site-muted)]"
+                    />
+                    <div className="w-full">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-md bg-[#f31d4f] text-lg font-black italic text-white">
+                          w
+                        </span>
+                        <span className="text-base font-black text-[#f31d4f]">
+                          Whish
+                        </span>
+                        <span className="inline-flex items-center rounded-full bg-[var(--site-panel)] px-2 py-0.5 text-xs font-semibold text-[var(--site-muted)]">
+                          Coming soon
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-[var(--site-muted)]">
+                        Whish payments are not available yet.
+                      </p>
+                    </div>
+                  </label>
                 </div>
               </div>
             </section>
@@ -758,6 +871,147 @@ const CheckoutPage = () => {
           </div>
         </form>
       </main>
+
+      {successSummary && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/55 px-4 py-6">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="checkout-success-title"
+            className="w-full max-w-2xl rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel)] p-6 shadow-2xl"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/12 text-emerald-600">
+                  <svg className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path
+                      fillRule="evenodd"
+                      d="M16.704 5.29a1 1 0 010 1.42l-7.2 7.2a1 1 0 01-1.415 0l-3.2-3.2a1 1 0 111.414-1.42l2.493 2.494 6.493-6.494a1 1 0 011.415 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <h2 id="checkout-success-title" className="text-2xl font-black text-[var(--site-text)]">
+                  Order confirmed
+                </h2>
+                <p className="mt-2 text-sm text-[var(--site-muted)]">
+                  Thanks{successSummary.customerName ? `, ${successSummary.customerName}` : ""}. Your order has been placed successfully.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeSuccessDialog}
+                className="rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 py-2 text-sm font-semibold text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-5 rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-[var(--site-text)]">
+                  Order reference
+                </p>
+                <p className="text-sm font-bold text-[var(--site-accent)]">
+                  {successSummary.orderId.slice(0, 8).toUpperCase()}
+                </p>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm text-[var(--site-muted)]">Delivery fee</p>
+                <p className="text-sm font-semibold text-[var(--site-text)]">${successSummary.deliveryFee.toFixed(2)}</p>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm text-[var(--site-muted)]">Estimated delivery</p>
+                <p className="text-sm font-semibold text-[var(--site-text)]">3-5 business days</p>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm text-[var(--site-muted)]">Payment</p>
+                <p className="text-sm font-semibold text-[var(--site-text)]">Cash on delivery</p>
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <h3 className="text-sm font-bold uppercase tracking-[0.08em] text-[var(--site-muted)]">
+                Order summary
+              </h3>
+              <div className="mt-3 space-y-3">
+                {successSummary.items.map((item) => (
+                  <div
+                    key={item.cartItemId || `${item.title}-${item.amount}`}
+                    className="flex items-start justify-between gap-4 rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 py-3"
+                  >
+                    <div>
+                      <p className="font-semibold text-[var(--site-text)]">{item.title}</p>
+                      <p className="mt-1 text-sm text-[var(--site-muted)]">
+                        Qty: {item.amount}
+                        {item.selectedColor ? ` | Color: ${item.selectedColor}` : ""}
+                      </p>
+                    </div>
+                    <p className="text-sm font-semibold text-[var(--site-text)]">
+                      ${(item.price * item.amount).toFixed(2)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-xl border border-[var(--site-border)] p-4">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-[var(--site-muted)]">Subtotal</span>
+                <span className="font-semibold text-[var(--site-text)]">${successSummary.subtotal.toFixed(2)}</span>
+              </div>
+              <div className="mt-2 flex items-center justify-between text-sm">
+                <span className="text-[var(--site-muted)]">Delivery fee</span>
+                <span className="font-semibold text-[var(--site-text)]">${successSummary.deliveryFee.toFixed(2)}</span>
+              </div>
+              <div className="mt-2 flex items-center justify-between text-sm">
+                <span className="text-[var(--site-muted)]">Taxes</span>
+                <span className="font-semibold text-[var(--site-text)]">${successSummary.taxes.toFixed(2)}</span>
+              </div>
+              <div className="mt-4 flex items-center justify-between border-t border-[var(--site-border)] pt-4">
+                <span className="text-base font-bold text-[var(--site-text)]">Total</span>
+                <span className="text-lg font-black text-[var(--site-accent)]">${successSummary.total.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div className="mt-5 flex flex-col gap-3 rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-[var(--site-text)]">Need any more help?</p>
+                <p className="mt-1 text-sm text-[var(--site-muted)]">
+                  Contact us on WhatsApp: +961 71 089 840
+                </p>
+              </div>
+              <a
+                href={whatsappHref}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex min-h-11 items-center justify-center rounded-md border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-500/15"
+              >
+                Open WhatsApp
+              </a>
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <a
+                href={whatsappHref}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex min-h-11 items-center justify-center rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 py-2 text-sm font-semibold text-[var(--site-text)] transition hover:border-emerald-500/30 hover:text-emerald-700"
+              >
+                Ask on WhatsApp
+              </a>
+              <button
+                type="button"
+                onClick={closeSuccessDialog}
+                className="theme-button inline-flex min-h-11 items-center justify-center rounded-md px-5 py-2 text-sm font-semibold"
+              >
+                Continue shopping
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -11,6 +11,7 @@ interface Product {
   category: {name: string}?;
   inStock: number;
   isActive: boolean;
+  featured?: boolean;
   taxRate?: number;
 }
 
@@ -51,6 +52,14 @@ interface OtherImages {
 interface Category {
   id: string;
   name: string;
+  parentId?: string | null;
+  parent?: { id: string; name: string } | null;
+  children?: Category[];
+  sortOrder?: number;
+  _count?: {
+    children?: number;
+    products?: number;
+  };
 }
 
 interface User {
@@ -87,11 +96,6 @@ interface SingleProductBtnProps {
   selectedColor?: string;
 }
 
-
-interface Category {
-  id: string;
-  name: string;
-}
 
 interface WishListItem {
   id: string;

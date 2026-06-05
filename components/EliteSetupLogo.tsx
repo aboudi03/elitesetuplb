@@ -23,7 +23,7 @@ export function EliteSetupLogo({
         alt="Elite Setup icon"
         width={64}
         height={64}
-        className={`h-[3.3rem] w-auto shrink-0 object-contain max-md:h-10 max-sm:h-8 ${iconClassName}`}
+        className={`elite-setup-logo-icon h-[3.3rem] w-auto shrink-0 object-contain max-md:h-10 max-sm:h-8 ${iconClassName}`}
         priority
       />
 
@@ -33,7 +33,7 @@ export function EliteSetupLogo({
           alt="EliteSetup"
           width={340}
           height={64}
-          className={`h-9 w-auto translate-y-[1px] object-contain max-md:h-7 max-sm:h-6 ${textClassName}`}
+          className={`elite-setup-logo-wordmark h-9 w-auto translate-y-[1px] object-contain max-md:h-7 max-sm:h-6 ${textClassName}`}
           priority
         />
       )}

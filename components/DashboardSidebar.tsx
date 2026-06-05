@@ -24,6 +24,7 @@ import {
   FaRegUser,
   FaStore,
   FaTable,
+  FaBarsStaggered,
 } from "react-icons/fa6";
 import { FaFileUpload } from "react-icons/fa";
 import Link from "next/link";
@@ -176,6 +177,12 @@ const DashboardSidebar = () => {
         <div className={itemClassName}>
           <MdCategory className="text-2xl" />
           <span className="font-normal">Categories</span>
+        </div>
+      </Link>
+      <Link href="/admin/navbar-categories" onClick={handleLinkClick}>
+        <div className={itemClassName}>
+          <FaBarsStaggered className="text-2xl" />
+          <span className="font-normal">Navbar Categories</span>
         </div>
       </Link>
       <Link href="/admin/users" onClick={handleLinkClick}>

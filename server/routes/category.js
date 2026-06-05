@@ -6,11 +6,13 @@ const {
   getCategory,
   createCategory,
   updateCategory,
+  reorderCategories,
   deleteCategory,
   getAllCategories,
 } = require("../controllers/category");
 
 router.route("/").get(getAllCategories).post(createCategory);
+router.route("/reorder").put(reorderCategories);
 
 router
   .route("/:id")

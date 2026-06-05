@@ -15,9 +15,14 @@ const DashboardSingleCategory = ({ params }: DashboardSingleCategoryProps) => {
   const resolvedParams = use(params);
   const id = resolvedParams.id;
 
-  const [categoryInput, setCategoryInput] = useState<{ name: string }>({
+  const [categoryInput, setCategoryInput] = useState<{
+    name: string;
+    parentId: string;
+  }>({
     name: "",
+    parentId: "",
   });
+  const [categories, setCategories] = useState<Category[]>([]);
   const router = useRouter();
 
   const deleteCategory = async () => {
@@ -45,6 +50,7 @@ const DashboardSingleCategory = ({ params }: DashboardSingleCategoryProps) => {
       try {
         const response = await apiClient.put(`/api/categories/${id}`, {
           name: convertCategoryNameToURLFriendly(categoryInput.name),
+          parentId: categoryInput.parentId || null,
         });
 
         if (response.status === 200) {
@@ -74,7 +80,15 @@ const DashboardSingleCategory = ({ params }: DashboardSingleCategoryProps) => {
       .then((data) => {
         setCategoryInput({
           name: data?.name,
+          parentId: data?.parentId || "",
         });
+      });
+
+    apiClient
+      .get(`/api/categories`)
+      .then((res) => res.json())
+      .then((data) => {
+        setCategories(Array.isArray(data) ? data : []);
       });
   }, [id]);
 
@@ -96,6 +110,30 @@ const DashboardSingleCategory = ({ params }: DashboardSingleCategoryProps) => {
                 setCategoryInput({ ...categoryInput, name: e.target.value })
               }
             />
+          </label>
+        </div>
+
+        <div>
+          <label className="form-control w-full max-w-xs">
+            <div className="label">
+              <span className="label-text">Parent category:</span>
+            </div>
+            <select
+              className="select select-bordered w-full max-w-xs"
+              value={categoryInput.parentId}
+              onChange={(e) =>
+                setCategoryInput({ ...categoryInput, parentId: e.target.value })
+              }
+            >
+              <option value="">No parent (top level)</option>
+              {categories
+                .filter((category) => category.id !== id)
+                .map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {formatCategoryName(category.name)}
+                  </option>
+                ))}
+            </select>
           </label>
         </div>
 

@@ -22,6 +22,7 @@ const AddNewProduct = () => {
     slug: string;
     categoryId: string;
     isActive: boolean;
+    featured: boolean;
   }>({
     merchantId: "",
     title: "",
@@ -34,6 +35,7 @@ const AddNewProduct = () => {
     slug: "",
     categoryId: "",
     isActive: true,
+    featured: false,
   });
   const [categories, setCategories] = useState<Category[]>([]);
   const [merchants, setMerchants] = useState<Merchant[]>([]);
@@ -74,10 +76,11 @@ const AddNewProduct = () => {
           slug: "",
           categoryId: categories[0]?.id || "",
           isActive: true,
+          featured: false,
         });
       } else {
         const errorData = await response.json();
-        toast.error(`Error: ${errorData.message || "Failed to add product"}`);
+        toast.error(errorData.error || errorData.message || "Failed to add product");
       }
     } catch (error) {
       console.error("Error adding product:", error);
@@ -319,6 +322,20 @@ const AddNewProduct = () => {
                   >
                     <option value="enabled">Enabled - visible to customers</option>
                     <option value="disabled">Disabled - hidden from customers</option>
+                  </select>
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">Featured</span>
+                  <select
+                    className={fieldClassName}
+                    value={product.featured ? "yes" : "no"}
+                    onChange={(e) =>
+                      setProduct({ ...product, featured: e.target.value === "yes" })
+                    }
+                  >
+                    <option value="no">No</option>
+                    <option value="yes">Yes</option>
                   </select>
                 </label>
               </div>

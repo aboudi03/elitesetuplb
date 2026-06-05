@@ -1,6 +1,6 @@
 "use client";
 import { DashboardSidebar } from "@/components";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { convertCategoryNameToURLFriendly } from "../../../../../utils/categoryFormating";
 import apiClient from "@/lib/api";
@@ -8,13 +8,16 @@ import apiClient from "@/lib/api";
 const DashboardNewCategoryPage = () => {
   const [categoryInput, setCategoryInput] = useState({
     name: "",
+    parentId: "",
   });
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const addNewCategory = async () => {
     if (categoryInput.name.length > 0) {
       try {
         const response = await apiClient.post(`/api/categories`, {
           name: convertCategoryNameToURLFriendly(categoryInput.name),
+          parentId: categoryInput.parentId || null,
         });
 
         if (response.status === 201) {
@@ -22,6 +25,7 @@ const DashboardNewCategoryPage = () => {
           toast.success("Category added successfully");
           setCategoryInput({
             name: "",
+            parentId: "",
           });
         } else {
           const errorData = await response.json();
@@ -37,6 +41,15 @@ const DashboardNewCategoryPage = () => {
       toast.error("You need to enter values to add a category");
     }
   };
+
+  useEffect(() => {
+    apiClient
+      .get("/api/categories")
+      .then((res) => res.json())
+      .then((data) => setCategories(Array.isArray(data) ? data : []))
+      .catch(() => toast.error("Failed to load categories"));
+  }, []);
+
   return (
     <div className="bg-[var(--site-bg)] text-[var(--site-text)] flex justify-start max-w-screen-2xl mx-auto xl:h-full max-xl:flex-col max-xl:gap-y-5">
       <DashboardSidebar />
@@ -55,6 +68,28 @@ const DashboardNewCategoryPage = () => {
                 setCategoryInput({ ...categoryInput, name: e.target.value })
               }
             />
+          </label>
+        </div>
+
+        <div>
+          <label className="form-control w-full max-w-xs">
+            <div className="label">
+              <span className="label-text">Parent category:</span>
+            </div>
+            <select
+              className="select select-bordered w-full max-w-xs"
+              value={categoryInput.parentId}
+              onChange={(e) =>
+                setCategoryInput({ ...categoryInput, parentId: e.target.value })
+              }
+            >
+              <option value="">No parent (top level)</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
           </label>
         </div>
 

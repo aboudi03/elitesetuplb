@@ -18,7 +18,7 @@ const ProductsSection = async () => {
   
   try {
     // sending API request for getting all products
-    const data = await apiClient.get("/api/products");
+    const data = await apiClient.get("/api/products?featured=true");
     
     if (!data.ok) {
       console.error('Failed to fetch products:', data.statusText);
@@ -39,7 +39,7 @@ const ProductsSection = async () => {
         <div className="mb-6 flex items-end justify-between">
           <div>
             <p className="text-sm font-bold uppercase text-[var(--site-accent)]">Featured drops</p>
-            <Heading title="Popular gear" />
+            <Heading title="Featured gear" />
           </div>
         </div>
         <div className="grid grid-cols-4 gap-4 max-xl:grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1">

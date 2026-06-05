@@ -25,6 +25,7 @@ model Product {
   manufacturer   String
   inStock        Int                      @default(1)
   isActive       Boolean                  @default(true)
+  featured       Boolean                  @default(false)
   categoryId     String
   category       Category                 @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   customerOrders customer_order_product[]
@@ -164,9 +165,13 @@ model customer_order_product {
 }
 
 model Category {
-  id       String    @id @default(uuid())
-  name     String    @unique
-  products Product[] // Define a one-to-many relationship
+  id        String    @id @default(uuid())
+  name      String    @unique
+  parentId  String?
+  parent    Category? @relation("CategoryChildren", fields: [parentId], references: [id], onDelete: SetNull)
+  children  Category[] @relation("CategoryChildren")
+  sortOrder Int       @default(0)
+  products  Product[] // Define a one-to-many relationship
 }
 
 model Wishlist {

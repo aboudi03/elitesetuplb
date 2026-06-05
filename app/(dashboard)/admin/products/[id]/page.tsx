@@ -359,6 +359,22 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
                     <option value="disabled">Disabled - hidden from customers</option>
                   </select>
                 </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
+                    Featured
+                  </span>
+                  <select
+                    className={fieldClassName}
+                    value={product?.featured ? "yes" : "no"}
+                    onChange={(e) =>
+                      setProduct({ ...product!, featured: e.target.value === "yes" })
+                    }
+                  >
+                    <option value="no">No</option>
+                    <option value="yes">Yes</option>
+                  </select>
+                </label>
               </div>
             </section>
 

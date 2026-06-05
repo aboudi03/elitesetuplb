@@ -28,7 +28,15 @@ const CategoryMenu = () => {
       <div className="grid grid-cols-5 gap-4 max-lg:grid-cols-3 max-md:grid-cols-2 max-[450px]:grid-cols-1">
         {categoryMenuList.map((item) => (
           <CategoryItem title={item.title} key={item.id} href={item.href}>
-            <Image src={item.src} width={48} height={48} alt={item.title} className="h-10 w-10 object-contain" />
+            <Image
+              src={item.src}
+              width={48}
+              height={48}
+              alt={item.title}
+              className={`object-contain ${
+                item.title === "Monitors" ? "h-12 w-12" : "h-10 w-10"
+              }`}
+            />
           </CategoryItem>
         ))}
       </div>

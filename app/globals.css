@@ -437,6 +437,65 @@ body {
     }
 }
 
+html[data-theme="dim"] .elite-setup-logo-icon {
+    filter:
+      brightness(1.08)
+      drop-shadow(0 0 10px rgba(255, 255, 255, 0.06))
+      drop-shadow(0 8px 22px rgba(0, 0, 0, 0.28));
+}
+
+html[data-theme="dim"] .elite-setup-logo-wordmark {
+    filter:
+      brightness(0)
+      invert(0.9)
+      grayscale(1)
+      brightness(1.18)
+      contrast(1.08)
+      drop-shadow(0 0 8px rgba(255, 255, 255, 0.04));
+}
+
+html[data-theme="dim"] .hero-edge-button__bubble {
+    border-color: rgba(142, 167, 178, 0.28);
+    background:
+      linear-gradient(180deg, rgba(36, 41, 51, 0.96), rgba(24, 29, 39, 0.9));
+    box-shadow:
+      0 12px 34px rgba(5, 8, 14, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+html[data-theme="dim"] .hero-edge-button__shape {
+    border-color: rgba(142, 167, 178, 0.34);
+    background: rgba(42, 48, 60, 0.96);
+    box-shadow:
+      0 14px 28px rgba(5, 8, 14, 0.34),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      inset 0 -8px 14px rgba(0, 0, 0, 0.18);
+}
+
+html[data-theme="dim"] .hero-edge-button__icon {
+    color: #f3f6fb;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    html[data-theme="dim"] .hero-edge-button:hover .hero-edge-button__bubble {
+        border-color: rgba(142, 167, 178, 0.42);
+        background:
+          linear-gradient(180deg, rgba(42, 48, 60, 0.98), rgba(32, 37, 46, 0.94));
+        box-shadow:
+          0 16px 38px rgba(5, 8, 14, 0.4),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    html[data-theme="dim"] .hero-edge-button:hover .hero-edge-button__shape {
+        background: rgba(57, 65, 80, 0.98);
+        border-color: rgba(178, 204, 214, 0.42);
+        box-shadow:
+          0 20px 45px rgba(5, 8, 14, 0.34),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1),
+          inset 0 -18px 28px rgba(0, 0, 0, 0.18);
+    }
+}
+
 /* Compatibility layer for older hardcoded Tailwind colors in pages/admin. */
 html[data-theme] .bg-white,
 html[data-theme] .bg-gray-50,
@@ -511,6 +570,7 @@ html[data-theme] textarea {
     background-color: var(--site-panel-soft);
     color: var(--site-text);
     border-color: var(--site-border);
+    font: inherit;
 }
 
 html[data-theme] .input::placeholder,
@@ -583,7 +643,7 @@ html[data-theme] .btn-ghost:hover {
 html[data-theme] tr.hover\:bg-gray-50:hover,
 html[data-theme] tr.hover\:bg-gray-100:hover,
 html[data-theme] .table tbody tr:hover,
-html[data-theme] table tbody tr:hover,
+html[data-theme] table:not(.admin-data-table) tbody tr:hover,
 html[data-theme] .theme-hover-row:hover {
     background-color: var(--site-accent);
     color: white;
@@ -592,7 +652,7 @@ html[data-theme] .theme-hover-row:hover {
 html[data-theme] tr.hover\:bg-gray-50:hover *,
 html[data-theme] tr.hover\:bg-gray-100:hover *,
 html[data-theme] .table tbody tr:hover *,
-html[data-theme] table tbody tr:hover *,
+html[data-theme] table:not(.admin-data-table) tbody tr:hover *,
 html[data-theme] .theme-hover-row:hover * {
     color: white;
 }
@@ -600,19 +660,19 @@ html[data-theme] .theme-hover-row:hover * {
 html[data-theme] tr.hover\:bg-gray-50:hover a,
 html[data-theme] tr.hover\:bg-gray-100:hover a,
 html[data-theme] .table tbody tr:hover a,
-html[data-theme] table tbody tr:hover a,
+html[data-theme] table:not(.admin-data-table) tbody tr:hover a,
 html[data-theme] .theme-hover-row:hover a {
     color: white;
     text-decoration-color: white;
 }
 
 html[data-theme] .table tbody tr:hover .badge,
-html[data-theme] table tbody tr:hover .badge {
+html[data-theme] table:not(.admin-data-table) tbody tr:hover .badge {
     color: white;
 }
 
 html[data-theme] .table tbody tr:hover select,
-html[data-theme] table tbody tr:hover select,
+html[data-theme] table:not(.admin-data-table) tbody tr:hover select,
 html[data-theme] .theme-hover-row:hover select,
 html[data-theme] .admin-data-table tbody tr:hover select {
     background-color: var(--site-panel);
@@ -623,6 +683,14 @@ html[data-theme] .admin-data-table tbody tr:hover select {
 html[data-theme] select option {
     background-color: var(--site-panel);
     color: var(--site-text);
+    font: inherit;
+    font-size: 0.95rem;
+}
+
+html[data-theme] select optgroup {
+    background-color: var(--site-panel);
+    color: var(--site-muted);
+    font: inherit;
 }
 
 html[data-theme] .admin-data-table {
@@ -651,6 +719,11 @@ html[data-theme] .admin-data-table tbody tr:hover a,
 html[data-theme] .admin-data-table tbody tr:hover button {
     color: var(--site-accent);
     text-decoration-color: var(--site-accent);
+}
+
+html[data-theme] .admin-data-table tbody tr:hover .admin-table-select,
+html[data-theme] .admin-data-table tbody tr:hover .admin-table-select * {
+    color: var(--site-text);
 }
 
 .admin-table-select {

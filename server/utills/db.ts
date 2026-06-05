@@ -1,4 +1,6 @@
-import { PrismaClient } from "@prisma/client"; 
+/// <reference types="node" />
+
+import { Prisma, PrismaClient } from "@prisma/client"; 
 
 const prismaClientSingleton = () => {
     // Validate that DATABASE_URL is present
@@ -16,18 +18,16 @@ const prismaClientSingleton = () => {
         console.log(`🔒 SSL Mode: ${url.searchParams.get('sslmode') || 'not specified'}`);
     }
 
-    return new PrismaClient({
-        // Add logging for debugging
-        log: process.env.NODE_ENV === "development" 
-            ? ['query', 'info', 'warn', 'error']
-            : ['error', 'warn'],
-    });
+    const log: Prisma.LogLevel[] =
+        process.env.NODE_ENV === "development"
+            ? ["query", "info", "warn", "error"]
+            : ["error", "warn"];
+
+    return new PrismaClient({ log });
 }
 
-type PrismaClientSingleton = ReturnType<typeof prismaClientSingleton>;
-
 const globalForPrisma = globalThis as unknown as {
-    prisma: PrismaClientSingleton | undefined;
+    prisma?: PrismaClient;
 }
 
 const prisma = globalForPrisma.prisma ?? prismaClientSingleton();

@@ -5,6 +5,10 @@ import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
 import { FaAnglesLeft, FaAnglesRight, FaChevronLeft, FaChevronRight } from "react-icons/fa6";
 import config from "@/lib/config";
+import {
+  fallbackNavbarCategories,
+  type NavbarCategoryItem,
+} from "@/lib/navbarCategories";
 
 type HeroSlide = {
   id?: string;
@@ -59,27 +63,42 @@ const fallbackSlides: HeroSlide[] = [
   },
 ];
 
-const heroCategories = [
-  { label: "Mice", href: "/shop/gaming-mice" },
-  { label: "Keyboards", href: "/shop/gaming-keyboards" },
-  { label: "Headsets", href: "/shop/gaming-headsets" },
-  { label: "Monitors", href: "/shop/gaming-monitors" },
-  { label: "Laptops", href: "/shop/gaming-laptops" },
-  { label: "PC Builds", href: "/shop/gaming-pcs" },
-  { label: "Components", href: "/shop/pc-components" },
-  { label: "Streaming", href: "/shop/streaming-gear" },
-  { label: "Deals", href: "/shop" },
-];
-
 const Hero = () => {
   const [activeSlide, setActiveSlide] = useState(0);
   const [slideDirection, setSlideDirection] = useState<"next" | "previous">("next");
   const [slides, setSlides] = useState<HeroSlide[]>(fallbackSlides);
+  const [heroCategories, setHeroCategories] = useState<NavbarCategoryItem[]>(
+    fallbackNavbarCategories
+  );
   const [previousRippleKey, setPreviousRippleKey] = useState(0);
   const [nextRippleKey, setNextRippleKey] = useState(0);
   const autoplayTimerRef = useRef<number | null>(null);
   const touchStartXRef = useRef<number | null>(null);
   const touchDeltaXRef = useRef(0);
+
+  useEffect(() => {
+    const fetchNavbarCategories = async () => {
+      try {
+        const response = await fetch(`${config.apiBaseUrl}/api/navbar-categories`, {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+
+        if (Array.isArray(data) && data.length > 0) {
+          setHeroCategories(data);
+        }
+      } catch (error) {
+        console.error("Failed to load navbar categories:", error);
+      }
+    };
+
+    fetchNavbarCategories();
+  }, []);
 
   useEffect(() => {
     const fetchHeroSlides = async () => {
@@ -184,15 +203,36 @@ const Hero = () => {
     <section className="bg-[var(--site-bg)] pb-8">
       <nav className="border-b border-[var(--site-border)] bg-[var(--site-panel)]">
         <div className="mx-auto flex max-w-screen-2xl items-center justify-center gap-9 overflow-x-auto px-4 py-3 text-sm font-semibold text-[var(--site-text)] max-lg:justify-start">
-          {heroCategories.map((category) => (
-            <Link
-              key={category.label}
-              href={category.href}
-              className="whitespace-nowrap transition hover:text-[var(--site-accent)]"
-            >
-              {category.label}
-            </Link>
-          ))}
+          {heroCategories.map((category) => {
+            const hasChildren = Array.isArray(category.children) && category.children.length > 0;
+
+            return (
+              <div key={category.id} className="group relative">
+                <Link
+                  href={category.href}
+                  className="whitespace-nowrap transition hover:text-[var(--site-accent)]"
+                >
+                  {category.label}
+                </Link>
+
+                {hasChildren && (
+                  <div className="absolute left-1/2 top-full z-30 hidden min-w-[220px] -translate-x-1/2 pt-4 group-hover:block max-lg:hidden">
+                    <div className="rounded-xl border border-[var(--site-border)] bg-[var(--site-panel)] p-2 shadow-[0_18px_45px_rgba(0,0,0,0.16)]">
+                      {category.children!.map((childCategory) => (
+                        <Link
+                          key={childCategory.id}
+                          href={childCategory.href}
+                          className="block rounded-lg px-3 py-2 text-sm font-semibold text-[var(--site-text)] transition hover:bg-[var(--site-panel-soft)] hover:text-[var(--site-accent)]"
+                        >
+                          {childCategory.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </nav>
 
