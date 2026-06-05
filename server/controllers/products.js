@@ -329,10 +329,6 @@ const createProduct = asyncHandler(async (request, response) => {
     throw new AppError("Missing required field: price", 400);
   }
 
-  if (!categoryId) {
-    throw new AppError("Missing required field: categoryId", 400);
-  }
-
   await ensureFeaturedSlotOrThrow(normalizeBoolean(featured, false));
 
   const product = await prisma.product.create({
@@ -347,7 +343,7 @@ const createProduct = asyncHandler(async (request, response) => {
       rating: 5,
       description,
       manufacturer,
-      categoryId,
+      categoryId: categoryId || null,
       inStock,
       isActive: normalizeBoolean(isActive, true),
       featured: normalizeBoolean(featured, false),
@@ -415,7 +411,7 @@ const updateProduct = asyncHandler(async (request, response) => {
       rating: rating,
       description: description,
       manufacturer: manufacturer,
-      categoryId: categoryId,
+      categoryId: categoryId === undefined ? existingProduct.categoryId : categoryId || null,
       inStock: inStock,
       isActive: isActive === undefined ? existingProduct.isActive : normalizeBoolean(isActive, existingProduct.isActive),
       featured: nextFeaturedValue,

@@ -229,9 +229,12 @@ const AddNewProduct = () => {
   };
 
   const applyResearchFields = (fields: Partial<Product>) => {
+    const { categoryId, ...nextFields } = fields;
+
     setProduct((currentProduct) => ({
       ...currentProduct,
-      ...fields,
+      ...nextFields,
+      ...(categoryId !== undefined ? { categoryId: categoryId || "" } : {}),
       slug: fields.title
         ? convertSlugToURLFriendly(fields.title.toLowerCase())
         : currentProduct.slug,

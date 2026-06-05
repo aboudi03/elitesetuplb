@@ -7,8 +7,8 @@ interface Product {
   description: string;
   mainImage: string;
   manufacturer: string;
-  categoryId: string;
-  category: {name: string}?;
+  categoryId: string | null;
+  category?: { name: string } | null;
   inStock: number;
   isActive: boolean;
   featured?: boolean;

@@ -13,6 +13,7 @@ logs/
 # Database backups
 backups/
 *.sql
+!prisma/migrations/20260605195000_make_product_category_nullable/migration.sql
 *.dump
 *.backup
 

@@ -26,8 +26,8 @@ model Product {
   inStock        Int                      @default(1)
   isActive       Boolean                  @default(true)
   featured       Boolean                  @default(false)
-  categoryId     String
-  category       Category                 @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId     String?
+  category       Category?                @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   customerOrders customer_order_product[]
   Wishlist       Wishlist[]
 
