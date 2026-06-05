@@ -84,6 +84,8 @@ const AddNewProduct = () => {
 
       const sanitizedProduct = sanitizeFormData({
         ...product,
+        // send null to server when no category selected
+        categoryId: product.categoryId === "" ? null : product.categoryId,
         mainImage: mainImagePath,
       });
       const response = await apiClient.post(`/api/products`, sanitizedProduct);
