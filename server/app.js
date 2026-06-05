@@ -190,8 +190,19 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log('Rate limiting and request logging enabled for all endpoints');
   console.log('Logs are being written to server/logs/ directory');
+});
+
+server.on("error", (error) => {
+  if (error.code === "EADDRINUSE") {
+    console.error(`Port ${PORT} is already in use. Stop the old backend process or set a different PORT.`);
+    console.error(`On Windows, run: netstat -ano | findstr :${PORT}`);
+    console.error("Then stop the listed PID with: taskkill /PID <PID> /T /F");
+    process.exit(1);
+  }
+
+  throw error;
 });

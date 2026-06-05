@@ -1,4 +1,5 @@
 const { spawn } = require("child_process");
+const net = require("net");
 require("dotenv").config();
 
 const isWindows = process.platform === "win32";
@@ -6,6 +7,7 @@ const npmCommand = isWindows ? "npm.cmd" : "npm";
 const npxCommand = isWindows ? "npx.cmd" : "npx";
 
 const children = [];
+let isStopping = false;
 
 function prefixOutput(prefix, stream) {
   let buffer = "";
@@ -47,8 +49,7 @@ function run(prefix, command, args, options = {}) {
 
     if (code !== 0 && options.exitOnFailure !== false) {
       console.log(`[${prefix}] exited with code ${code}`);
-      stopAll();
-      process.exit(code || 1);
+      stopAll().finally(() => process.exit(code || 1));
     }
   });
 
@@ -56,18 +57,55 @@ function run(prefix, command, args, options = {}) {
 }
 
 function stopAll() {
-  for (const child of children) {
-    if (!child.killed) {
-      if (isWindows) {
-        spawn("taskkill", ["/pid", child.pid, "/T", "/F"], {
+  if (isStopping) {
+    return Promise.resolve();
+  }
+
+  isStopping = true;
+
+  return Promise.all(
+    children.map((child) => {
+      if (child.killed) {
+        return Promise.resolve();
+      }
+
+      if (!isWindows) {
+        child.kill("SIGINT");
+        return Promise.resolve();
+      }
+
+      return new Promise((resolve) => {
+        const killer = spawn("taskkill", ["/pid", child.pid, "/T", "/F"], {
           stdio: "ignore",
           shell: false,
         });
-      } else {
-        child.kill("SIGINT");
+
+        killer.on("exit", resolve);
+        killer.on("error", resolve);
+      });
+    })
+  );
+}
+
+function assertPortAvailable(port) {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+
+    server.once("error", (error) => {
+      if (error.code === "EADDRINUSE") {
+        reject(new Error(`port ${port} is already in use. Stop the old process with: taskkill /PID <PID> /T /F`));
+        return;
       }
-    }
-  }
+
+      reject(error);
+    });
+
+    server.once("listening", () => {
+      server.close(resolve);
+    });
+
+    server.listen(port);
+  });
 }
 
 async function runOnce(prefix, command, args, options = {}) {
@@ -133,6 +171,8 @@ async function main() {
     process.exit(1);
   }
 
+  await assertPortAvailable(Number(process.env.PORT || 3001));
+
   try {
     await runOnce("prisma", npxCommand, ["prisma", "generate"]);
   } catch (error) {
@@ -154,17 +194,15 @@ async function main() {
 }
 
 process.on("SIGINT", () => {
-  stopAll();
-  process.exit(0);
+  console.log("\n[dev] stopping frontend and backend...");
+  stopAll().finally(() => process.exit(0));
 });
 
 process.on("SIGTERM", () => {
-  stopAll();
-  process.exit(0);
+  stopAll().finally(() => process.exit(0));
 });
 
 main().catch((error) => {
   console.error(`[dev] ${error.message}`);
-  stopAll();
-  process.exit(1);
+  stopAll().finally(() => process.exit(1));
 });

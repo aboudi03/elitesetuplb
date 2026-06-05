@@ -60,7 +60,7 @@ const BuyNowSingleProductBtn = ({
   return (
     <button
       onClick={handleAddToCart}
-      className="btn theme-button w-[200px] border-0 text-lg font-bold uppercase transition-all ease-in hover:scale-105 max-[500px]:w-full"
+      className="btn h-10 min-h-10 w-40 border-0 px-4 text-sm font-bold uppercase transition-all ease-in theme-button max-[500px]:w-full"
     >
       Buy Now
     </button>

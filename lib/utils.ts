@@ -93,6 +93,11 @@ export const heroNavCategories = [
   { id: "deals", label: "Deals", href: "/shop" },
 ];
 
+export const contactEmails = {
+  support: "support@elitesetuplb.com",
+  info: "info@elitesetuplb.com",
+};
+
 export const incentives = [
   {
     name: "Free Shipping",
@@ -121,9 +126,9 @@ export const navigation = {
     { name: "Register Discounts", href: "#" },
   ],
   about: [
-    { name: "About Elite Setup", href: "#" },
-    { name: "Work With Us", href: "#" },
-    { name: "Company Profile", href: "#" },
+    { name: "About Elite Setup", href: `mailto:${contactEmails.info}` },
+    { name: "Work With Us", href: `mailto:${contactEmails.info}` },
+    { name: "Company Profile", href: `mailto:${contactEmails.info}` },
   ],
   buy: [
     { name: "Elite Setup Loyalty Card", href: "#" },
@@ -133,7 +138,7 @@ export const navigation = {
     { name: "Partners", href: "#" },
   ],
   help: [
-    { name: "Contact", href: "#" },
+    { name: "Contact", href: `mailto:${contactEmails.support}` },
     { name: "How to Buy at Elite Setup", href: "#" },
     { name: "FAQ", href: "#" },
   ],

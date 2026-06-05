@@ -71,11 +71,11 @@ const ShopPage = async ({ params, searchParams }: { params: Promise<{ slug?: str
     <div className="bg-[var(--site-bg)] text-[var(--site-text)]">
       <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-10">
         <Breadcrumb />
-        <div className="grid grid-cols-[200px_1fr] gap-x-10 max-md:grid-cols-1 max-md:gap-y-5">
+        <div className="grid grid-cols-[auto_1fr] gap-x-5 max-md:grid-cols-1 max-md:gap-y-4">
           <Filters />
           <div className="min-w-0">
-            <div className="flex items-center justify-between gap-4 max-lg:flex-col max-lg:items-stretch max-lg:gap-y-5">
-              <h2 className="text-2xl font-black max-sm:text-xl max-[400px]:text-lg uppercase">
+            <div className="flex items-center justify-between gap-4 max-lg:flex-col max-lg:items-stretch max-lg:gap-y-4">
+              <h2 className="text-xl font-black uppercase max-sm:text-lg">
                 {awaitedParams?.slug && awaitedParams?.slug[0]?.length > 0
                   ? sanitize(improveCategoryText(awaitedParams?.slug[0]))
                   : "All products"}
@@ -83,7 +83,7 @@ const ShopPage = async ({ params, searchParams }: { params: Promise<{ slug?: str
 
               <SortBy />
             </div>
-            <div className="divider"></div>
+            <div className="divider my-3"></div>
             <Products params={awaitedParams} searchParams={awaitedSearchParams} />
             <Pagination />
           </div>

@@ -10,10 +10,11 @@
 
 "use client";
 import React, { useEffect, useState } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useSortStore } from "@/app/_zustand/sortStore";
 import { usePaginationStore } from "@/app/_zustand/paginationStore";
+import { FaBars, FaTimes } from "react-icons/fa";
 
 interface InputCategory {
   inStock: { text: string, isChecked: boolean },
@@ -25,6 +26,7 @@ interface InputCategory {
 const Filters = () => {
   const pathname = usePathname();
   const { replace } = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
 
   // getting current page number from Zustand store
   const { page } = usePaginationStore();
@@ -50,106 +52,120 @@ const Filters = () => {
   }, [inputCategory, sortBy, page]);
 
   return (
-    <div className="rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] p-4">
-      <h3 className="text-2xl font-black mb-2">Filters</h3>
-      <div className="divider"></div>
-      <div className="flex flex-col gap-y-1">
-        <h3 className="text-xl font-bold mb-2">Availability</h3>
-        <div className="form-control">
-          <label className="cursor-pointer flex items-center">
-            <input
-              type="checkbox"
-              checked={inputCategory.inStock.isChecked}
-              onChange={() =>
-                setInputCategory({
-                  ...inputCategory,
-                  inStock: {
-                    text: "instock",
-                    isChecked: !inputCategory.inStock.isChecked,
-                  },
-                })
-              }
-              className="checkbox"
-            />
-            <span className="label-text text-lg ml-2 text-[var(--site-text)]">In stock</span>
-          </label>
-        </div>
+    <div className={`${isOpen ? "w-60" : "w-12"} self-start rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] p-2 max-md:w-full`}>
+      <button
+        type="button"
+        className="flex h-8 w-8 items-center justify-center rounded-md border border-[var(--site-border)] text-sm text-[var(--site-text)] transition hover:bg-[var(--site-bg)]"
+        aria-expanded={isOpen}
+        aria-label={isOpen ? "Close filters" : "Open filters"}
+        title={isOpen ? "Close filters" : "Open filters"}
+        onClick={() => setIsOpen((current) => !current)}
+      >
+        {isOpen ? <FaTimes aria-hidden="true" /> : <FaBars aria-hidden="true" />}
+      </button>
 
-        <div className="form-control">
-          <label className="cursor-pointer flex items-center">
-            <input
-              type="checkbox"
-              checked={inputCategory.outOfStock.isChecked}
-              onChange={() =>
-                setInputCategory({
-                  ...inputCategory,
-                  outOfStock: {
-                    text: "outofstock",
-                    isChecked: !inputCategory.outOfStock.isChecked,
-                  },
-                })
-              }
-              className="checkbox"
-            />
-            <span className="label-text text-lg ml-2 text-[var(--site-text)]">
-              Out of stock
-            </span>
-          </label>
-        </div>
-      </div>
+      {isOpen && (
+        <div className="mt-3">
+          <h3 className="mb-2 text-base font-black">Filters</h3>
+          <div className="divider"></div>
+          <div className="grid gap-4">
+            <div className="flex flex-col gap-y-1">
+              <h3 className="mb-2 text-sm font-bold">Availability</h3>
+              <div className="form-control">
+                <label className="flex cursor-pointer items-center">
+                  <input
+                    type="checkbox"
+                    checked={inputCategory.inStock.isChecked}
+                    onChange={() =>
+                      setInputCategory({
+                        ...inputCategory,
+                        inStock: {
+                          text: "instock",
+                          isChecked: !inputCategory.inStock.isChecked,
+                        },
+                      })
+                    }
+                    className="checkbox"
+                  />
+                  <span className="label-text ml-2 text-sm text-[var(--site-text)]">In stock</span>
+                </label>
+              </div>
 
-      <div className="divider"></div>
-      <div className="flex flex-col gap-y-1">
-        <h3 className="text-xl font-bold mb-2">Price</h3>
-        <div>
-          <input
-            type="range"
-            min={0}
-            max={3000}
-            step={10}
-            value={inputCategory.priceFilter.value}
-            className="range"
-            onChange={(e) =>
-              setInputCategory({
-                ...inputCategory,
-                priceFilter: {
-                  text: "price",
-                  value: Number(e.target.value),
-                },
-              })
-            }
-          />
-          <span className="text-[var(--site-muted)]">{`Max price: $${inputCategory.priceFilter.value}`}</span>
-        </div>
-      </div>
+              <div className="form-control">
+                <label className="flex cursor-pointer items-center">
+                  <input
+                    type="checkbox"
+                    checked={inputCategory.outOfStock.isChecked}
+                    onChange={() =>
+                      setInputCategory({
+                        ...inputCategory,
+                        outOfStock: {
+                          text: "outofstock",
+                          isChecked: !inputCategory.outOfStock.isChecked,
+                        },
+                      })
+                    }
+                    className="checkbox"
+                  />
+                  <span className="label-text ml-2 text-sm text-[var(--site-text)]">
+                    Out of stock
+                  </span>
+                </label>
+              </div>
+            </div>
 
-      <div className="divider"></div>
+            <div className="flex flex-col gap-y-1">
+              <h3 className="mb-2 text-sm font-bold">Price</h3>
+              <div>
+                <input
+                  type="range"
+                  min={0}
+                  max={3000}
+                  step={10}
+                  value={inputCategory.priceFilter.value}
+                  className="range"
+                  onChange={(e) =>
+                    setInputCategory({
+                      ...inputCategory,
+                      priceFilter: {
+                        text: "price",
+                        value: Number(e.target.value),
+                      },
+                    })
+                  }
+                />
+                <span className="text-sm text-[var(--site-muted)]">{`Max price: $${inputCategory.priceFilter.value}`}</span>
+              </div>
+            </div>
 
-      <div>
-        <h3 className="text-xl font-bold mb-2">Minimum Rating:</h3>
-        <input
-          type="range"
-          min={0}
-          max="5"
-          value={inputCategory.ratingFilter.value}
-          onChange={(e) =>
-            setInputCategory({
-              ...inputCategory,
-              ratingFilter: { text: "rating", value: Number(e.target.value) },
-            })
-          }
-          className="range range-info"
-          step="1"
-        />
-        <div className="w-full flex justify-between text-xs px-2">
-          <span>0</span>
-          <span>1</span>
-          <span>2</span>
-          <span>3</span>
-          <span>4</span>
-          <span>5</span>
+            <div>
+              <h3 className="mb-2 text-sm font-bold">Minimum Rating:</h3>
+              <input
+                type="range"
+                min={0}
+                max="5"
+                value={inputCategory.ratingFilter.value}
+                onChange={(e) =>
+                  setInputCategory({
+                    ...inputCategory,
+                    ratingFilter: { text: "rating", value: Number(e.target.value) },
+                  })
+                }
+                className="range range-info"
+                step="1"
+              />
+              <div className="flex w-full justify-between px-2 text-xs">
+                <span>0</span>
+                <span>1</span>
+                <span>2</span>
+                <span>3</span>
+                <span>4</span>
+                <span>5</span>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

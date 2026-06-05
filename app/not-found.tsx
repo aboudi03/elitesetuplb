@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { contactEmails } from "@/lib/utils";
 
 export default function NotFound() {
   return (
@@ -17,7 +18,7 @@ export default function NotFound() {
           <Link href="/" className="theme-button rounded-md px-3.5 py-2.5 text-sm font-semibold shadow-sm">
             Go back home
           </Link>
-          <Link href="#" className="text-sm font-semibold text-[var(--site-accent)] hover:underline hover:underline-offset-4">
+          <Link href={`mailto:${contactEmails.support}`} className="text-sm font-semibold text-[var(--site-accent)] hover:underline hover:underline-offset-4">
             Contact support <span aria-hidden="true">&rarr;</span>
           </Link>
         </div>
