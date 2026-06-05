@@ -119,7 +119,6 @@ const AddNewProduct = () => {
         setProduct({
           ...createEmptyProduct(),
           merchantId: merchants[0]?.id || "",
-          categoryId: categories[0]?.id || "",
         });
         setPendingMainImageFile(null);
         setMainImagePreviewUrl("");
@@ -219,10 +218,7 @@ const AddNewProduct = () => {
       .then((data) => {
         const categoriesData = Array.isArray(data) ? data : [];
         setCategories(categoriesData);
-        setProduct((currentProduct) => ({
-          ...currentProduct,
-          categoryId: currentProduct.categoryId || categoriesData[0]?.id || "",
-        }));
+        // Do not auto-select a category — keep it optional/blank by default
       })
       .catch(() => {
         setCategories([]);
@@ -314,6 +310,7 @@ const AddNewProduct = () => {
                   value={product?.categoryId}
                   onChange={(e) => setProduct({ ...product, categoryId: e.target.value })}
                 >
+                  <option value="">Uncategorized</option>
                   {categories.map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.name}
