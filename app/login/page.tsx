@@ -7,7 +7,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { FcGoogle } from "react-icons/fc";
 
 const LoginPage = () => {
   const router = useRouter();
@@ -145,18 +144,22 @@ const LoginPage = () => {
                 </div>
               </div>
 
-              <div className="mt-6 grid grid-cols-2 gap-4">
+              <div className="mt-6 grid grid-cols-2 gap-4 opacity-50">
                 <button
-                  className="flex w-full items-center justify-center gap-3 rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 py-2 text-[var(--site-text)]"
-                  onClick={() => signIn("google")}
+                  type="button"
+                  disabled
+                  className="flex w-full cursor-not-allowed items-center justify-center gap-3 rounded-md border border-dashed border-[var(--site-border)] bg-transparent px-3 py-2 text-[var(--site-muted)]"
+                  aria-disabled="true"
                 >
-                  <FcGoogle />
+                  <span className="text-sm font-bold leading-6">G</span>
                   <span className="text-sm font-semibold leading-6">Google</span>
                 </button>
 
                 <button
-                  className="flex w-full items-center justify-center gap-3 rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 py-2 text-[var(--site-text)]"
-                  onClick={() => signIn("github")}
+                  type="button"
+                  disabled
+                  className="flex w-full cursor-not-allowed items-center justify-center gap-3 rounded-md border border-dashed border-[var(--site-border)] bg-transparent px-3 py-2 text-[var(--site-muted)]"
+                  aria-disabled="true"
                 >
                   <svg className="h-5 w-5" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20">
                     <path
@@ -178,7 +181,7 @@ const LoginPage = () => {
                   href="/register"
                   className="mt-3 inline-flex w-full items-center justify-center rounded-md border border-[var(--site-accent)] bg-[var(--site-accent-soft)] px-4 py-2 text-sm font-bold text-[var(--site-accent)] transition hover:bg-[var(--site-accent)] hover:text-white"
                 >
-                  Create customer account
+                  Create an account
                 </Link>
               </div>
             </div>

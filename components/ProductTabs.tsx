@@ -14,12 +14,90 @@ import React, { useEffect, useRef, useState } from "react";
 import { formatCategoryName } from "@/utils/categoryFormating";
 import { sanitize, sanitizeHtml } from "@/lib/sanitize";
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
+
+function formatPlainDescription(value: string) {
+  const sectionLabels = [
+    "Summary",
+    "Package Content",
+    "Features",
+    "Description",
+  ];
+  const specLabels = [
+    "DPI",
+    "Switch Lifetime",
+    "Lighting Effects",
+    "Size",
+    "Weight",
+    "Cable",
+  ];
+  const allLabels = [...sectionLabels, ...specLabels];
+  const labelPattern = allLabels
+    .map((label) => label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join("|");
+
+  const lines = value
+    .replace(/\r\n/g, "\n")
+    .replace(new RegExp(`(${labelPattern}):`, "g"), "\n$1:\n")
+    .replace(/([a-z0-9])([A-Z][a-z])/g, "$1\n$2")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  let html = "";
+  let listOpen = false;
+
+  const closeList = () => {
+    if (!listOpen) return;
+    html += "</ol>";
+    listOpen = false;
+  };
+
+  lines.forEach((line) => {
+    if (sectionLabels.some((label) => line === `${label}:`)) {
+      closeList();
+      html += `<h2>${escapeHtml(line)}</h2>`;
+      return;
+    }
+
+    if (!listOpen) {
+      html += "<ol>";
+      listOpen = true;
+    }
+
+    html += `<li>${escapeHtml(line.replace(/^\d+\.\s*/, ""))}</li>`;
+  });
+
+  closeList();
+
+  return html || escapeHtml(value);
+}
+
+function formatDescription(value: string | null | undefined) {
+  if (!value || value.trim().length === 0) {
+    return "<p>This product has no description yet.</p>";
+  }
+
+  if (/<[a-z][\s\S]*>/i.test(value)) {
+    return sanitizeHtml(value);
+  }
+
+  return formatPlainDescription(value);
+}
+
 const ProductTabs = ({ product }: { product: Product }) => {
   const [currentProductTab, setCurrentProductTab] = useState<number>(0);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [canExpandDescription, setCanExpandDescription] = useState(false);
   const descriptionRef = useRef<HTMLDivElement>(null);
-  const sanitizedDescription = sanitizeHtml(product?.description);
+  const sanitizedDescription = formatDescription(product?.description);
 
   useEffect(() => {
     if (currentProductTab !== 0) return;
