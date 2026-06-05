@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
+        unoptimized: true,
         remotePatterns: [
           {
             protocol: 'https',
@@ -24,6 +25,16 @@ const nextConfig = {
           },
         ],
       },
+    async rewrites() {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:3001";
+
+      return [
+        {
+          source: "/uploads/:path*",
+          destination: `${apiBaseUrl}/uploads/:path*`,
+        },
+      ];
+    },
     env: {
         NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
     },

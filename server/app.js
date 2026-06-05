@@ -132,6 +132,13 @@ app.use(express.json());
 app.use(cors(corsOptionsDelegate));
 app.options("*", cors(corsOptionsDelegate));
 app.use(fileUpload());
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "..", "public", "uploads"), {
+    fallthrough: false,
+    maxAge: process.env.NODE_ENV === "production" ? "30d" : 0,
+  })
+);
 
 // Apply specific rate limiters to different route groups
 app.use("/api/users", userManagementLimiter);
