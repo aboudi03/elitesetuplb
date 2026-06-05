@@ -43,6 +43,7 @@ export { default as DashboardSidebar } from "./DashboardSidebar";
 export { default as StatsElement } from "./StatsElement";
 export { default as DashboardProductTable } from "./DashboardProductTable";
 export { default as DataTable } from "./ui/DataTable";
+export { default as RichTextEditor } from "./RichTextEditor";
 export { default as AdminOrders } from "./AdminOrders";
 export { default as OrderItem } from "./OrderItem";
 export { default as NotificationBell } from "./NotificationBell";

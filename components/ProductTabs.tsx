@@ -41,10 +41,10 @@ const ProductTabs = ({ product }: { product: Product }) => {
       </div>
       <div className="pt-5">
         {currentProductTab === 0 && (
-          <div 
-            className="text-lg max-sm:text-base max-sm:text-sm"
-            dangerouslySetInnerHTML={{ 
-              __html: sanitizeHtml(product?.description) 
+          <div
+            className="rich-text-content text-lg text-[var(--site-text)] max-sm:text-base"
+            dangerouslySetInnerHTML={{
+              __html: sanitizeHtml(product?.description)
             }}
           />
         )}

@@ -791,3 +791,64 @@ html[data-theme] .admin-data-table tbody tr:hover .admin-table-select * {
       ),
       linear-gradient(-45deg, white 50%, #a1a1aa 50.99%);
 }
+
+.rich-text-content {
+    line-height: 1.75;
+    word-break: break-word;
+}
+
+.rich-text-content:empty::before {
+    content: "Write the product description...";
+    color: var(--site-muted);
+}
+
+.rich-text-content h2 {
+    margin: 0.75rem 0 0.45rem;
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.rich-text-content h3 {
+    margin: 0.65rem 0 0.35rem;
+    font-size: 1.1rem;
+    font-weight: 750;
+    line-height: 1.3;
+}
+
+.rich-text-content p,
+.rich-text-content div {
+    margin: 0.45rem 0;
+}
+
+.rich-text-content ul,
+.rich-text-content ol {
+    margin: 0.65rem 0;
+    padding-left: 1.5rem;
+}
+
+.rich-text-content li {
+    margin: 0.25rem 0;
+}
+
+.rich-text-content ul[data-list="checklist"] {
+    list-style: none;
+    padding-left: 0;
+}
+
+.rich-text-content ul[data-list="checklist"] li {
+    position: relative;
+    padding-left: 1.8rem;
+}
+
+.rich-text-content ul[data-list="checklist"] li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.48em;
+    width: 0.95rem;
+    height: 0.95rem;
+    border: 2px solid var(--site-accent);
+    border-radius: 0.2rem;
+    background: transparent;
+}

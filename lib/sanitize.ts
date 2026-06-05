@@ -38,12 +38,31 @@ export function sanitize(text: string | null | undefined): string {
  */
 export function sanitizeHtml(text: string | null | undefined): string {
   if (!text) return '';
-  
+
+  const allowedTags = [
+    'p',
+    'br',
+    'strong',
+    'em',
+    'u',
+    'b',
+    'i',
+    'span',
+    'font',
+    'h2',
+    'h3',
+    'ul',
+    'ol',
+    'li',
+    'div',
+  ];
+  const allowedAttributes = ['style', 'class', 'data-list', 'color', 'face'];
+
   // For client-side, use DOMPurify with limited allowed tags
   if (typeof window !== 'undefined') {
     return DOMPurify.sanitize(text, {
-      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'b', 'i'],
-      ALLOWED_ATTR: [],
+      ALLOWED_TAGS: allowedTags,
+      ALLOWED_ATTR: allowedAttributes,
       KEEP_CONTENT: true,
       FORBID_TAGS: ['script', 'img', 'iframe', 'object', 'embed', 'form', 'input', 'button', 'link', 'meta', 'style'],
       FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur', 'onchange', 'onsubmit', 'onreset', 'onselect', 'onkeydown', 'onkeyup', 'onkeypress']

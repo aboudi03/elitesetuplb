@@ -1,6 +1,7 @@
 "use client";
-import { DashboardSidebar } from "@/components";
+import { DashboardSidebar, RichTextEditor } from "@/components";
 import ProductResearchAssistant from "@/components/ProductResearchAssistant";
+import { sanitizeFormData } from "@/lib/form-sanitize";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState, use } from "react";
@@ -89,10 +90,12 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
         }
       }
 
-      const response = await apiClient.put(`/api/products/${id}`, {
+      const sanitizedProduct = sanitizeFormData({
         ...product,
         mainImage: mainImagePath,
       });
+
+      const response = await apiClient.put(`/api/products/${id}`, sanitizedProduct);
 
       if (response.status === 200) {
         await response.json();
@@ -387,16 +390,16 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
                 />
               </label>
 
-              <label className="block md:col-span-2">
+              <div className="block md:col-span-2">
                 <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
                   Product description
                 </span>
-                <textarea
-                  className={`${fieldClassName} min-h-[220px]`}
+                <RichTextEditor
                   value={product?.description || ""}
-                  onChange={(e) => setProduct({ ...product!, description: e.target.value })}
+                  onChange={(description) => setProduct({ ...product!, description })}
+                  minHeightClassName="min-h-[240px]"
                 />
-              </label>
+              </div>
             </div>
           </section>
 

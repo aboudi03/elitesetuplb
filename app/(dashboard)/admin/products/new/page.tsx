@@ -1,5 +1,5 @@
 "use client";
-import { DashboardSidebar } from "@/components";
+import { DashboardSidebar, RichTextEditor } from "@/components";
 import ProductResearchAssistant from "@/components/ProductResearchAssistant";
 import apiClient, { getRuntimeApiBaseUrl } from "@/lib/api";
 import { sanitizeFormData } from "@/lib/form-sanitize";
@@ -359,14 +359,14 @@ const AddNewProduct = () => {
                 />
               </label>
 
-              <label className="block md:col-span-2">
+              <div className="block md:col-span-2">
                 <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">Description</span>
-                <textarea
-                  className={`${fieldClassName} min-h-[190px]`}
+                <RichTextEditor
                   value={product?.description}
-                  onChange={(e) => setProduct({ ...product, description: e.target.value })}
+                  onChange={(description) => setProduct({ ...product, description })}
+                  minHeightClassName="min-h-[220px]"
                 />
-              </label>
+              </div>
             </div>
           </section>
 
