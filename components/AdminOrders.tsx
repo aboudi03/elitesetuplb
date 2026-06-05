@@ -61,6 +61,22 @@ const getApiErrorMessage = (errorData: any, fallback: string) => {
   return fallback;
 };
 
+const readApiResponse = async (response: Response, fallback: string) => {
+  let data: any = null;
+
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+
+  if (!response.ok) {
+    throw new Error(getApiErrorMessage(data, fallback));
+  }
+
+  return data;
+};
+
 const AdminOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [statusOptions, setStatusOptions] = useState<OrderStatusOption[]>([]);
@@ -69,18 +85,29 @@ const AdminOrders = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [ordersResponse, statusesResponse] = await Promise.all([
-          apiClient.get("/api/orders"),
-          apiClient.get("/api/order-statuses"),
-        ]);
-        const ordersData = await ordersResponse.json();
-        const statusesData = await statusesResponse.json();
+        const ordersResponse = await apiClient.get("/api/orders");
+        const ordersData = await readApiResponse(
+          ordersResponse,
+          "Failed to load orders from the backend"
+        );
+
+        const statusesResponse = await apiClient.get("/api/order-statuses");
+        const statusesData = await readApiResponse(
+          statusesResponse,
+          "Failed to load order statuses from the backend"
+        );
 
         setOrders(ordersData?.orders || []);
         setStatusOptions(statusesData?.statuses || []);
       } catch (error) {
-        console.error(error);
-        toast.error("Failed to load orders");
+        console.error("Failed to load orders:", error);
+        toast.error(
+          error instanceof TypeError
+            ? "Backend is not reachable"
+            : error instanceof Error
+              ? error.message
+              : "Failed to load orders"
+        );
       } finally {
         setLoading(false);
       }

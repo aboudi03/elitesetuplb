@@ -22,6 +22,7 @@ const heroSlidesRouter = require("./routes/heroSlides");
 const orderStatusesRouter = require("./routes/orderStatuses");
 const dashboardMetricsRouter = require("./routes/dashboardMetrics");
 const cartEventsRouter = require("./routes/cartEvents");
+const prisma = require("./utills/db");
 var cors = require("cors");
 
 // Import logging middleware
@@ -55,6 +56,14 @@ const normalizeOrigin = (value) => {
   return value.trim().replace(/\/+$/, "");
 };
 
+const getHostname = (value) => {
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return "";
+  }
+};
+
 // Trust proxy for accurate IP addresses
 app.set('trust proxy', 1);
 
@@ -79,15 +88,22 @@ const allowedOrigins = [
   .map(normalizeOrigin)
   .filter(Boolean); // Remove undefined values
 
-// CORS configuration with origin validation
-const corsOptions = {
-  origin: function (origin, callback) {
+const createCorsOptions = (req) => ({
+  origin(origin, callback) {
     const normalizedOrigin = normalizeOrigin(origin);
 
     if (!origin) return callback(null, true);
-    
 
     if (allowedOrigins.includes(normalizedOrigin)) {
+      return callback(null, true);
+    }
+
+    const requestHost = normalizeOrigin(`${req.protocol}://${req.get("host") || ""}`);
+    if (
+      process.env.NODE_ENV === "production" &&
+      getHostname(normalizedOrigin) &&
+      getHostname(normalizedOrigin) === getHostname(requestHost)
+    ) {
       return callback(null, true);
     }
     
@@ -103,14 +119,18 @@ const corsOptions = {
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true, // Allow cookies and authorization headers
+});
+
+const corsOptionsDelegate = (req, callback) => {
+  callback(null, createCorsOptions(req));
 };
 
 // Apply general rate limiting to all routes
 app.use(generalLimiter);
 
 app.use(express.json());
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+app.use(cors(corsOptionsDelegate));
+app.options("*", cors(corsOptionsDelegate));
 app.use(fileUpload());
 
 // Apply specific rate limiters to different route groups
@@ -159,6 +179,27 @@ app.get('/health', (req, res) => {
     rateLimiting: 'enabled',
     requestId: req.reqId
   });
+});
+
+app.get('/health/db', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.status(200).json({
+      status: 'OK',
+      database: 'connected',
+      timestamp: new Date().toISOString(),
+      requestId: req.reqId
+    });
+  } catch (error) {
+    console.error('Database health check failed:', error);
+    res.status(503).json({
+      status: 'ERROR',
+      database: 'disconnected',
+      error: error.message,
+      timestamp: new Date().toISOString(),
+      requestId: req.reqId
+    });
+  }
 });
 
 // Rate limit info endpoint

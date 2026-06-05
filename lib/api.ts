@@ -1,10 +1,28 @@
 import config from './config';
 
+function getRuntimeApiBaseUrl() {
+  if (typeof window === "undefined") {
+    return config.apiBaseUrl;
+  }
+
+  try {
+    const apiUrl = new URL(config.apiBaseUrl);
+
+    if (["localhost", "127.0.0.1", "::1"].includes(apiUrl.hostname)) {
+      apiUrl.hostname = window.location.hostname;
+    }
+
+    return apiUrl.toString().replace(/\/+$/, "");
+  } catch {
+    return config.apiBaseUrl;
+  }
+}
+
 export const apiClient = {
   baseUrl: config.apiBaseUrl,
   
   async request(endpoint: string, options: RequestInit = {}) {
-    const url = `${this.baseUrl}${endpoint}`;
+    const url = `${getRuntimeApiBaseUrl()}${endpoint}`;
     
     const defaultOptions: RequestInit = {
       headers: {
