@@ -3,11 +3,10 @@ import {
   UrgencyText,
 
   ProductTabs,
+  ProductImageGallery,
   SingleProductDynamicFields,
-  
 } from "@/components";
 import apiClient from "@/lib/api";
-import Image from "next/image";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import React from "react";
@@ -147,27 +146,11 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
       />
       <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-center gap-x-16 gap-y-8 pt-10 max-lg:flex-col">
-          <div className="w-full max-w-xl">
-            <Image
-              src={product?.mainImage ? `/${product?.mainImage}` : "/product_placeholder.jpg"}
-              width={500}
-              height={500}
-              alt={stripHtml(product?.title)}
-              className="mx-auto h-auto max-h-[520px] w-auto max-w-full object-contain"
-            />
-            <div className="flex justify-around mt-5 flex-wrap gap-y-1 max-[500px]:justify-center max-[500px]:gap-x-1">
-              {images?.map((imageItem: ImageItem, key: number) => (
-                <Image
-                  key={imageItem.imageID + key}
-                  src={`/${imageItem.image}`}
-                  width={100}
-                  height={100}
-                  alt={`${stripHtml(product?.title)} image ${key + 1}`}
-                  className="h-20 w-20 object-contain"
-                />
-              ))}
-            </div>
-          </div>
+          <ProductImageGallery
+            mainImage={product?.mainImage}
+            images={images}
+            title={stripHtml(product?.title)}
+          />
           <div className="flex w-full max-w-xl flex-col gap-y-7 max-[500px]:text-center">
         
             <h1 className="break-words text-3xl max-sm:text-2xl">{sanitize(product?.title)}</h1>

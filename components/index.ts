@@ -22,6 +22,7 @@ export { default as StockAvailabillity } from "./StockAvailabillity";
 export { default as ColorInput } from "./ColorInput";
 
 export { default as ProductTabs } from "./ProductTabs";
+export { default as ProductImageGallery } from "./ProductImageGallery";
 
 
 export { default as CustomButton } from "./CustomButton";

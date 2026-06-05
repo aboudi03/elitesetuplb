@@ -10,12 +10,32 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { formatCategoryName } from "@/utils/categoryFormating";
 import { sanitize, sanitizeHtml } from "@/lib/sanitize";
 
 const ProductTabs = ({ product }: { product: Product }) => {
   const [currentProductTab, setCurrentProductTab] = useState<number>(0);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [canExpandDescription, setCanExpandDescription] = useState(false);
+  const descriptionRef = useRef<HTMLDivElement>(null);
+  const sanitizedDescription = sanitizeHtml(product?.description);
+
+  useEffect(() => {
+    if (currentProductTab !== 0) return;
+
+    const checkOverflow = () => {
+      const descriptionElement = descriptionRef.current;
+      if (!descriptionElement) return;
+
+      setCanExpandDescription(descriptionElement.scrollHeight > descriptionElement.clientHeight + 8);
+    };
+
+    checkOverflow();
+    window.addEventListener("resize", checkOverflow);
+
+    return () => window.removeEventListener("resize", checkOverflow);
+  }, [currentProductTab, sanitizedDescription, isDescriptionExpanded]);
 
   return (
     <div className="px-5 text-black">
@@ -41,12 +61,29 @@ const ProductTabs = ({ product }: { product: Product }) => {
       </div>
       <div className="pt-5">
         {currentProductTab === 0 && (
-          <div
-            className="rich-text-content text-lg text-[var(--site-text)] max-sm:text-base"
-            dangerouslySetInnerHTML={{
-              __html: sanitizeHtml(product?.description)
-            }}
-          />
+          <div className="border-y border-[var(--site-border)] py-5">
+            <div
+              ref={descriptionRef}
+              className={`rich-text-content text-lg text-[var(--site-text)] transition-[max-height] duration-300 max-sm:text-base ${
+                isDescriptionExpanded ? "max-h-none" : "max-h-[170px] overflow-hidden"
+              }`}
+              dangerouslySetInnerHTML={{
+                __html: sanitizedDescription
+              }}
+            />
+            {canExpandDescription || isDescriptionExpanded ? (
+              <div className="mt-4 flex justify-center">
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--site-accent)] transition hover:text-[var(--site-accent-strong)]"
+                  onClick={() => setIsDescriptionExpanded((current) => !current)}
+                >
+                  {isDescriptionExpanded ? "Show Less" : "Show More"}
+                  <span aria-hidden="true">{isDescriptionExpanded ? "^" : "v"}</span>
+                </button>
+              </div>
+            ) : null}
+          </div>
         )}
 
         {currentProductTab === 1 && (
