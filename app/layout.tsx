@@ -23,6 +23,10 @@ export const metadata: Metadata = {
   description:
     "Shop electronics, gaming PCs, laptops, PC parts, accessories, and setup essentials in Lebanon.",
   applicationName: STORE_NAME,
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-icon.png",
+  },
   openGraph: {
     type: "website",
     siteName: STORE_NAME,
