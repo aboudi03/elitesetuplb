@@ -44,8 +44,8 @@ type ProductInWishlist = {
 };
 
 interface OtherImages {
-  imageID: number;
-  productID: number;
+  imageID: string;
+  productID: string;
   image: string;
 }
 

@@ -1,3 +1,5 @@
+const fs = require("fs");
+const path = require("path");
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
@@ -80,6 +82,37 @@ async function deleteImage(request, response) {
   }
 }
 
+async function deleteSingleImage(request, response) {
+  try {
+    const { imageId } = request.params;
+
+    const existingImage = await prisma.image.findUnique({
+      where: { imageID: String(imageId) },
+    });
+
+    if (!existingImage) {
+      return response.status(404).json({ error: "Image not found" });
+    }
+
+    const absoluteImagePath = path.join(__dirname, "..", "..", "public", existingImage.image);
+
+    await prisma.image.delete({
+      where: {
+        imageID: String(imageId),
+      },
+    });
+
+    if (fs.existsSync(absoluteImagePath)) {
+      fs.rmSync(absoluteImagePath, { force: true });
+    }
+
+    return response.status(204).send();
+  } catch (error) {
+    console.error("Error deleting single image:", error);
+    return response.status(500).json({ error: "Error deleting image" });
+  }
+}
+
 
 
 module.exports = {
@@ -87,4 +120,5 @@ module.exports = {
   createImage,
   updateImage,
   deleteImage,
+  deleteSingleImage,
 };

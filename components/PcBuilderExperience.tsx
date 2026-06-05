@@ -33,9 +33,10 @@ const PcBuilderExperience = () => {
           return;
         }
 
-        setCategories(data.categories);
+        const nextCategories = Array.isArray(data?.categories) ? data.categories : [];
+        setCategories(nextCategories);
         const defaults = Object.fromEntries(
-          data.categories.map((category) => [category.key, category.options[0]?.id || ""])
+          nextCategories.map((category) => [category.key, category.options[0]?.id || ""])
         ) as Partial<Record<PcBuilderCategoryKey, string>>;
         setSelections(defaults);
       } catch (error) {

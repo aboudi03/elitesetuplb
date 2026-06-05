@@ -9,6 +9,12 @@ import { nanoid } from "nanoid";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
+type PendingGalleryImage = {
+  id: string;
+  file: File;
+  previewUrl: string;
+};
+
 const createEmptyProduct = () => ({
   id: nanoid(),
   merchantId: "",
@@ -43,6 +49,10 @@ const AddNewProduct = () => {
   }>(createEmptyProduct);
   const [categories, setCategories] = useState<Category[]>([]);
   const [merchants, setMerchants] = useState<Merchant[]>([]);
+  const [otherImages, setOtherImages] = useState<OtherImages[]>([]);
+  const [pendingMainImageFile, setPendingMainImageFile] = useState<File | null>(null);
+  const [mainImagePreviewUrl, setMainImagePreviewUrl] = useState("");
+  const [pendingGalleryImages, setPendingGalleryImages] = useState<PendingGalleryImage[]>([]);
 
   const fieldClassName =
     "block w-full rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 py-3 text-base text-[var(--site-text)] shadow-sm outline-none transition focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent-soft)]";
@@ -62,18 +72,67 @@ const AddNewProduct = () => {
     }
 
     try {
-      const sanitizedProduct = sanitizeFormData(product);
+      let mainImagePath = product.mainImage;
+
+      if (pendingMainImageFile) {
+        mainImagePath = await uploadFile(pendingMainImageFile, product.id);
+        if (!mainImagePath) {
+          toast.error("Failed to upload main image");
+          return;
+        }
+      }
+
+      const sanitizedProduct = sanitizeFormData({
+        ...product,
+        mainImage: mainImagePath,
+      });
       const response = await apiClient.post(`/api/products`, sanitizedProduct);
 
-        if (response.status === 201) {
-          await response.json();
-          toast.success("Product added successfully");
-          setProduct({
-            ...createEmptyProduct(),
-            merchantId: merchants[0]?.id || "",
-            categoryId: categories[0]?.id || "",
+      if (response.status === 201) {
+        await response.json();
+
+        const uploadedGalleryImages: OtherImages[] = [];
+        for (const image of pendingGalleryImages) {
+          const uploadedPath = await uploadGalleryFile(image.file, product.id);
+          if (!uploadedPath) {
+            continue;
+          }
+
+          const imageResponse = await apiClient.post("/api/images", {
+            productID: product.id,
+            image: uploadedPath,
           });
-        } else {
+          const imageRecord = await imageResponse.json();
+
+          if (imageResponse.ok) {
+            uploadedGalleryImages.push(imageRecord);
+          }
+        }
+
+        if (mainImagePreviewUrl) {
+          URL.revokeObjectURL(mainImagePreviewUrl);
+        }
+        pendingGalleryImages.forEach((image) => {
+          URL.revokeObjectURL(image.previewUrl);
+        });
+        toast.success("Product added successfully");
+        setProduct({
+          ...createEmptyProduct(),
+          merchantId: merchants[0]?.id || "",
+          categoryId: categories[0]?.id || "",
+        });
+        setPendingMainImageFile(null);
+        setMainImagePreviewUrl("");
+        setPendingGalleryImages([]);
+        setOtherImages([]);
+        if (uploadedGalleryImages.length > 0) {
+          toast.success(
+            `${uploadedGalleryImages.length} gallery image${
+              uploadedGalleryImages.length > 1 ? "s were" : " was"
+            } added`
+          );
+        }
+      } else {
         const errorData = await response.json();
         toast.error(errorData.error || errorData.message || "Failed to add product");
       }
@@ -86,21 +145,22 @@ const AddNewProduct = () => {
   const fetchMerchants = async () => {
     try {
       const res = await apiClient.get("/api/merchants");
-      const data: Merchant[] = await res.json();
-      setMerchants(data || []);
+      const data = await res.json();
+      const merchantsData: Merchant[] = Array.isArray(data) ? data : [];
+      setMerchants(merchantsData);
       setProduct((prev) => ({
         ...prev,
-        merchantId: prev.merchantId || data?.[0]?.id || "",
+        merchantId: prev.merchantId || merchantsData[0]?.id || "",
       }));
     } catch (e) {
       toast.error("Failed to load merchants");
     }
   };
 
-  const uploadFile = async (file: File) => {
+  const uploadFile = async (file: File, productId: string) => {
     const formData = new FormData();
     formData.append("uploadedFile", file);
-    formData.append("productId", product.id);
+    formData.append("productId", productId);
 
     try {
       const response = await fetch(`${getRuntimeApiBaseUrl()}/api/main-image`, {
@@ -119,16 +179,54 @@ const AddNewProduct = () => {
     return "";
   };
 
+  const uploadGalleryFile = async (file: File, productId: string) => {
+    const formData = new FormData();
+    formData.append("uploadedFile", file);
+    formData.append("productId", productId);
+    formData.append("assetType", "gallery");
+
+    try {
+      const response = await fetch(`${getRuntimeApiBaseUrl()}/api/main-image`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.path as string;
+      }
+    } catch (error) {
+      console.error("Error happened while sending gallery request:", error);
+    }
+
+    return "";
+  };
+
+  const selectGalleryImages = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const nextImages = Array.from(files).map((file) => ({
+      id: `${file.name}-${file.lastModified}-${Math.random().toString(36).slice(2, 8)}`,
+      file,
+      previewUrl: URL.createObjectURL(file),
+    }));
+    setPendingGalleryImages((currentImages) => [...currentImages, ...nextImages]);
+  };
+
   const fetchCategories = async () => {
     apiClient
       .get(`/api/categories`)
       .then((res) => res.json())
       .then((data) => {
-        setCategories(data);
+        const categoriesData = Array.isArray(data) ? data : [];
+        setCategories(categoriesData);
         setProduct((currentProduct) => ({
           ...currentProduct,
-          categoryId: currentProduct.categoryId || data[0]?.id || "",
+          categoryId: currentProduct.categoryId || categoriesData[0]?.id || "",
         }));
+      })
+      .catch(() => {
+        setCategories([]);
+        toast.error("Failed to load categories");
       });
   };
 
@@ -146,6 +244,17 @@ const AddNewProduct = () => {
     fetchCategories();
     fetchMerchants();
   }, []);
+
+  const removePendingGalleryImage = (imageId: string) => {
+    setPendingGalleryImages((currentImages) => {
+      const imageToRemove = currentImages.find((image) => image.id === imageId);
+      if (imageToRemove) {
+        URL.revokeObjectURL(imageToRemove.previewUrl);
+      }
+
+      return currentImages.filter((image) => image.id !== imageId);
+    });
+  };
 
   return (
     <div className="mx-auto flex max-w-screen-2xl justify-start gap-y-5 bg-[var(--site-bg)] text-[var(--site-text)] xl:h-full max-xl:flex-col">
@@ -349,20 +458,21 @@ const AddNewProduct = () => {
                 <input
                   type="file"
                   className="file-input file-input-bordered file-input-lg w-full"
-                  onChange={async (e: any) => {
-                    const selectedFile = e.target.files[0];
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    const selectedFile = e.target.files?.[0];
                     if (!selectedFile) return;
 
-                    const uploadedPath = await uploadFile(selectedFile);
-                    if (uploadedPath) {
-                      setProduct({ ...product, mainImage: uploadedPath });
+                    if (mainImagePreviewUrl) {
+                      URL.revokeObjectURL(mainImagePreviewUrl);
                     }
+                    setPendingMainImageFile(selectedFile);
+                    setMainImagePreviewUrl(URL.createObjectURL(selectedFile));
                   }}
                 />
                 <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-dashed border-[var(--site-border)] bg-[var(--site-panel-soft)] p-6">
-                  {product?.mainImage ? (
+                  {mainImagePreviewUrl || product?.mainImage ? (
                     <Image
-                      src={`/` + product?.mainImage}
+                      src={mainImagePreviewUrl || `/${product?.mainImage}`}
                       alt={product?.title || "Product preview"}
                       className="h-auto max-h-[220px] w-auto object-contain"
                       width={220}
@@ -372,6 +482,57 @@ const AddNewProduct = () => {
                     <p className="text-center text-sm text-[var(--site-muted)]">
                       Upload an image to preview it here.
                     </p>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            <section className={sectionClassName}>
+              <div className="mb-6">
+                <h2 className="text-2xl font-semibold">Gallery images</h2>
+                <p className="mt-2 text-sm text-[var(--site-muted)]">
+                  Add extra product shots. You can upload several images at once.
+                </p>
+              </div>
+
+              <div className="space-y-5">
+                <input
+                  type="file"
+                  multiple
+                  className="file-input file-input-bordered file-input-lg w-full"
+                  onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
+                    await selectGalleryImages(e.target.files);
+                    e.target.value = "";
+                  }}
+                />
+                <div className="grid min-h-[180px] grid-cols-2 gap-3 rounded-2xl border border-dashed border-[var(--site-border)] bg-[var(--site-panel-soft)] p-4 sm:grid-cols-3">
+                  {pendingGalleryImages.length > 0 ? (
+                    pendingGalleryImages.map((image) => (
+                      <div
+                        key={image.id}
+                        className="group relative flex aspect-square items-center justify-center rounded-xl border border-[var(--site-border)] bg-[var(--site-panel)] p-3"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => removePendingGalleryImage(image.id)}
+                          className="absolute right-2 top-2 z-10 hidden h-7 w-7 items-center justify-center rounded-full bg-black/75 text-sm font-bold text-white transition hover:bg-black group-hover:inline-flex"
+                          aria-label="Remove gallery image"
+                        >
+                          x
+                        </button>
+                        <Image
+                          src={image.previewUrl}
+                          alt="Gallery preview"
+                          width={140}
+                          height={140}
+                          className="h-full w-full object-contain"
+                        />
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-full flex items-center justify-center text-center text-sm text-[var(--site-muted)]">
+                      Upload a few extra angles to build the product gallery.
+                    </div>
                   )}
                 </div>
               </div>

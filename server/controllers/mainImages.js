@@ -9,6 +9,10 @@ async function uploadMainImage(req, res) {
   const uploadedFile = req.files.uploadedFile;
   const safeName = uploadedFile.name.replace(/[^a-zA-Z0-9._-]/g, "-");
   const productId = typeof req.body?.productId === "string" ? req.body.productId.trim() : "";
+  const assetType =
+    typeof req.body?.assetType === "string" && req.body.assetType.trim() === "gallery"
+      ? "gallery"
+      : "main";
   const fileExtension = path.extname(safeName) || ".jpg";
 
   let uploadDir = path.join(__dirname, "..", "..", "public", "uploads");
@@ -27,7 +31,10 @@ async function uploadMainImage(req, res) {
       productId
     );
 
-    fileName = `main-image${fileExtension}`;
+    fileName =
+      assetType === "gallery"
+        ? `gallery-${Date.now()}-${safeName}`
+        : `main-image${fileExtension}`;
     relativePath = path.posix.join("uploads", "products", productId, fileName);
     destinationPath = path.join(uploadDir, fileName);
   } else {
@@ -38,7 +45,7 @@ async function uploadMainImage(req, res) {
 
   fs.mkdirSync(uploadDir, { recursive: true });
 
-  if (productId) {
+  if (productId && assetType === "main") {
     const existingMainImages = fs
       .readdirSync(uploadDir, { withFileTypes: true })
       .filter((entry) => entry.isFile() && /^main-image\./.test(entry.name))
