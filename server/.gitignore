@@ -14,6 +14,7 @@ logs/
 backups/
 *.sql
 !prisma/migrations/20260605195000_make_product_category_nullable/migration.sql
+!prisma/migrations/20260606001000_make_product_description_text/migration.sql
 *.dump
 *.backup
 
