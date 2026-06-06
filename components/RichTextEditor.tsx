@@ -38,6 +38,28 @@ function escapeHtml(value: string) {
     .replace(/'/g, "&#x27;");
 }
 
+function stripPastedThemeColors(html: string) {
+  const template = document.createElement("template");
+  template.innerHTML = html;
+
+  template.content.querySelectorAll<HTMLElement>("[style]").forEach((element) => {
+    element.style.removeProperty("background");
+    element.style.removeProperty("background-color");
+    element.style.removeProperty("color");
+
+    if (!element.getAttribute("style")?.trim()) {
+      element.removeAttribute("style");
+    }
+  });
+
+  template.content.querySelectorAll("[bgcolor], [color]").forEach((element) => {
+    element.removeAttribute("bgcolor");
+    element.removeAttribute("color");
+  });
+
+  return template.innerHTML;
+}
+
 const RichTextEditor = ({
   value,
   onChange,
@@ -81,7 +103,9 @@ const RichTextEditor = ({
 
     const html = event.clipboardData.getData("text/html");
     const text = event.clipboardData.getData("text/plain");
-    const content = html ? sanitizeHtml(html) : escapeHtml(text).replace(/\r?\n/g, "<br>");
+    const content = html
+      ? stripPastedThemeColors(sanitizeHtml(html))
+      : escapeHtml(text).replace(/\r?\n/g, "<br>");
 
     document.execCommand("insertHTML", false, content);
     emitChange();
