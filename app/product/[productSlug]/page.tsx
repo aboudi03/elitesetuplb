@@ -100,10 +100,24 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
   if (!product || product.error) {
     notFound();
   }
-  const productName = product.title || product.model || "Product";
+  const normalizedProduct = {
+    ...product,
+    title: product.title || "",
+    model: product.model || "",
+    slug: product.slug || paramsAwaited?.productSlug || "",
+    description: product.description || "",
+    manufacturer: product.manufacturer || "",
+    mainImage: product.mainImage || null,
+    sku: product.sku || "",
+    price: Number(product.price || 0),
+    inStock: Number(product.inStock || 0),
+    category:
+      product.category && typeof product.category === "object" ? product.category : null,
+  };
+  const productName = normalizedProduct.title || normalizedProduct.model || "Product";
 
   // sending API request for more than 1 product image if it exists
-  const imagesData = await apiClient.get(`/api/images/${product.id}`, {
+  const imagesData = await apiClient.get(`/api/images/${normalizedProduct.id}`, {
     cache: "no-store",
   });
   const rawImages = imagesData.ok ? await imagesData.json() : [];
@@ -113,27 +127,27 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
     "@context": "https://schema.org",
     "@type": "Product",
     name: stripHtml(productName),
-    image: [productImageUrl(product.mainImage)],
+    image: [productImageUrl(normalizedProduct.mainImage)],
     description: buildMetaDescription(
       `Buy ${stripHtml(productName)} in ${STORE_LOCATION} from ${STORE_NAME}.`,
-      product.description,
+      normalizedProduct.description,
       500
     ),
-    sku: product.sku || product.slug,
-    brand: product.manufacturer
+    sku: normalizedProduct.sku || normalizedProduct.slug,
+    brand: normalizedProduct.manufacturer
       ? {
           "@type": "Brand",
-          name: stripHtml(product.manufacturer),
+          name: stripHtml(normalizedProduct.manufacturer),
         }
       : undefined,
-    category: product.category?.name,
+    category: normalizedProduct.category?.name,
     offers: {
       "@type": "Offer",
-      url: absoluteUrl(`/product/${product.slug}`),
+      url: absoluteUrl(`/product/${normalizedProduct.slug}`),
       priceCurrency: "USD",
-      price: product.price,
+      price: normalizedProduct.price,
       availability:
-        product.inStock > 0
+        normalizedProduct.inStock > 0
           ? "https://schema.org/InStock"
           : "https://schema.org/OutOfStock",
       itemCondition: "https://schema.org/NewCondition",
@@ -149,26 +163,26 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
       <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-center gap-x-16 gap-y-8 pt-10 max-lg:flex-col">
           <ProductImageGallery
-            mainImage={product?.mainImage}
+            mainImage={normalizedProduct.mainImage}
             images={images}
             title={stripHtml(productName)}
           />
           <div className="flex w-full max-w-xl flex-col gap-y-7 max-[500px]:text-center">
         
             <h1 className="break-words text-3xl max-sm:text-2xl">{sanitize(productName)}</h1>
-            <p className="text-xl font-semibold">${Number(product?.price || 0).toFixed(2)}</p>
-            <StockAvailabillity stock={product?.inStock} inStock={product?.inStock} />
-            {product?.inStock > 0 && product?.inStock <= 5 && <UrgencyText stock={product?.inStock} />}
+            <p className="text-xl font-semibold">${normalizedProduct.price.toFixed(2)}</p>
+            <StockAvailabillity stock={normalizedProduct.inStock} inStock={normalizedProduct.inStock} />
+            {normalizedProduct.inStock > 0 && normalizedProduct.inStock <= 5 && <UrgencyText stock={normalizedProduct.inStock} />}
             <div className="flex flex-col gap-y-2 max-[500px]:items-center">
               <p className="text-lg">
-                SKU: <span className="ml-1">{product?.sku || product?.slug || "-"}</span>
+                SKU: <span className="ml-1">{normalizedProduct.sku || normalizedProduct.slug || "-"}</span>
               </p>
             </div>
-            <SingleProductDynamicFields product={product} />
+            <SingleProductDynamicFields product={normalizedProduct} />
           </div>
         </div>
         <div className="py-16">
-          <ProductTabs product={product} />
+          <ProductTabs product={normalizedProduct} />
         </div>
       </div>
     </div>
