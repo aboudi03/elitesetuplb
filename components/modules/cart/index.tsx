@@ -1,6 +1,7 @@
 "use client"
 
 import { useProductStore } from "@/app/_zustand/store";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Image from "next/image"
 import Link from "next/link";
@@ -10,6 +11,7 @@ import { sanitize } from "@/lib/sanitize";
 import { calculateCartGrandTotal, calculateCartTax } from "@/lib/cartPricing";
 
 export const CartModule = () => {
+  const [isMounted, setIsMounted] = useState(false);
   const cartState = useProductStore();
   const products = Array.isArray(cartState?.products) ? cartState.products : [];
   const total = typeof cartState?.total === "number" ? cartState.total : 0;
@@ -24,11 +26,24 @@ export const CartModule = () => {
   const taxTotal = calculateCartTax(products);
   const orderTotal = calculateCartGrandTotal(products, total);
 
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const handleRemoveItem = (cartItemId: string) => {
     removeFromCart(cartItemId);
     calculateTotals();
     toast.success("Product removed from the cart");
   };
+
+  if (!isMounted) {
+    return (
+      <div className="mt-12 rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] p-8 text-center">
+        <p className="text-sm text-[var(--site-muted)]">Loading cart...</p>
+      </div>
+    );
+  }
+
   return (
 
     <form className="mt-12 lg:grid lg:grid-cols-12 lg:items-start lg:gap-x-12 xl:gap-x-16">

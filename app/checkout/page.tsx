@@ -37,6 +37,7 @@ type CheckoutSuccessSummary = {
 
 const CheckoutPage = () => {
   const { data: session } = useSession();
+  const [isMounted, setIsMounted] = useState(false);
   const [checkoutForm, setCheckoutForm] = useState({
     name: "",
     lastname: "",
@@ -60,6 +61,10 @@ const CheckoutPage = () => {
   const orderTaxTotal = calculateCartTax(products);
   const orderGrandTotal = calculateCartGrandTotal(products, total);
   const whatsappHref = `https://wa.me/${pcBuilderWhatsAppNumber}`;
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const normalizeLebanesePhone = (value: string) => {
     let digits = value.replace(/\D/g, "");
@@ -424,16 +429,33 @@ const CheckoutPage = () => {
   };
 
   useEffect(() => {
+    if (!isMounted) {
+      return;
+    }
+
     if (products.length === 0) {
       toast.error("You don't have items in your cart");
       router.push("/cart");
     }
-  }, []);
+  }, [isMounted, products.length, router]);
 
   const closeSuccessDialog = () => {
     setSuccessSummary(null);
     router.push("/");
   };
+
+  if (!isMounted) {
+    return (
+      <div className="bg-[var(--site-bg)] text-[var(--site-text)]">
+        <SectionTitle title="Checkout" path="Home | Cart | Checkout" />
+        <main className="mx-auto max-w-screen-2xl px-4 py-16 sm:px-6 lg:px-8">
+          <div className="rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] p-8 text-center">
+            <p className="text-sm text-[var(--site-muted)]">Loading checkout...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[var(--site-bg)] text-[var(--site-text)]">
