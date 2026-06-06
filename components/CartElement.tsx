@@ -15,7 +15,8 @@ import { FaCartShopping } from 'react-icons/fa6'
 import { useProductStore } from "@/app/_zustand/store";
 
 const CartElement = () => {
-    const { allQuantity } = useProductStore();
+    const cartState = useProductStore();
+    const allQuantity = typeof cartState?.allQuantity === "number" ? cartState.allQuantity : 0;
   return (
     <div className="relative">
             <Link href="/cart" className="flex h-9 w-9 items-center justify-center rounded-md text-[var(--site-text)] transition hover:bg-[var(--site-panel-soft)] hover:text-[var(--site-accent)] md:h-auto md:w-auto md:rounded-none">

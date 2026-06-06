@@ -23,7 +23,14 @@ const BuyNowSingleProductBtn = ({
 }: SingleProductBtnProps) => {
   const router = useRouter();
   const { data: session } = useSession();
-  const { addToCart, calculateTotals, products } = useProductStore();
+  const cartState = useProductStore();
+  const addToCart =
+    typeof cartState?.addToCart === "function" ? cartState.addToCart : () => undefined;
+  const calculateTotals =
+    typeof cartState?.calculateTotals === "function"
+      ? cartState.calculateTotals
+      : () => undefined;
+  const products = Array.isArray(cartState?.products) ? cartState.products : [];
   const cartItemId = `${product.id}::${selectedColor || "default"}`;
   const displayTitle = product.title || product.model || "Product";
   const displayImage = product.mainImage || "/product_placeholder.jpg";

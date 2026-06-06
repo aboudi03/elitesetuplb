@@ -11,11 +11,20 @@ import toast from "react-hot-toast";
 const LoginPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isMounted, setIsMounted] = useState(false);
   const [error, setError] = useState("");
   const { data: session, status: sessionStatus } = useSession();
   const sessionRole = (session as any)?.user?.role;
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) {
+      return;
+    }
+
     const expired = searchParams.get("expired");
     if (expired === "true") {
       setError("Your session has expired. Please log in again.");
@@ -25,7 +34,7 @@ const LoginPage = () => {
     if (sessionStatus === "authenticated") {
       router.replace(sessionRole === "admin" ? "/admin" : "/");
     }
-  }, [sessionStatus, sessionRole, router, searchParams]);
+  }, [isMounted, sessionStatus, sessionRole, router, searchParams]);
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -60,7 +69,7 @@ const LoginPage = () => {
     }
   };
 
-  if (sessionStatus === "loading") {
+  if (!isMounted || sessionStatus === "loading") {
     return <h1 className="bg-[var(--site-bg)] p-10 text-[var(--site-text)]">Loading...</h1>;
   }
 

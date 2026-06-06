@@ -9,11 +9,15 @@ type BuilderResponse = {
   categories: PcBuilderCategory[];
 };
 
+type SafePcBuilderCategory = PcBuilderCategory & {
+  options: PcBuilderCategory["options"];
+};
+
 const inputClassName =
   "block w-full rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 py-3 text-base text-[var(--site-text)] shadow-sm outline-none transition focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent)]";
 
 const PcBuilderExperience = () => {
-  const [categories, setCategories] = useState<PcBuilderCategory[]>([]);
+  const [categories, setCategories] = useState<SafePcBuilderCategory[]>([]);
   const [selections, setSelections] = useState<Partial<Record<PcBuilderCategoryKey, string>>>({});
   const [customerNote, setCustomerNote] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -33,7 +37,12 @@ const PcBuilderExperience = () => {
           return;
         }
 
-        const nextCategories = Array.isArray(data?.categories) ? data.categories : [];
+        const nextCategories: SafePcBuilderCategory[] = Array.isArray(data?.categories)
+          ? data.categories.map((category) => ({
+              ...category,
+              options: Array.isArray(category?.options) ? category.options : [],
+            }))
+          : [];
         setCategories(nextCategories);
         const defaults = Object.fromEntries(
           nextCategories.map((category) => [category.key, category.options[0]?.id || ""])
@@ -59,7 +68,9 @@ const PcBuilderExperience = () => {
   const selectedParts = useMemo(() => {
     return categories.map((category) => {
       const selectedId = selections[category.key];
-      const option = category.options.find((entry) => entry.id === selectedId) || category.options[0];
+      const option =
+        (Array.isArray(category.options) ? category.options : []).find((entry) => entry.id === selectedId) ||
+        (Array.isArray(category.options) ? category.options[0] : undefined);
       return {
         category,
         option,
@@ -211,7 +222,7 @@ const PcBuilderExperience = () => {
                       </p>
                     </div>
                     <span className="inline-flex w-fit rounded-full bg-[var(--site-accent-soft)] px-3 py-1 text-xs font-black uppercase text-[var(--site-accent)]">
-                      {category.options.length} options
+                      {Array.isArray(category.options) ? category.options.length : 0} options
                     </span>
                   </div>
 
@@ -221,7 +232,7 @@ const PcBuilderExperience = () => {
                       onChange={(event) => handleSelect(category.key, event.target.value)}
                       className={inputClassName}
                     >
-                      {category.options.map((option) => (
+                      {(Array.isArray(category.options) ? category.options : []).map((option) => (
                         <option key={option.id} value={option.id}>
                           {option.label} - {option.tier}
                         </option>
@@ -233,7 +244,9 @@ const PcBuilderExperience = () => {
                     <p className="text-xs font-black uppercase text-[var(--site-muted)]">Selection note</p>
                     <p className="mt-2 text-sm leading-6 text-[var(--site-text)]">
                       {
-                        category.options.find((option) => option.id === selections[category.key])?.note
+                        (Array.isArray(category.options) ? category.options : []).find(
+                          (option) => option.id === selections[category.key]
+                        )?.note
                       }
                     </p>
                   </div>

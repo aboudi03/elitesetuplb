@@ -17,7 +17,7 @@ import { getProductColorsFromDescription } from "@/lib/productColors";
 
 const SingleProductDynamicFields = ({ product }: { product: Product }) => {
   const [quantityCount, setQuantityCount] = useState<number>(1);
-  const colorOptions = getProductColorsFromDescription(product.description);
+  const colorOptions = getProductColorsFromDescription(product?.description || "");
   const [selectedColor, setSelectedColor] = useState<string | undefined>(
     colorOptions[0]?.label
   );

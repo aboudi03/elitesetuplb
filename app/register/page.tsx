@@ -11,15 +11,24 @@ const inputClassName =
   "block w-full rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 py-2 text-[var(--site-text)] shadow-sm outline-none placeholder:text-[var(--site-muted)] focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent)] sm:text-sm sm:leading-6";
 
 const RegisterPage = () => {
+  const [isMounted, setIsMounted] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) {
+      return;
+    }
+
     if (sessionStatus === "authenticated") {
       router.replace("/");
     }
-  }, [sessionStatus, router]);
+  }, [isMounted, sessionStatus, router]);
 
   const isValidEmail = (email: string) => {
     const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
@@ -94,7 +103,7 @@ const RegisterPage = () => {
     }
   };
 
-  if (sessionStatus === "loading") {
+  if (!isMounted || sessionStatus === "loading") {
     return <h1 className="bg-[var(--site-bg)] p-10 text-[var(--site-text)]">Loading...</h1>;
   }
 

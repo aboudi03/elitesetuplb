@@ -17,7 +17,16 @@ import toast from "react-hot-toast";
 
 const QuantityInputCart = ({ product } : { product: ProductInCart }) => {
   const [quantityCount, setQuantityCount] = useState<number>(product.amount);
-  const { updateCartAmount, calculateTotals, products } = useProductStore();
+  const cartState = useProductStore();
+  const products = Array.isArray(cartState?.products) ? cartState.products : [];
+  const updateCartAmount =
+    typeof cartState?.updateCartAmount === "function"
+      ? cartState.updateCartAmount
+      : () => undefined;
+  const calculateTotals =
+    typeof cartState?.calculateTotals === "function"
+      ? cartState.calculateTotals
+      : () => undefined;
 
   const handleQuantityChange = (actionName: string): void => {
     if (actionName === "plus") {

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import PcBuilderExperience from "@/components/PcBuilderExperience";
 import { absoluteUrl, STORE_NAME } from "@/lib/seo";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Build a PC Online in Lebanon",
   description:
