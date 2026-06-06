@@ -108,7 +108,7 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
           <button
             key={slide.id}
             type="button"
-            className={`flex aspect-square h-20 w-20 shrink-0 items-center justify-center rounded-md border bg-[var(--site-panel-soft)] p-2 transition ${
+            className={`relative flex aspect-square h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-[radial-gradient(circle_at_top,_rgba(255,255,255,1),_rgba(248,250,252,0.96)_60%,_rgba(226,232,240,0.8)_100%)] p-2 transition ${
               activeIndex === index
                 ? "border-[var(--site-accent)] ring-2 ring-[var(--site-accent-soft)]"
                 : "border-[var(--site-border)] hover:border-[var(--site-accent)]"
@@ -116,24 +116,26 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
             onClick={() => setActiveIndex(index)}
             aria-label={`Show ${slide.alt}`}
           >
+            <span className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.28),rgba(255,255,255,0))]" />
             <Image
               src={slide.src}
               width={80}
               height={80}
               alt={slide.alt}
-              className="h-full w-full object-contain"
+              className="relative z-10 h-full w-full object-contain"
             />
           </button>
         ))}
       </div>
 
       <div
-        className="relative flex aspect-square min-h-[320px] flex-1 items-center justify-center overflow-hidden rounded-md border border-[var(--site-border)] bg-white p-2"
+        className="relative flex aspect-square min-h-[320px] flex-1 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,1),_rgba(248,250,252,0.97)_58%,_rgba(226,232,240,0.82)_100%)] p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)]"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
       >
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.34),rgba(255,255,255,0))]" />
         <Image
           key={activeSlide.src}
           src={activeSlide.src}
@@ -141,7 +143,7 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
           height={560}
           alt={activeSlide.alt}
           priority
-          className="h-full max-h-[520px] w-full animate-[productImageFade_450ms_ease-out] object-contain"
+          className="relative z-10 h-full max-h-[520px] w-full animate-[productImageFade_450ms_ease-out] object-contain"
         />
         {hasMultipleSlides ? (
           <>

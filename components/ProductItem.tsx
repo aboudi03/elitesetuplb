@@ -22,7 +22,11 @@ const ProductItem = ({
 }) => {
   return (
     <div className="flex h-full w-full min-w-0 flex-col rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] p-3 transition hover:-translate-y-1 hover:border-[var(--site-accent)]">
-      <Link href={`/product/${product.slug || product.id}`} className="flex aspect-square items-center justify-center rounded-md bg-[var(--site-panel-soft)] p-3">
+      <Link
+        href={`/product/${product.slug || product.id}`}
+        className="relative flex aspect-square items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,1),_rgba(248,250,252,0.96)_58%,_rgba(226,232,240,0.82)_100%)] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]"
+      >
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.24),rgba(255,255,255,0))]" />
         <Image
           src={
             product.mainImage
@@ -32,7 +36,7 @@ const ProductItem = ({
           width="0"
           height="0"
           sizes="100vw"
-          className="h-full max-h-[220px] w-auto object-contain"
+          className="relative z-10 h-full max-h-[228px] w-auto object-contain"
           alt={sanitize(product?.title || product.model) || "Product image"}
         />
       </Link>
