@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
+import { sanitizeHtml } from "@/lib/sanitize";
 import {
   FaBold,
   FaCheckSquare,
@@ -27,6 +28,15 @@ const fonts = [
 
 const toolbarButtonClassName =
   "inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--site-accent-soft)]";
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
 
 const RichTextEditor = ({
   value,
@@ -63,6 +73,17 @@ const RichTextEditor = ({
       false,
       '<ul data-list="checklist"><li>Checklist item</li></ul>'
     );
+    emitChange();
+  };
+
+  const handlePaste = (event: React.ClipboardEvent<HTMLDivElement>) => {
+    event.preventDefault();
+
+    const html = event.clipboardData.getData("text/html");
+    const text = event.clipboardData.getData("text/plain");
+    const content = html ? sanitizeHtml(html) : escapeHtml(text).replace(/\r?\n/g, "<br>");
+
+    document.execCommand("insertHTML", false, content);
     emitChange();
   };
 
@@ -181,6 +202,7 @@ const RichTextEditor = ({
         className={`rich-text-content block w-full overflow-auto px-4 py-3 text-base text-[var(--site-text)] outline-none ${minHeightClassName}`}
         contentEditable
         suppressContentEditableWarning
+        onPaste={handlePaste}
         onInput={emitChange}
         onBlur={emitChange}
         dangerouslySetInnerHTML={{ __html: value || "" }}
