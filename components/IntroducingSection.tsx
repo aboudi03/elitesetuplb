@@ -20,10 +20,10 @@ const IntroducingSection = () => {
         </h2>
         <div>
           <p className="text-white text-center text-2xl font-semibold max-md:text-xl max-[480px]:text-base">
-            Buy the latest electronics.
+            Buy PC parts, peripherals, and setup essentials.
           </p>
           <p className="text-white text-center text-2xl font-semibold max-md:text-xl max-[480px]:text-base">
-            The best electronics for tech lovers.
+            Built for gamers, creators, and clean desk setups.
           </p>
           <Link href="/shop" className="mx-auto mt-2 block w-full max-w-96 bg-white px-12 py-3 text-xl font-bold text-[var(--site-accent)] hover:bg-gray-100 max-md:max-w-72 max-md:text-lg max-[480px]:max-w-60">
             SHOP NOW

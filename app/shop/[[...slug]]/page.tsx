@@ -34,11 +34,11 @@ export async function generateMetadata({
   const categoryName = categorySlug ? toTitleCase(categorySlug) : "All Products";
   const title =
     categorySlug === undefined
-      ? "Shop Electronics in Lebanon"
+      ? "Shop PC Parts & Setups in Lebanon"
       : `${categoryName} in Lebanon`;
   const description =
     categorySlug === undefined
-      ? `Shop electronics, gaming PCs, laptops, PC parts, accessories, and setup essentials from ${STORE_NAME} in Lebanon.`
+      ? `Shop gaming PCs, PC parts, laptops, peripherals, accessories, and setup essentials from ${STORE_NAME} in Lebanon.`
       : `Shop ${categoryName.toLowerCase()} in Lebanon from ${STORE_NAME}. Browse prices, stock, and setup essentials online.`;
   const url = absoluteUrl(categorySlug ? `/shop/${categorySlug}` : "/shop");
 

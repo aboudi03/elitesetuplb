@@ -28,7 +28,7 @@ export const infoPages: InfoPage[] = [
       {
         heading: "Who We Are",
         body:
-          "Elite Setup is a Lebanon-based electronics and gaming setup store focused on practical gear, clear product information, and responsive support before and after checkout.",
+          "Elite Setup is a Lebanon-based PC parts and gaming setup store focused on practical gear, clear product information, and responsive support before and after checkout.",
       },
       {
         heading: "What We Sell",
@@ -79,7 +79,7 @@ export const infoPages: InfoPage[] = [
       {
         heading: "Who Can Reach Out",
         items: [
-          "Suppliers and distributors with gaming, PC, or electronics products.",
+          "Suppliers and distributors with gaming, PC parts, peripherals, or setup products.",
           "Content creators interested in setup, gaming, or product collaboration.",
           "Technicians, builders, and service providers with relevant experience.",
           "Businesses looking for setup sourcing or recurring equipment support.",
@@ -105,7 +105,7 @@ export const infoPages: InfoPage[] = [
       {
         heading: "Business Summary",
         body:
-          "Elite Setup is an online-focused store for gaming peripherals, electronics, and setup essentials in Lebanon. The store is designed to help customers browse products, compare details, and place orders with direct support available when needed.",
+          "Elite Setup is an online-focused store for PC parts, gaming peripherals, and setup essentials in Lebanon. The store is designed to help customers browse products, compare details, and place orders with direct support available when needed.",
       },
       {
         heading: "Main Categories",

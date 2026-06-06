@@ -17,11 +17,11 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   metadataBase: new URL(absoluteUrl("/")),
   title: {
-    default: `${STORE_NAME} | Electronics Store in Lebanon`,
+    default: `${STORE_NAME} | PC Parts & Setups in Lebanon`,
     template: `%s | ${STORE_NAME}`,
   },
   description:
-    "Shop electronics, gaming PCs, laptops, PC parts, accessories, and setup essentials in Lebanon.",
+    "Shop gaming PCs, PC parts, laptops, peripherals, accessories, and setup essentials in Lebanon.",
   applicationName: STORE_NAME,
   icons: {
     icon: "/icon.png",
@@ -30,16 +30,16 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: STORE_NAME,
-    title: `${STORE_NAME} | Electronics Store in Lebanon`,
+    title: `${STORE_NAME} | PC Parts & Setups in Lebanon`,
     description:
-      "Shop electronics, gaming PCs, laptops, PC parts, accessories, and setup essentials in Lebanon.",
+      "Shop gaming PCs, PC parts, laptops, peripherals, accessories, and setup essentials in Lebanon.",
     url: absoluteUrl("/"),
   },
   twitter: {
     card: "summary_large_image",
-    title: `${STORE_NAME} | Electronics Store in Lebanon`,
+    title: `${STORE_NAME} | PC Parts & Setups in Lebanon`,
     description:
-      "Shop electronics, gaming PCs, laptops, PC parts, accessories, and setup essentials in Lebanon.",
+      "Shop gaming PCs, PC parts, laptops, peripherals, accessories, and setup essentials in Lebanon.",
   },
 };
 
