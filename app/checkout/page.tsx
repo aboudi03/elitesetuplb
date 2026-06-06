@@ -50,7 +50,10 @@ const CheckoutPage = () => {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successSummary, setSuccessSummary] = useState<CheckoutSuccessSummary | null>(null);
-  const { products, total, clearCart } = useProductStore();
+  const cartState = useProductStore();
+  const products = Array.isArray(cartState?.products) ? cartState.products : [];
+  const total = typeof cartState?.total === "number" ? cartState.total : 0;
+  const clearCart = typeof cartState?.clearCart === "function" ? cartState.clearCart : () => undefined;
   const router = useRouter();
 
   const orderTaxTotal = calculateCartTax(products);
