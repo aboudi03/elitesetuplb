@@ -15,15 +15,17 @@ datasource db {
 
 model Product {
   id             String                   @id @default(uuid())
-  slug           String                   @unique
-  title          String
-  mainImage      String
-  price          Int                      @default(0)
+  slug           String?                  @unique
+  title          String?
+  model          String
+  sku            String?                  @unique
+  mainImage      String?
+  price          Float                    @default(0)
   taxRate        Float                    @default(0)
   rating         Int                      @default(0)
-  description    String                   @db.Text
-  manufacturer   String
-  inStock        Int                      @default(1)
+  description    String?                  @db.Text
+  manufacturer   String?
+  inStock        Int                      @default(0)
   isActive       Boolean                  @default(true)
   featured       Boolean                  @default(false)
   categoryId     String?
@@ -31,8 +33,8 @@ model Product {
   customerOrders customer_order_product[]
   Wishlist       Wishlist[]
 
-  merchantId     String
-  merchant       Merchant @relation(fields: [merchantId], references: [id])
+  merchantId     String?
+  merchant       Merchant? @relation(fields: [merchantId], references: [id], onDelete: SetNull)
   createdAt      DateTime                 @default(now())
   updatedAt      DateTime                 @default(now()) @updatedAt
   // Back relation for bulk upload items
@@ -159,8 +161,8 @@ model customer_order_product {
   id              String         @id @default(uuid())
   customerOrder   Customer_order @relation(fields: [customerOrderId], references: [id])
   customerOrderId String
-  product         Product        @relation(fields: [productId], references: [id])
-  productId       String
+  product         Product?       @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productId       String?
   quantity        Int
   selectedColor   String?
 }
@@ -255,14 +257,14 @@ model bulk_upload_item {
   product   Product?          @relation(name: "ProductBulkItems", fields: [productId], references: [id], onDelete: SetNull)
 
   // snapshot fields for auditing and re-commit edits
-  title         String
-  slug          String
-  price         Int
+  title         String?
+  slug          String?
+  price         Float                @default(0)
   manufacturer  String?
   description   String?
   mainImage     String?
-  categoryId    String
-  inStock       Int
+  categoryId    String?
+  inStock       Int                  @default(0)
 
   status        BulkUploadItemStatus @default(CREATED)
   error         String?

@@ -20,11 +20,13 @@ import toast from "react-hot-toast";
 const createEmptyProduct = () => ({
   id: nanoid(),
   merchantId: "",
+  model: "",
+  sku: "",
   title: "",
   price: 0,
   taxRate: 0,
   manufacturer: "",
-  inStock: 1,
+  inStock: 0,
   mainImage: "",
   description: "",
   slug: "",
@@ -36,7 +38,9 @@ const createEmptyProduct = () => ({
 const AddNewProduct = () => {
   const [product, setProduct] = useState<{
     id: string;
-    merchantId?: string;
+    merchantId?: string | null;
+    model: string;
+    sku: string;
     title: string;
     price: number;
     taxRate: number;
@@ -59,23 +63,12 @@ const AddNewProduct = () => {
     "rounded-3xl border border-[var(--site-border)] bg-[var(--site-panel)] p-6 shadow-sm";
 
   const addProduct = async () => {
-    if (
-      !product.merchantId ||
-      product.title === "" ||
-      product.manufacturer === "" ||
-      product.description === "" ||
-      product.slug === ""
-    ) {
-      toast.error("Please enter values in input fields");
+    if (product.model.trim() === "") {
+      toast.error("Model is required");
       return;
     }
 
     try {
-      if (mediaRows.length === 0) {
-        toast.error("Add at least one product image");
-        return;
-      }
-
       const resolvedMediaRows = await Promise.all(
         mediaRows.map(async (row) => {
           if (!row.file) {
@@ -99,16 +92,17 @@ const AddNewProduct = () => {
       );
 
       const mainImageRow = resolvedMediaRows.find((row) => row.isMain && row.path);
-      if (!mainImageRow?.path) {
-        toast.error("Select one main image");
-        return;
-      }
 
       const sanitizedProduct = sanitizeFormData({
         ...product,
-        // send null to server when no category selected
+        merchantId: product.merchantId === "" ? null : product.merchantId,
         categoryId: product.categoryId === "" ? null : product.categoryId,
-        mainImage: mainImageRow.path,
+        sku: product.sku.trim() === "" ? null : product.sku,
+        title: product.title.trim() === "" ? null : product.title,
+        manufacturer: product.manufacturer.trim() === "" ? null : product.manufacturer,
+        description: product.description.trim() === "" ? null : product.description,
+        slug: product.slug.trim() === "" ? null : product.slug,
+        mainImage: mainImageRow?.path || null,
       });
       const response = await apiClient.post(`/api/products`, sanitizedProduct);
 
@@ -130,7 +124,6 @@ const AddNewProduct = () => {
         toast.success("Product added successfully");
         setProduct({
           ...createEmptyProduct(),
-          merchantId: merchants[0]?.id || "",
         });
         setMediaRows([]);
       } else {
@@ -149,10 +142,6 @@ const AddNewProduct = () => {
       const data = await res.json();
       const merchantsData: Merchant[] = Array.isArray(data) ? data : [];
       setMerchants(merchantsData);
-      setProduct((prev) => ({
-        ...prev,
-        merchantId: prev.merchantId || merchantsData[0]?.id || "",
-      }));
     } catch (e) {
       toast.error("Failed to load merchants");
     }
@@ -201,12 +190,18 @@ const AddNewProduct = () => {
   };
 
   const applyResearchFields = (fields: Partial<Product>) => {
-    const { categoryId, ...nextFields } = fields;
-
     setProduct((currentProduct) => ({
       ...currentProduct,
-      ...nextFields,
-      ...(categoryId !== undefined ? { categoryId: categoryId || "" } : {}),
+      ...(fields.title !== undefined ? { title: fields.title || "" } : {}),
+      ...(fields.model !== undefined ? { model: fields.model || "" } : {}),
+      ...(fields.sku !== undefined ? { sku: fields.sku || "" } : {}),
+      ...(fields.manufacturer !== undefined ? { manufacturer: fields.manufacturer || "" } : {}),
+      ...(fields.description !== undefined ? { description: fields.description || "" } : {}),
+      ...(fields.mainImage !== undefined ? { mainImage: fields.mainImage || "" } : {}),
+      ...(fields.price !== undefined ? { price: fields.price } : {}),
+      ...(fields.taxRate !== undefined ? { taxRate: fields.taxRate || 0 } : {}),
+      ...(fields.inStock !== undefined ? { inStock: fields.inStock } : {}),
+      ...(fields.categoryId !== undefined ? { categoryId: fields.categoryId || "" } : {}),
       slug: fields.title
         ? convertSlugToURLFriendly(fields.title.toLowerCase())
         : currentProduct.slug,
@@ -271,18 +266,16 @@ const AddNewProduct = () => {
                 <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">Merchant</span>
                 <select
                   className={fieldClassName}
-                  value={product?.merchantId}
+                  value={product?.merchantId || ""}
                   onChange={(e) => setProduct({ ...product, merchantId: e.target.value })}
                 >
+                  <option value="">No merchant</option>
                   {merchants.map((merchant) => (
                     <option key={merchant.id} value={merchant.id}>
                       {merchant.name}
                     </option>
                   ))}
                 </select>
-                {merchants.length === 0 && (
-                  <span className="mt-2 block text-xs text-red-500">Please create a merchant first.</span>
-                )}
               </label>
 
               <label className="block">
@@ -302,6 +295,26 @@ const AddNewProduct = () => {
               </label>
 
               <label className="block md:col-span-2">
+                <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">Model</span>
+                <input
+                  type="text"
+                  className={fieldClassName}
+                  value={product?.model}
+                  onChange={(e) => setProduct({ ...product, model: e.target.value })}
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">SKU</span>
+                <input
+                  type="text"
+                  className={fieldClassName}
+                  value={product?.sku}
+                  onChange={(e) => setProduct({ ...product, sku: e.target.value })}
+                />
+              </label>
+
+              <label className="block">
                 <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">Product name</span>
                 <input
                   type="text"
@@ -363,10 +376,11 @@ const AddNewProduct = () => {
                     type="number"
                     min={0}
                     className={fieldClassName}
-                    value={product?.price}
-                    onChange={(e) => setProduct({ ...product, price: Number(e.target.value) })}
-                  />
-                </label>
+                  value={product?.price}
+                  step="0.01"
+                  onChange={(e) => setProduct({ ...product, price: Number(e.target.value) })}
+                />
+              </label>
 
                 <label className="block">
                   <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">Tax % (optional)</span>

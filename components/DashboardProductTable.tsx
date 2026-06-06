@@ -96,6 +96,8 @@ const DashboardProductTable = () => {
       searchableText: (product) =>
         [
           product.title,
+          product.model,
+          product.sku,
           product.manufacturer,
           product.slug,
           product.category?.name,
@@ -106,9 +108,17 @@ const DashboardProductTable = () => {
       className: "min-w-[320px]",
       cell: (product) => (
         <div>
-          <div className="text-lg font-semibold leading-6">{sanitize(product.title)}</div>
-          <div className="text-sm text-[var(--site-muted)]">/{sanitize(product.slug)}</div>
-          <div className="text-base text-[var(--site-muted)]">{sanitize(product.manufacturer)}</div>
+          <div className="text-lg font-semibold leading-6">
+            {sanitize(product.title || product.model || "Untitled product")}
+          </div>
+          <div className="text-sm text-[var(--site-muted)]">
+            Model: {sanitize(product.model || "-")}
+            {product.sku ? ` | SKU: ${sanitize(product.sku)}` : ""}
+          </div>
+          <div className="text-sm text-[var(--site-muted)]">
+            {product.slug ? `/${sanitize(product.slug)}` : "No slug"}
+          </div>
+          <div className="text-base text-[var(--site-muted)]">{sanitize(product.manufacturer || "-")}</div>
         </div>
       ),
     },
@@ -228,7 +238,7 @@ const DashboardProductTable = () => {
       searchableText: (product) => `${product.price} ${product.taxRate ?? 0}`,
       cell: (product) => (
         <div>
-          <div className="text-lg font-semibold">${product.price}</div>
+          <div className="text-lg font-semibold">${product.price.toFixed(2)}</div>
           <div className="text-sm text-[var(--site-muted)]">Tax: {product.taxRate ?? 0}%</div>
         </div>
       ),

@@ -11,21 +11,22 @@ import toast from "react-hot-toast";
 interface OrderProduct {
   id: string;
   customerOrderId: string;
-  productId: string;
+  productId: string | null;
   quantity: number;
   selectedColor?: string | null;
   product: {
     id: string;
-    slug: string;
+    slug: string | null;
     title: string;
-    mainImage: string;
+    mainImage: string | null;
     price: number;
-    rating: number;
-    description: string;
-    manufacturer: string;
-    inStock: number;
-    categoryId: string;
-  };
+    model?: string | null;
+    rating?: number;
+    description?: string | null;
+    manufacturer?: string | null;
+    inStock?: number;
+    categoryId?: string | null;
+  } | null;
 }
 
 interface OrderStatusOption {
@@ -409,19 +410,21 @@ const AdminSingleOrder = () => {
                   >
                     <Image
                       src={product?.product?.mainImage ? `/${product?.product?.mainImage}` : "/product_placeholder.jpg"}
-                      alt={product?.product?.title}
+                      alt={product?.product?.title || product?.product?.model || "Deleted product"}
                       width={64}
                       height={64}
                       className="h-16 w-16 rounded-xl object-contain"
                     />
                     <div className="min-w-0 flex-1">
                       <Link
-                        href={`/product/${product?.product?.slug}`}
+                        href={product?.product?.slug ? `/product/${product.product.slug}` : "#"}
                         className="text-lg font-semibold hover:text-[var(--site-accent)]"
                       >
-                        {product?.product?.title}
+                        {product?.product?.title || product?.product?.model || "Deleted product"}
                       </Link>
-                      <p className="mt-1 text-sm text-[var(--site-muted)]">${product?.product?.price} each</p>
+                      <p className="mt-1 text-sm text-[var(--site-muted)]">
+                        ${Number(product?.product?.price || 0).toFixed(2)} each
+                      </p>
                       {product?.selectedColor && (
                         <p className="mt-1 text-sm text-[var(--site-muted)]">
                           Color: <span className="font-medium text-[var(--site-text)]">{product.selectedColor}</span>

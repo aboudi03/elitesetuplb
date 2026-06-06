@@ -7,6 +7,63 @@ const ALLOWED_OPERATORS = ['gte', 'lte', 'gt', 'lt', 'equals', 'contains'];
 const ALLOWED_SORT_VALUES = ['defaultSort', 'titleAsc', 'titleDesc', 'lowPrice', 'highPrice'];
 const FEATURED_PRODUCTS_LIMIT = 12;
 
+function normalizeText(value) {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  const normalized = String(value).trim();
+  return normalized.length > 0 ? normalized : null;
+}
+
+function normalizeNumber(value, defaultValue = 0) {
+  if (value === undefined || value === null || value === "") return defaultValue;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : defaultValue;
+}
+
+function normalizeInteger(value, defaultValue = 0) {
+  if (value === undefined || value === null || value === "") return defaultValue;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : defaultValue;
+}
+
+function slugify(value) {
+  return String(value || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+async function resolveUniqueSlug({ providedSlug, title, model, sku, productIdToExclude = null }) {
+  const baseSource =
+    normalizeText(providedSlug) ||
+    normalizeText(model) ||
+    normalizeText(sku) ||
+    normalizeText(title) ||
+    "product";
+  const baseSlug = slugify(baseSource) || "product";
+
+  let candidate = baseSlug;
+  let suffix = 1;
+
+  while (true) {
+    const existingProduct = await prisma.product.findFirst({
+      where: {
+        slug: candidate,
+        ...(productIdToExclude ? { id: { not: productIdToExclude } } : {}),
+      },
+      select: { id: true },
+    });
+
+    if (!existingProduct) {
+      return candidate;
+    }
+
+    suffix += 1;
+    candidate = `${baseSlug}-${suffix}`;
+  }
+}
+
 function normalizeBoolean(value, defaultValue = true) {
   if (typeof value === "boolean") return value;
   if (typeof value === "string") {
@@ -34,7 +91,7 @@ function validateAndSanitizeFilterValue(filterType, filterValue) {
     case 'rating':
     case 'inStock':
     case 'outOfStock':
-      const numValue = parseInt(filterValue);
+      const numValue = Number(filterValue);
       return isNaN(numValue) ? null : numValue;
     case 'category':
       return typeof filterValue === 'string' && filterValue.trim().length > 0 
@@ -177,7 +234,7 @@ const getAllProducts = asyncHandler(async (request, response) => {
           if (filterType === "category") {
             filterValue = queryParam.substring(queryParam.indexOf("=") + 1);
           } else {
-            const numValue = parseInt(queryParam.substring(queryParam.indexOf("=") + 1));
+            const numValue = Number(queryParam.substring(queryParam.indexOf("=") + 1));
             filterValue = isNaN(numValue) ? null : numValue;
           }
 
@@ -318,6 +375,8 @@ const createProduct = asyncHandler(async (request, response) => {
     merchantId,
     slug,
     title,
+    model,
+    sku,
     mainImage,
     price,
     taxRate = 0,
@@ -329,39 +388,35 @@ const createProduct = asyncHandler(async (request, response) => {
     featured = false,
   } = request.body;
 
-  if (!title) {
-    throw new AppError("Missing required field: title", 400);
-  }
-  
-  // Basic validation
-  if (!merchantId) {
-    throw new AppError("Missing required field: merchantId", 400);
-  }
-  
-  if (!slug) {
-    throw new AppError("Missing required field: slug", 400);
-  }
-
-  if (!price) {
-    throw new AppError("Missing required field: price", 400);
+  const normalizedModel = normalizeText(model);
+  if (!normalizedModel) {
+    throw new AppError("Missing required field: model", 400);
   }
 
   await ensureFeaturedSlotOrThrow(normalizeBoolean(featured, false));
+  const resolvedSlug = await resolveUniqueSlug({
+    providedSlug: slug,
+    title,
+    model: normalizedModel,
+    sku,
+  });
 
   const product = await prisma.product.create({
     data: {
       ...(id ? { id } : {}),
-      merchantId,
-      slug,
-      title,
-      mainImage,
-      price,
-      taxRate,
+      merchantId: normalizeText(merchantId),
+      slug: resolvedSlug,
+      title: normalizeText(title),
+      model: normalizedModel,
+      sku: normalizeText(sku),
+      mainImage: normalizeText(mainImage),
+      price: normalizeNumber(price, 0),
+      taxRate: normalizeNumber(taxRate, 0),
       rating: 5,
-      description,
-      manufacturer,
-      categoryId: categoryId || null,
-      inStock,
+      description: normalizeText(description),
+      manufacturer: normalizeText(manufacturer),
+      categoryId: normalizeText(categoryId),
+      inStock: Math.max(0, normalizeInteger(inStock, 0)),
       isActive: normalizeBoolean(isActive, true),
       featured: normalizeBoolean(featured, false),
     },
@@ -376,6 +431,8 @@ const updateProduct = asyncHandler(async (request, response) => {
     merchantId,
     slug,
     title,
+    model,
+    sku,
     mainImage,
     price,
     taxRate,
@@ -413,23 +470,47 @@ const updateProduct = asyncHandler(async (request, response) => {
     await ensureFeaturedSlotOrThrow(true, id);
   }
 
+  const nextModel = model === undefined ? existingProduct.model : normalizeText(model);
+  if (!nextModel) {
+    throw new AppError("Model is required", 400);
+  }
+
+  const nextSlug =
+    slug === undefined
+      ? existingProduct.slug ||
+        (await resolveUniqueSlug({
+          title: title === undefined ? existingProduct.title : title,
+          model: nextModel,
+          sku: sku === undefined ? existingProduct.sku : sku,
+          productIdToExclude: id,
+        }))
+      : await resolveUniqueSlug({
+          providedSlug: slug,
+          title: title === undefined ? existingProduct.title : title,
+          model: nextModel,
+          sku: sku === undefined ? existingProduct.sku : sku,
+          productIdToExclude: id,
+        });
+
   // Updating found product
   const updatedProduct = await prisma.product.update({
     where: {
       id,
     },
     data: {
-      merchantId: merchantId,
-      title: title,
-      mainImage: mainImage,
-      slug: slug,
-      price: price,
-      taxRate: taxRate === undefined ? existingProduct.taxRate : Number(taxRate),
-      rating: rating,
-      description: description,
-      manufacturer: manufacturer,
-      categoryId: categoryId === undefined ? existingProduct.categoryId : categoryId || null,
-      inStock: inStock,
+      merchantId: merchantId === undefined ? existingProduct.merchantId : normalizeText(merchantId),
+      title: title === undefined ? existingProduct.title : normalizeText(title),
+      model: nextModel,
+      sku: sku === undefined ? existingProduct.sku : normalizeText(sku),
+      mainImage: mainImage === undefined ? existingProduct.mainImage : normalizeText(mainImage),
+      slug: nextSlug,
+      price: price === undefined ? existingProduct.price : normalizeNumber(price, existingProduct.price),
+      taxRate: taxRate === undefined ? existingProduct.taxRate : normalizeNumber(taxRate, existingProduct.taxRate),
+      rating: rating === undefined ? existingProduct.rating : normalizeInteger(rating, existingProduct.rating),
+      description: description === undefined ? existingProduct.description : normalizeText(description),
+      manufacturer: manufacturer === undefined ? existingProduct.manufacturer : normalizeText(manufacturer),
+      categoryId: categoryId === undefined ? existingProduct.categoryId : normalizeText(categoryId),
+      inStock: inStock === undefined ? existingProduct.inStock : Math.max(0, normalizeInteger(inStock, existingProduct.inStock)),
       isActive: isActive === undefined ? existingProduct.isActive : normalizeBoolean(isActive, existingProduct.isActive),
       featured: nextFeaturedValue,
     },
@@ -446,16 +527,11 @@ const deleteProduct = asyncHandler(async (request, response) => {
     throw new AppError("Product ID is required", 400);
   }
 
-  // Check for related records in order_product table
-  const relatedOrderProductItems = await prisma.customer_order_product.findMany({
+  await prisma.image.deleteMany({
     where: {
-      productId: id,
+      productID: id,
     },
   });
-  
-  if(relatedOrderProductItems.length > 0){
-    throw new AppError("Cannot delete product because of foreign key constraint", 400);
-  }
 
   await prisma.product.delete({
     where: {
@@ -478,6 +554,16 @@ const searchProducts = asyncHandler(async (request, response) => {
       OR: [
         {
           title: {
+            contains: query,
+          },
+        },
+        {
+          model: {
+            contains: query,
+          },
+        },
+        {
+          sku: {
             contains: query,
           },
         },

@@ -48,13 +48,7 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
       .delete(`/api/products/${id}`, requestOptions)
       .then((response) => {
         if (response.status !== 204) {
-          if (response.status === 400) {
-            toast.error(
-              "Cannot delete the product because of foreign key constraint"
-            );
-          } else {
-            throw Error("There was an error while deleting product");
-          }
+          throw Error("There was an error while deleting product");
         } else {
           toast.success("Product deleted successfully");
           router.push("/admin/products");
@@ -67,23 +61,12 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
 
   // functionality for updating product
   const updateProduct = async () => {
-    if (
-      product?.title === "" ||
-      product?.slug === "" ||
-      product?.price.toString() === "" ||
-      product?.manufacturer === "" ||
-      product?.description === ""
-    ) {
-      toast.error("You need to enter values in input fields");
+    if (!product || product.model.trim() === "") {
+      toast.error("Model is required");
       return;
     }
 
     try {
-      if (mediaRows.length === 0) {
-        toast.error("Add at least one product image");
-        return;
-      }
-
       const resolvedMediaRows = await Promise.all(
         mediaRows.map(async (row) => {
           if (!row.file) {
@@ -107,14 +90,17 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
       );
 
       const mainImageRow = resolvedMediaRows.find((row) => row.isMain && row.path);
-      if (!mainImageRow?.path) {
-        toast.error("Select one main image");
-        return;
-      }
 
       const sanitizedProduct = sanitizeFormData({
         ...product,
-        mainImage: mainImageRow.path,
+        merchantId: product.merchantId === "" ? null : product.merchantId,
+        categoryId: product.categoryId === "" ? null : product.categoryId,
+        sku: product.sku?.trim() === "" ? null : product.sku,
+        title: product.title?.trim() === "" ? null : product.title,
+        manufacturer: product.manufacturer?.trim() === "" ? null : product.manufacturer,
+        description: product.description?.trim() === "" ? null : product.description,
+        slug: product.slug?.trim() === "" ? null : product.slug,
+        mainImage: mainImageRow?.path || null,
       });
 
       const response = await apiClient.put(`/api/products/${id}`, sanitizedProduct);
@@ -299,6 +285,30 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
             <div className="grid gap-5 md:grid-cols-2">
               <label className="block md:col-span-2">
                 <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
+                  Model
+                </span>
+                <input
+                  type="text"
+                  className={fieldClassName}
+                  value={product?.model || ""}
+                  onChange={(e) => setProduct({ ...product!, model: e.target.value })}
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
+                  SKU
+                </span>
+                <input
+                  type="text"
+                  className={fieldClassName}
+                  value={product?.sku || ""}
+                  onChange={(e) => setProduct({ ...product!, sku: e.target.value })}
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
                   Product name
                 </span>
                 <input
@@ -335,6 +345,7 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
                     })
                   }
                 >
+                  <option value="">Uncategorized</option>
                   {categories &&
                     categories.map((category: Category) => (
                       <option key={category?.id} value={category?.id}>
@@ -391,6 +402,7 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
                   <input
                     type="number"
                     min={0}
+                    step="0.01"
                     className={fieldClassName}
                     value={product?.price ?? 0}
                     onChange={(e) => setProduct({ ...product!, price: Number(e.target.value) })}
@@ -497,8 +509,8 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
                 </button>
               </div>
               <p className="mt-4 text-sm leading-6 text-red-500">
-                Products connected to order records cannot be deleted until those records are
-                removed.
+                Deleting a product now also releases related order references instead of blocking
+                the delete.
               </p>
             </section>
           </div>

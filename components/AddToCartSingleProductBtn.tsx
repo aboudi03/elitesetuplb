@@ -25,6 +25,8 @@ const AddToCartSingleProductBtn = ({
   const { data: session } = useSession();
   const { addToCart, calculateTotals, products } = useProductStore();
   const cartItemId = `${product.id}::${selectedColor || "default"}`;
+  const displayTitle = product.title || product.model || "Product";
+  const displayImage = product.mainImage || "/product_placeholder.jpg";
 
   const handleAddToCart = async () => {
     const existingQuantityForProduct = products
@@ -39,10 +41,10 @@ const AddToCartSingleProductBtn = ({
     addToCart({
       cartItemId,
       id: product?.id.toString(),
-      title: product?.title,
+      title: displayTitle,
       price: product?.price,
       taxRate: product?.taxRate || 0,
-      image: product?.mainImage,
+      image: displayImage,
       selectedColor,
       amount: quantityCount,
       stock: product?.inStock,
@@ -50,7 +52,7 @@ const AddToCartSingleProductBtn = ({
     calculateTotals();
     await trackCartAdd({
       productId: product.id,
-      productTitle: product.title,
+      productTitle: displayTitle,
       quantity: quantityCount,
       userId: (session?.user as { id?: string } | undefined)?.id,
     });

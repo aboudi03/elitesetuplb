@@ -56,9 +56,10 @@ export async function generateMetadata({
     };
   }
 
-  const title = `${stripHtml(product.title)} in ${STORE_LOCATION}`;
+  const productName = product.title || product.model || "Product";
+  const title = `${stripHtml(productName)} in ${STORE_LOCATION}`;
   const description = buildMetaDescription(
-    `Buy ${stripHtml(product.title)} in ${STORE_LOCATION} from ${STORE_NAME}. Check price, stock, and delivery options.`,
+    `Buy ${stripHtml(productName)} in ${STORE_LOCATION} from ${STORE_NAME}. Check price, stock, and delivery options.`,
     product.description
   );
   const url = absoluteUrl(`/product/${product.slug}`);
@@ -78,7 +79,7 @@ export async function generateMetadata({
       images: [
         {
           url: image,
-          alt: stripHtml(product.title),
+          alt: stripHtml(productName),
         },
       ],
     },
@@ -99,6 +100,7 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
   if (!product || product.error) {
     notFound();
   }
+  const productName = product.title || product.model || "Product";
 
   // sending API request for more than 1 product image if it exists
   const imagesData = await apiClient.get(`/api/images/${product.id}`, {
@@ -110,14 +112,14 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
   const productSchema = {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: stripHtml(product.title),
+    name: stripHtml(productName),
     image: [productImageUrl(product.mainImage)],
     description: buildMetaDescription(
-      `Buy ${stripHtml(product.title)} in ${STORE_LOCATION} from ${STORE_NAME}.`,
+      `Buy ${stripHtml(productName)} in ${STORE_LOCATION} from ${STORE_NAME}.`,
       product.description,
       500
     ),
-    sku: product.slug,
+    sku: product.sku || product.slug,
     brand: product.manufacturer
       ? {
           "@type": "Brand",
@@ -149,17 +151,17 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
           <ProductImageGallery
             mainImage={product?.mainImage}
             images={images}
-            title={stripHtml(product?.title)}
+            title={stripHtml(productName)}
           />
           <div className="flex w-full max-w-xl flex-col gap-y-7 max-[500px]:text-center">
         
-            <h1 className="break-words text-3xl max-sm:text-2xl">{sanitize(product?.title)}</h1>
-            <p className="text-xl font-semibold">${product?.price}</p>
+            <h1 className="break-words text-3xl max-sm:text-2xl">{sanitize(productName)}</h1>
+            <p className="text-xl font-semibold">${Number(product?.price || 0).toFixed(2)}</p>
             <StockAvailabillity stock={product?.inStock} inStock={product?.inStock} />
-            {product?.inStock > 0 && product?.inStock < 5 && <UrgencyText stock={product?.inStock} />}
+            {product?.inStock > 0 && product?.inStock <= 5 && <UrgencyText stock={product?.inStock} />}
             <div className="flex flex-col gap-y-2 max-[500px]:items-center">
               <p className="text-lg">
-                SKU: <span className="ml-1">abccd-18</span>
+                SKU: <span className="ml-1">{product?.sku || product?.slug || "-"}</span>
               </p>
             </div>
             <SingleProductDynamicFields product={product} />

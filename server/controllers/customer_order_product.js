@@ -186,26 +186,40 @@ const getAllProductOrders = asyncHandler(async (request, response) => {
     const { customerOrder, productId, quantity } = order;
     const { id, ...orderDetails } = customerOrder;
 
-    const product = await prisma.product.findUnique({
-      where: {
-        id: productId
-      },
-      select: {
-        id: true,
-        title: true,
-        mainImage: true,
-        price: true,
-        slug: true
-      }
-    });
+    const product = productId
+      ? await prisma.product.findUnique({
+          where: {
+            id: productId
+          },
+          select: {
+            id: true,
+            title: true,
+            model: true,
+            mainImage: true,
+            price: true,
+            slug: true
+          }
+        })
+      : null;
+
+    const productSummary = product
+      ? { ...product, title: product.title || product.model || "Deleted product" }
+      : {
+          id: null,
+          title: "Deleted product",
+          model: null,
+          mainImage: null,
+          price: 0,
+          slug: null
+        };
 
     if (ordersMap.has(id)) {
-      ordersMap.get(id).products.push({ ...product, quantity, selectedColor: order.selectedColor });
+      ordersMap.get(id).products.push({ ...productSummary, quantity, selectedColor: order.selectedColor });
     } else {
       ordersMap.set(id, {
         customerOrderId: id,
         customerOrder: orderDetails,
-        products: [{ ...product, quantity, selectedColor: order.selectedColor }]
+        products: [{ ...productSummary, quantity, selectedColor: order.selectedColor }]
       });
     }
   }

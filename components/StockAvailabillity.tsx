@@ -15,12 +15,13 @@ import { FaXmark } from "react-icons/fa6";
 
 const StockAvailabillity = ({ stock, inStock } : { stock: number, inStock: number }) => {
   const availableQuantity = Number(inStock || stock || 0);
+  const shouldShowExactStock = availableQuantity > 0 && availableQuantity <= 5;
 
   return (
     <p className='flex gap-x-2 text-xl max-[500px]:justify-center'>Availability:
     { availableQuantity > 0 ? (
       <span className='flex items-center gap-x-1 text-success'>
-        In stock ({availableQuantity} available) <FaCheck />
+        {shouldShowExactStock ? `In stock (${availableQuantity} available)` : "In stock"} <FaCheck />
       </span>
     ) : (
       <span className='flex items-center gap-x-1 text-error'>Out of stock <FaXmark /></span>

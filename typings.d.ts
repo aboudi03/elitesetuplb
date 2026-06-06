@@ -1,19 +1,21 @@
 interface Product {
   id: string;
-  slug: string;
-  title: string;
+  slug?: string | null;
+  title?: string | null;
+  model: string;
+  sku?: string | null;
   price: number;
   rating: number;
-  description: string;
-  mainImage: string;
-  manufacturer: string;
+  description?: string | null;
+  mainImage?: string | null;
+  manufacturer?: string | null;
   categoryId: string | null;
   category?: { name: string } | null;
   inStock: number;
   isActive: boolean;
   featured?: boolean;
   taxRate?: number;
-  merchantId?: string;
+  merchantId?: string | null;
   merchant?: { id: string; name: string } | null;
   createdAt?: string;
   updatedAt?: string;

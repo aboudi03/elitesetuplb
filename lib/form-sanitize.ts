@@ -12,6 +12,8 @@ export function sanitizeFormData(formData: any): any {
 
   // Sanitize text fields
   if (sanitized.title) sanitized.title = sanitize(sanitized.title);
+  if (sanitized.model) sanitized.model = sanitize(sanitized.model);
+  if (sanitized.sku) sanitized.sku = sanitize(sanitized.sku);
   if (sanitized.manufacturer) sanitized.manufacturer = sanitize(sanitized.manufacturer);
   if (sanitized.description) sanitized.description = sanitizeHtml(sanitized.description);
   if (sanitized.slug) sanitized.slug = sanitize(sanitized.slug);
