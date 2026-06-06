@@ -10,9 +10,17 @@ import { sanitize } from "@/lib/sanitize";
 import { calculateCartGrandTotal, calculateCartTax } from "@/lib/cartPricing";
 
 export const CartModule = () => {
-
-  const { products, removeFromCart, calculateTotals, total } =
-    useProductStore();
+  const cartState = useProductStore();
+  const products = Array.isArray(cartState?.products) ? cartState.products : [];
+  const total = typeof cartState?.total === "number" ? cartState.total : 0;
+  const removeFromCart =
+    typeof cartState?.removeFromCart === "function"
+      ? cartState.removeFromCart
+      : () => undefined;
+  const calculateTotals =
+    typeof cartState?.calculateTotals === "function"
+      ? cartState.calculateTotals
+      : () => undefined;
   const taxTotal = calculateCartTax(products);
   const orderTotal = calculateCartGrandTotal(products, total);
 
