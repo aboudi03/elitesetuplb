@@ -1,19 +1,21 @@
 "use client";
 import { DashboardSidebar, RichTextEditor } from "@/components";
+import ProductMediaManager from "@/components/ProductMediaManager";
 import ProductResearchAssistant from "@/components/ProductResearchAssistant";
 import apiClient, { getRuntimeApiBaseUrl } from "@/lib/api";
 import { sanitizeFormData } from "@/lib/form-sanitize";
+import {
+  appendMediaRows,
+  createPendingMediaRows,
+  moveMediaRow,
+  removeMediaRow,
+  setMainMediaRow,
+  type ProductMediaRow,
+} from "@/lib/productMedia";
 import { convertCategoryNameToURLFriendly as convertSlugToURLFriendly } from "@/utils/categoryFormating";
-import Image from "next/image";
 import { nanoid } from "nanoid";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-
-type PendingGalleryImage = {
-  id: string;
-  file: File;
-  previewUrl: string;
-};
 
 const createEmptyProduct = () => ({
   id: nanoid(),
@@ -49,10 +51,7 @@ const AddNewProduct = () => {
   }>(createEmptyProduct);
   const [categories, setCategories] = useState<Category[]>([]);
   const [merchants, setMerchants] = useState<Merchant[]>([]);
-  const [otherImages, setOtherImages] = useState<OtherImages[]>([]);
-  const [pendingMainImageFile, setPendingMainImageFile] = useState<File | null>(null);
-  const [mainImagePreviewUrl, setMainImagePreviewUrl] = useState("");
-  const [pendingGalleryImages, setPendingGalleryImages] = useState<PendingGalleryImage[]>([]);
+  const [mediaRows, setMediaRows] = useState<ProductMediaRow[]>([]);
 
   const fieldClassName =
     "block w-full rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 py-3 text-base text-[var(--site-text)] shadow-sm outline-none transition focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent-soft)]";
@@ -72,67 +71,68 @@ const AddNewProduct = () => {
     }
 
     try {
-      let mainImagePath = product.mainImage;
+      if (mediaRows.length === 0) {
+        toast.error("Add at least one product image");
+        return;
+      }
 
-      if (pendingMainImageFile) {
-        mainImagePath = await uploadFile(pendingMainImageFile, product.id);
-        if (!mainImagePath) {
-          toast.error("Failed to upload main image");
-          return;
-        }
+      const resolvedMediaRows = await Promise.all(
+        mediaRows.map(async (row) => {
+          if (!row.file) {
+            return row;
+          }
+
+          const uploadedPath = await uploadFile(row.file, product.id, row.isMain ? "main" : "gallery");
+          if (!uploadedPath) {
+            throw new Error(`Failed to upload ${row.fileName}`);
+          }
+
+          URL.revokeObjectURL(row.previewUrl);
+          return {
+            ...row,
+            path: uploadedPath,
+            previewUrl: `/${uploadedPath}`,
+            file: undefined,
+            source: "existing-gallery" as const,
+          };
+        })
+      );
+
+      const mainImageRow = resolvedMediaRows.find((row) => row.isMain && row.path);
+      if (!mainImageRow?.path) {
+        toast.error("Select one main image");
+        return;
       }
 
       const sanitizedProduct = sanitizeFormData({
         ...product,
         // send null to server when no category selected
         categoryId: product.categoryId === "" ? null : product.categoryId,
-        mainImage: mainImagePath,
+        mainImage: mainImageRow.path,
       });
       const response = await apiClient.post(`/api/products`, sanitizedProduct);
 
       if (response.status === 201) {
         await response.json();
 
-        const uploadedGalleryImages: OtherImages[] = [];
-        for (const image of pendingGalleryImages) {
-          const uploadedPath = await uploadGalleryFile(image.file, product.id);
-          if (!uploadedPath) {
-            continue;
-          }
+        const galleryPayload = resolvedMediaRows
+          .filter((row) => !row.isMain && row.path)
+          .map((row, index) => ({
+            image: row.path,
+            sortOrder: index + 1,
+          }));
 
-          const imageResponse = await apiClient.post("/api/images", {
-            productID: product.id,
-            image: uploadedPath,
-          });
-          const imageRecord = await imageResponse.json();
-
-          if (imageResponse.ok) {
-            uploadedGalleryImages.push(imageRecord);
-          }
-        }
-
-        if (mainImagePreviewUrl) {
-          URL.revokeObjectURL(mainImagePreviewUrl);
-        }
-        pendingGalleryImages.forEach((image) => {
-          URL.revokeObjectURL(image.previewUrl);
+        await apiClient.put(`/api/images/sync/${product.id}`, {
+          images: galleryPayload,
+          removedPaths: [],
         });
+
         toast.success("Product added successfully");
         setProduct({
           ...createEmptyProduct(),
           merchantId: merchants[0]?.id || "",
         });
-        setPendingMainImageFile(null);
-        setMainImagePreviewUrl("");
-        setPendingGalleryImages([]);
-        setOtherImages([]);
-        if (uploadedGalleryImages.length > 0) {
-          toast.success(
-            `${uploadedGalleryImages.length} gallery image${
-              uploadedGalleryImages.length > 1 ? "s were" : " was"
-            } added`
-          );
-        }
+        setMediaRows([]);
       } else {
         const errorData = await response.json();
         toast.error(errorData.error || errorData.message || "Failed to add product");
@@ -158,10 +158,15 @@ const AddNewProduct = () => {
     }
   };
 
-  const uploadFile = async (file: File, productId: string) => {
+  const uploadFile = async (
+    file: File,
+    productId: string,
+    assetType: "main" | "gallery" = "main"
+  ) => {
     const formData = new FormData();
     formData.append("uploadedFile", file);
     formData.append("productId", productId);
+    formData.append("assetType", assetType);
 
     try {
       const response = await fetch(`${getRuntimeApiBaseUrl()}/api/main-image`, {
@@ -178,39 +183,6 @@ const AddNewProduct = () => {
     }
 
     return "";
-  };
-
-  const uploadGalleryFile = async (file: File, productId: string) => {
-    const formData = new FormData();
-    formData.append("uploadedFile", file);
-    formData.append("productId", productId);
-    formData.append("assetType", "gallery");
-
-    try {
-      const response = await fetch(`${getRuntimeApiBaseUrl()}/api/main-image`, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return data.path as string;
-      }
-    } catch (error) {
-      console.error("Error happened while sending gallery request:", error);
-    }
-
-    return "";
-  };
-
-  const selectGalleryImages = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    const nextImages = Array.from(files).map((file) => ({
-      id: `${file.name}-${file.lastModified}-${Math.random().toString(36).slice(2, 8)}`,
-      file,
-      previewUrl: URL.createObjectURL(file),
-    }));
-    setPendingGalleryImages((currentImages) => [...currentImages, ...nextImages]);
   };
 
   const fetchCategories = async () => {
@@ -246,14 +218,19 @@ const AddNewProduct = () => {
     fetchMerchants();
   }, []);
 
-  const removePendingGalleryImage = (imageId: string) => {
-    setPendingGalleryImages((currentImages) => {
-      const imageToRemove = currentImages.find((image) => image.id === imageId);
-      if (imageToRemove) {
-        URL.revokeObjectURL(imageToRemove.previewUrl);
+  const addMediaFiles = (files: FileList | null) => {
+    const nextRows = createPendingMediaRows(files);
+    setMediaRows((currentRows) => appendMediaRows(currentRows, nextRows));
+  };
+
+  const handleRemoveMediaRow = (rowId: string) => {
+    setMediaRows((currentRows) => {
+      const removedRow = currentRows.find((row) => row.id === rowId);
+      if (removedRow?.source === "pending") {
+        URL.revokeObjectURL(removedRow.previewUrl);
       }
 
-      return currentImages.filter((image) => image.id !== imageId);
+      return removeMediaRow(currentRows, rowId);
     });
   };
 
@@ -448,97 +425,15 @@ const AddNewProduct = () => {
               </div>
             </section>
 
-            <section className={sectionClassName}>
-              <div className="mb-6">
-                <h2 className="text-2xl font-semibold">Main image</h2>
-                <p className="mt-2 text-sm text-[var(--site-muted)]">
-                  Upload the primary storefront image and preview it before saving.
-                </p>
-              </div>
-
-              <div className="space-y-5">
-                <input
-                  type="file"
-                  className="file-input file-input-bordered file-input-lg w-full"
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    const selectedFile = e.target.files?.[0];
-                    if (!selectedFile) return;
-
-                    if (mainImagePreviewUrl) {
-                      URL.revokeObjectURL(mainImagePreviewUrl);
-                    }
-                    setPendingMainImageFile(selectedFile);
-                    setMainImagePreviewUrl(URL.createObjectURL(selectedFile));
-                  }}
-                />
-                <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-dashed border-[var(--site-border)] bg-[var(--site-panel-soft)] p-6">
-                  {mainImagePreviewUrl || product?.mainImage ? (
-                    <Image
-                      src={mainImagePreviewUrl || `/${product?.mainImage}`}
-                      alt={product?.title || "Product preview"}
-                      className="h-auto max-h-[220px] w-auto object-contain"
-                      width={220}
-                      height={220}
-                    />
-                  ) : (
-                    <p className="text-center text-sm text-[var(--site-muted)]">
-                      Upload an image to preview it here.
-                    </p>
-                  )}
-                </div>
-              </div>
-            </section>
-
-            <section className={sectionClassName}>
-              <div className="mb-6">
-                <h2 className="text-2xl font-semibold">Gallery images</h2>
-                <p className="mt-2 text-sm text-[var(--site-muted)]">
-                  Add extra product shots. You can upload several images at once.
-                </p>
-              </div>
-
-              <div className="space-y-5">
-                <input
-                  type="file"
-                  multiple
-                  className="file-input file-input-bordered file-input-lg w-full"
-                  onChange={async (e: React.ChangeEvent<HTMLInputElement>) => {
-                    await selectGalleryImages(e.target.files);
-                    e.target.value = "";
-                  }}
-                />
-                <div className="grid min-h-[180px] grid-cols-2 gap-3 rounded-2xl border border-dashed border-[var(--site-border)] bg-[var(--site-panel-soft)] p-4 sm:grid-cols-3">
-                  {pendingGalleryImages.length > 0 ? (
-                    pendingGalleryImages.map((image) => (
-                      <div
-                        key={image.id}
-                        className="group relative flex aspect-square items-center justify-center rounded-xl border border-[var(--site-border)] bg-[var(--site-panel)] p-3"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => removePendingGalleryImage(image.id)}
-                          className="absolute right-2 top-2 z-10 hidden h-7 w-7 items-center justify-center rounded-full bg-black/75 text-sm font-bold text-white transition hover:bg-black group-hover:inline-flex"
-                          aria-label="Remove gallery image"
-                        >
-                          x
-                        </button>
-                        <Image
-                          src={image.previewUrl}
-                          alt="Gallery preview"
-                          width={140}
-                          height={140}
-                          className="h-full w-full object-contain"
-                        />
-                      </div>
-                    ))
-                  ) : (
-                    <div className="col-span-full flex items-center justify-center text-center text-sm text-[var(--site-muted)]">
-                      Upload a few extra angles to build the product gallery.
-                    </div>
-                  )}
-                </div>
-              </div>
-            </section>
+            <ProductMediaManager
+              rows={mediaRows}
+              onAddFiles={addMediaFiles}
+              onSetMain={(rowId) => setMediaRows((currentRows) => setMainMediaRow(currentRows, rowId))}
+              onMoveRow={(rowId, direction) =>
+                setMediaRows((currentRows) => moveMediaRow(currentRows, rowId, direction))
+              }
+              onRemoveRow={handleRemoveMediaRow}
+            />
 
             <div className="flex flex-wrap gap-3">
               <button

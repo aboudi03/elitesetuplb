@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
-import { FaAnglesLeft, FaAnglesRight, FaChevronLeft, FaChevronRight } from "react-icons/fa6";
+import { FaAnglesLeft, FaAnglesRight, FaChevronDown, FaChevronLeft, FaChevronRight } from "react-icons/fa6";
 import apiClient from "@/lib/api";
 import {
   fallbackNavbarCategories,
@@ -70,9 +70,12 @@ const Hero = () => {
   const [heroCategories, setHeroCategories] = useState<NavbarCategoryItem[]>(
     fallbackNavbarCategories
   );
+  const [expandedMobileCategoryId, setExpandedMobileCategoryId] = useState<string | null>(null);
   const [previousRippleKey, setPreviousRippleKey] = useState(0);
   const [nextRippleKey, setNextRippleKey] = useState(0);
   const autoplayTimerRef = useRef<number | null>(null);
+  const transitionLockRef = useRef(false);
+  const transitionUnlockTimerRef = useRef<number | null>(null);
   const touchStartXRef = useRef<number | null>(null);
   const touchDeltaXRef = useRef(0);
 
@@ -152,6 +155,11 @@ const Hero = () => {
     }
 
     autoplayTimerRef.current = window.setTimeout(() => {
+      if (slides.length <= 1 || transitionLockRef.current) {
+        return;
+      }
+
+      beginSlideTransition();
       setSlideDirection("next");
       setActiveSlide((current) => (current + 1) % slides.length);
     }, 4500);
@@ -160,17 +168,43 @@ const Hero = () => {
       if (autoplayTimerRef.current) {
         window.clearTimeout(autoplayTimerRef.current);
       }
+      if (transitionUnlockTimerRef.current) {
+        window.clearTimeout(transitionUnlockTimerRef.current);
+      }
     };
   }, [activeSlide, slides.length]);
 
   const slide = slides[activeSlide] ?? fallbackSlides[0];
+  const beginSlideTransition = () => {
+    transitionLockRef.current = true;
+
+    if (autoplayTimerRef.current) {
+      window.clearTimeout(autoplayTimerRef.current);
+    }
+
+    if (transitionUnlockTimerRef.current) {
+      window.clearTimeout(transitionUnlockTimerRef.current);
+    }
+
+    transitionUnlockTimerRef.current = window.setTimeout(() => {
+      transitionLockRef.current = false;
+    }, 900);
+  };
+  const canChangeSlide = slides.length > 1 && !transitionLockRef.current;
+
   const goToPreviousSlide = () => {
+    if (!canChangeSlide) return;
+
+    beginSlideTransition();
     setPreviousRippleKey((current) => current + 1);
     setSlideDirection("previous");
     setActiveSlide((current) => (current - 1 + slides.length) % slides.length);
   };
 
   const goToNextSlide = () => {
+    if (!canChangeSlide) return;
+
+    beginSlideTransition();
     setNextRippleKey((current) => current + 1);
     setSlideDirection("next");
     setActiveSlide((current) => (current + 1) % slides.length);
@@ -199,33 +233,85 @@ const Hero = () => {
     touchDeltaXRef.current = 0;
   };
 
+  const toggleMobileCategory = (categoryId: string) => {
+    setExpandedMobileCategoryId((current) =>
+      current === categoryId ? null : categoryId
+    );
+  };
+
   return (
     <section className="bg-[var(--site-bg)] pb-8">
       <nav className="border-b border-[var(--site-border)] bg-[var(--site-panel)]">
         <div className="mx-auto flex max-w-screen-2xl items-center justify-center gap-9 overflow-x-auto px-4 py-3 text-sm font-semibold text-[var(--site-text)] max-lg:justify-start lg:overflow-visible">
           {heroCategories.map((category) => {
             const hasChildren = Array.isArray(category.children) && category.children.length > 0;
+            const isExpandedOnMobile = expandedMobileCategoryId === category.id;
 
             return (
               <div key={category.id} className="group relative shrink-0">
-                <Link
-                  href={category.href}
-                  className="inline-flex items-center gap-2 whitespace-nowrap transition hover:text-[var(--site-accent)]"
-                >
-                  {category.label}
-                  {hasChildren && (
-                    <span
-                      aria-hidden="true"
-                      className="text-xs font-black leading-none transition-transform duration-200 group-hover:-rotate-180 group-focus-within:-rotate-180"
+                {hasChildren ? (
+                  <>
+                    <Link
+                      href={category.href}
+                      className="hidden items-center gap-2 whitespace-nowrap transition hover:text-[var(--site-accent)] lg:inline-flex"
                     >
-                      ^
-                    </span>
-                  )}
-                </Link>
+                      {category.label}
+                      <span
+                        aria-hidden="true"
+                        className="text-xs leading-none transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180"
+                      >
+                        <FaChevronDown />
+                      </span>
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={() => toggleMobileCategory(category.id)}
+                      aria-expanded={isExpandedOnMobile}
+                      className="inline-flex items-center gap-2 whitespace-nowrap transition hover:text-[var(--site-accent)] lg:hidden"
+                    >
+                      {category.label}
+                      <span
+                        aria-hidden="true"
+                        className={`text-xs leading-none transition-transform duration-200 ${
+                          isExpandedOnMobile ? "rotate-180" : ""
+                        }`}
+                      >
+                        <FaChevronDown />
+                      </span>
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    href={category.href}
+                    className="inline-flex items-center gap-2 whitespace-nowrap transition hover:text-[var(--site-accent)]"
+                  >
+                    {category.label}
+                  </Link>
+                )}
 
                 {hasChildren && (
-                  <div className="absolute left-0 top-full z-30 hidden min-w-[240px] pt-3 group-hover:block group-focus-within:block max-lg:hidden">
-                    <div className="rounded-lg border border-[var(--site-border)] bg-[var(--site-panel)] p-2 shadow-[0_18px_45px_rgba(0,0,0,0.16)]">
+                  <>
+                    <div className="absolute left-0 top-full z-30 hidden min-w-[240px] pt-3 group-hover:block group-focus-within:block max-lg:hidden">
+                      <div className="rounded-lg border border-[var(--site-border)] bg-[var(--site-panel)] p-2 shadow-[0_18px_45px_rgba(0,0,0,0.16)]">
+                        {category.children!.map((childCategory) => (
+                          <Link
+                            key={childCategory.id}
+                            href={childCategory.href}
+                            className="block rounded-lg px-3 py-2 text-sm font-semibold text-[var(--site-text)] transition hover:bg-[var(--site-panel-soft)] hover:text-[var(--site-accent)]"
+                          >
+                            {childCategory.label}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div
+                      className={`absolute left-0 top-full z-30 min-w-[240px] pt-3 lg:hidden ${
+                        isExpandedOnMobile ? "block" : "hidden"
+                      }`}
+                    >
+                      <div className="rounded-lg border border-[var(--site-border)] bg-[var(--site-panel)] p-2 shadow-[0_18px_45px_rgba(0,0,0,0.16)]">
                       {category.children!.map((childCategory) => (
                         <Link
                           key={childCategory.id}
@@ -235,8 +321,9 @@ const Hero = () => {
                           {childCategory.label}
                         </Link>
                       ))}
+                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
             );

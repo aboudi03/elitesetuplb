@@ -13,6 +13,10 @@ interface Product {
   isActive: boolean;
   featured?: boolean;
   taxRate?: number;
+  merchantId?: string;
+  merchant?: { id: string; name: string } | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface Merchant {
@@ -47,6 +51,7 @@ interface OtherImages {
   imageID: string;
   productID: string;
   image: string;
+  sortOrder?: number;
 }
 
 interface Category {

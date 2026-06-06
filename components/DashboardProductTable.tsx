@@ -47,7 +47,7 @@ const DashboardProductTable = () => {
 
   const updateProducts = async (
     targetProducts: Product[],
-    updates: Partial<Pick<Product, "inStock" | "isActive">>
+    updates: Partial<Pick<Product, "inStock" | "isActive" | "featured">>
   ) => {
     const updatedProducts = await Promise.all(
       targetProducts.map(async (product) => {
@@ -93,20 +93,40 @@ const DashboardProductTable = () => {
     {
       key: "product",
       header: "Product",
-      searchableText: (product) => `${product.title} ${product.manufacturer}`,
+      searchableText: (product) =>
+        [
+          product.title,
+          product.manufacturer,
+          product.slug,
+          product.category?.name,
+          product.merchant?.name,
+        ]
+          .filter(Boolean)
+          .join(" "),
       className: "min-w-[320px]",
       cell: (product) => (
         <div>
           <div className="text-lg font-semibold leading-6">{sanitize(product.title)}</div>
-          <div className="text-base text-[var(--site-muted)]">
-            {sanitize(product.manufacturer)}
-          </div>
+          <div className="text-sm text-[var(--site-muted)]">/{sanitize(product.slug)}</div>
+          <div className="text-base text-[var(--site-muted)]">{sanitize(product.manufacturer)}</div>
         </div>
       ),
     },
     {
+      key: "merchant",
+      header: "Merchant",
+      searchableText: (product) => product.merchant?.name || "",
+      accessor: (product) => product.merchant?.name || "-",
+    },
+    {
+      key: "category",
+      header: "Category",
+      searchableText: (product) => product.category?.name || "",
+      accessor: (product) => product.category?.name || "Uncategorized",
+    },
+    {
       key: "stock",
-      header: "Stock Availability",
+      header: "Stock",
       searchableText: (product) => String(product.inStock),
       className: "min-w-[240px]",
       cell: (product) => (
@@ -121,6 +141,30 @@ const DashboardProductTable = () => {
               targetProducts.length > 1
                 ? `Stock updated for ${targetProducts.length} products`
                 : "Stock updated"
+            );
+          }}
+        />
+      ),
+    },
+    {
+      key: "featured",
+      header: "Featured",
+      searchableText: (product) => (product.featured ? "featured yes" : "featured no"),
+      cell: (product) => (
+        <InlineSelectEdit
+          value={product.featured ? "yes" : "no"}
+          displayValue={product.featured ? "Yes" : "No"}
+          options={[
+            { label: "No", value: "no" },
+            { label: "Yes", value: "yes" },
+          ]}
+          onChange={async (value) => {
+            const targetProducts = getTargetProducts(product);
+            await updateProducts(targetProducts, { featured: value === "yes" });
+            toast.success(
+              targetProducts.length > 1
+                ? `Featured state updated for ${targetProducts.length} products`
+                : "Featured state updated"
             );
           }}
         />
@@ -151,9 +195,50 @@ const DashboardProductTable = () => {
       ),
     },
     {
+      key: "status",
+      header: "Storefront",
+      searchableText: (product) =>
+        `${product.isActive ? "enabled" : "disabled"} ${product.featured ? "featured" : "standard"}`,
+      cell: (product) => (
+        <div className="flex flex-wrap gap-2">
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+              product.isActive
+                ? "bg-green-100 text-green-700"
+                : "bg-gray-200 text-gray-700"
+            }`}
+          >
+            {product.isActive ? "On" : "Off"}
+          </span>
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+              product.featured
+                ? "bg-amber-100 text-amber-700"
+                : "bg-[var(--site-panel-soft)] text-[var(--site-muted)]"
+            }`}
+          >
+            {product.featured ? "Featured" : "Standard"}
+          </span>
+        </div>
+      ),
+    },
+    {
       key: "price",
       header: "Price",
-      accessor: (product) => `$${product.price}`,
+      searchableText: (product) => `${product.price} ${product.taxRate ?? 0}`,
+      cell: (product) => (
+        <div>
+          <div className="text-lg font-semibold">${product.price}</div>
+          <div className="text-sm text-[var(--site-muted)]">Tax: {product.taxRate ?? 0}%</div>
+        </div>
+      ),
+    },
+    {
+      key: "updatedAt",
+      header: "Updated",
+      searchableText: (product) => product.updatedAt || "",
+      accessor: (product) =>
+        product.updatedAt ? new Date(product.updatedAt).toLocaleDateString() : "-",
       className: "text-lg font-semibold",
     },
     {

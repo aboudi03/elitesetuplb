@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FaAnglesLeft, FaAnglesRight, FaChevronLeft, FaChevronRight } from "react-icons/fa6";
 
 type ProductGalleryImage = {
@@ -39,16 +39,27 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
   const [activeIndex, setActiveIndex] = useState(0);
   const [previousRippleKey, setPreviousRippleKey] = useState(0);
   const [nextRippleKey, setNextRippleKey] = useState(0);
+  const autoplayTimerRef = useRef<number | null>(null);
+  const touchStartXRef = useRef<number | null>(null);
+  const touchDeltaXRef = useRef(0);
 
   useEffect(() => {
     if (slides.length <= 1) return;
 
-    const slideTimer = window.setInterval(() => {
+    if (autoplayTimerRef.current) {
+      window.clearTimeout(autoplayTimerRef.current);
+    }
+
+    autoplayTimerRef.current = window.setTimeout(() => {
       setActiveIndex((currentIndex) => (currentIndex + 1) % slides.length);
     }, SLIDE_INTERVAL_MS);
 
-    return () => window.clearInterval(slideTimer);
-  }, [slides.length]);
+    return () => {
+      if (autoplayTimerRef.current) {
+        window.clearTimeout(autoplayTimerRef.current);
+      }
+    };
+  }, [activeIndex, slides.length]);
 
   const activeSlide = slides[activeIndex] || slides[0];
   const hasMultipleSlides = slides.length > 1;
@@ -65,6 +76,29 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
 
     setNextRippleKey((currentKey) => currentKey + 1);
     setActiveIndex((currentIndex) => (currentIndex + 1) % slides.length);
+  };
+
+  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    touchStartXRef.current = event.touches[0]?.clientX ?? null;
+    touchDeltaXRef.current = 0;
+  };
+
+  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (touchStartXRef.current === null) return;
+    touchDeltaXRef.current = (event.touches[0]?.clientX ?? 0) - touchStartXRef.current;
+  };
+
+  const handleTouchEnd = () => {
+    const swipeThreshold = 40;
+
+    if (touchDeltaXRef.current <= -swipeThreshold) {
+      goToNextSlide();
+    } else if (touchDeltaXRef.current >= swipeThreshold) {
+      goToPreviousSlide();
+    }
+
+    touchStartXRef.current = null;
+    touchDeltaXRef.current = 0;
   };
 
   return (
@@ -93,7 +127,13 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
         ))}
       </div>
 
-      <div className="relative flex aspect-square min-h-[320px] flex-1 items-center justify-center overflow-hidden rounded-md bg-[var(--site-panel-soft)] p-5">
+      <div
+        className="relative flex aspect-square min-h-[320px] flex-1 items-center justify-center overflow-hidden rounded-md border border-[var(--site-border)] bg-white p-2"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
+      >
         <Image
           key={activeSlide.src}
           src={activeSlide.src}

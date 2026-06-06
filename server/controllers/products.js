@@ -102,7 +102,24 @@ const getAllProducts = asyncHandler(async (request, response) => {
   
   // checking if we are on the admin products page because we don't want to have filtering, sorting and pagination there
   if(mode === "admin"){
-    const adminProducts = await prisma.product.findMany({});
+    const adminProducts = await prisma.product.findMany({
+      include: {
+        category: {
+          select: {
+            name: true,
+          },
+        },
+        merchant: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        updatedAt: "desc",
+      },
+    });
     return response.json(adminProducts);
   } else {
     const dividerLocation = request.url.indexOf("?");
@@ -489,6 +506,12 @@ const getProductById = asyncHandler(async (request, response) => {
     },
     include: {
       category: true,
+      merchant: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
   });
   

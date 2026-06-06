@@ -5,10 +5,12 @@ const {
   createImage,
   updateImage,
   deleteImage,
-  deleteSingleImage
+  deleteSingleImage,
+  syncProductImages,
 } = require('../controllers/productImages')
 
 router.route('/item/:imageId').delete(deleteSingleImage);
+router.route('/sync/:productId').put(syncProductImages);
 
 router.route('/:id').get(getSingleProductImages); 
 
