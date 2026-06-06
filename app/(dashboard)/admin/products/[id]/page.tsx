@@ -30,6 +30,7 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
   const id = resolvedParams.id;
 
   const [product, setProduct] = useState<Product>();
+  const [isLoadingProduct, setIsLoadingProduct] = useState(true);
   const [categories, setCategories] = useState<Category[]>();
   const [mediaRows, setMediaRows] = useState<ProductMediaRow[]>([]);
   const [removedMediaPaths, setRemovedMediaPaths] = useState<string[]>([]);
@@ -165,16 +166,39 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
 
   // fetching main product data including other product images
   const fetchProductData = async () => {
-    const productResponse = await apiClient.get(`/api/products/${id}`);
-    const productData = await productResponse.json();
-    setProduct(productData);
+    setIsLoadingProduct(true);
 
-    const imagesData = await apiClient.get(`/api/images/${id}`, {
-      cache: "no-store",
-    });
-    const images = await imagesData.json();
-    const normalizedImages = Array.isArray(images) ? images : [];
-    setMediaRows(buildMediaRows(productData.mainImage, normalizedImages));
+    try {
+      const productResponse = await apiClient.get(`/api/products/${id}`, {
+        cache: "no-store",
+      });
+
+      if (!productResponse.ok) {
+        throw new Error("Failed to load product details");
+      }
+
+      const productData = await productResponse.json();
+
+      if (!productData?.id) {
+        throw new Error("Product details response was invalid");
+      }
+
+      setProduct(productData);
+
+      const imagesData = await apiClient.get(`/api/images/${id}`, {
+        cache: "no-store",
+      });
+      const images = imagesData.ok ? await imagesData.json() : [];
+      const normalizedImages = Array.isArray(images) ? images : [];
+      setMediaRows(buildMediaRows(productData.mainImage, normalizedImages));
+    } catch (error) {
+      console.error("Failed to fetch product details:", error);
+      setProduct(undefined);
+      setMediaRows([]);
+      toast.error("Failed to load product details");
+    } finally {
+      setIsLoadingProduct(false);
+    }
   };
 
   // fetching all product categories. It will be used for displaying categories in select category input
@@ -272,6 +296,19 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
             onApply={applyResearchFields}
           />
         </div>
+
+        {isLoadingProduct ? (
+          <div className={`${sectionClassName} text-center text-[var(--site-muted)]`}>
+            Loading product details...
+          </div>
+        ) : !product ? (
+          <div className={`${sectionClassName} text-center`}>
+            <p className="text-lg font-semibold text-[var(--site-text)]">Product details could not be loaded.</p>
+            <p className="mt-2 text-sm text-[var(--site-muted)]">
+              The product may have been deleted, or the backend request failed.
+            </p>
+          </div>
+        ) : (
 
         <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
           <section className={sectionClassName}>
@@ -515,6 +552,7 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
             </section>
           </div>
         </div>
+        )}
       </div>
     </div>
   );
