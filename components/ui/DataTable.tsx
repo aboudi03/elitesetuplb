@@ -52,6 +52,8 @@ type DataTableProps<T> = {
   selectedIds?: string[];
   onSelectionChange?: (ids: string[]) => void;
   autoFilter?: boolean;
+  onRowClick?: (row: T) => void;
+  rowClassName?: string;
 };
 
 function getAccessorValue<T>(row: T, accessor?: keyof T | ((row: T) => React.ReactNode)) {
@@ -114,6 +116,8 @@ export default function DataTable<T>({
   selectedIds,
   onSelectionChange,
   autoFilter = true,
+  onRowClick,
+  rowClassName = "",
 }: DataTableProps<T>) {
   const [internalSearch, setInternalSearch] = useState("");
   const [internalSelectedIds, setInternalSelectedIds] = useState<string[]>([]);
@@ -200,8 +204,7 @@ export default function DataTable<T>({
       )}
 
       <div className="relative overflow-visible rounded-md border border-[var(--site-border)] bg-[var(--site-panel)]">
-        <div className="overflow-x-auto">
-          <table className={`admin-data-table w-full min-w-max text-base ${tableClassName}`}>
+          <table className={`admin-data-table w-full text-base ${tableClassName}`}>
           <thead>
             <tr>
               {enableSelection && (
@@ -251,7 +254,11 @@ export default function DataTable<T>({
                 const rowId = getRowId(row);
 
                 return (
-                  <tr key={rowId} className="border-t border-[var(--site-border)] transition">
+                  <tr
+                    key={rowId}
+                    className={`border-t border-[var(--site-border)] transition ${onRowClick ? "cursor-pointer hover:bg-[var(--site-panel-soft)]/50" : ""} ${rowClassName}`}
+                    onClick={() => onRowClick?.(row)}
+                  >
                     {enableSelection && (
                       <td className="px-4 py-3 text-center align-middle">
                         <input
@@ -259,6 +266,7 @@ export default function DataTable<T>({
                           className="checkbox checkbox-sm"
                           checked={currentSelectedIds.includes(rowId)}
                           onChange={() => toggleRow(rowId)}
+                          onClick={(event) => event.stopPropagation()}
                           aria-label={`Select row ${rowId}`}
                         />
                       </td>
@@ -285,7 +293,6 @@ export default function DataTable<T>({
             )}
           </tbody>
           </table>
-        </div>
       </div>
     </section>
   );

@@ -18,11 +18,14 @@ import { sanitize } from "@/lib/sanitize";
 import DataTable, { DataTableColumn } from "./ui/DataTable";
 import InlineNumberEdit from "./ui/InlineNumberEdit";
 import InlineSelectEdit from "./ui/InlineSelectEdit";
+import InlineTextEdit from "./ui/InlineTextEdit";
 import HoverImagePreview from "./ui/HoverImagePreview";
 import ViewActionLink from "./ui/ViewActionLink";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 const DashboardProductTable = () => {
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
@@ -47,7 +50,12 @@ const DashboardProductTable = () => {
 
   const updateProducts = async (
     targetProducts: Product[],
-    updates: Partial<Pick<Product, "inStock" | "isActive" | "featured">>
+    updates: Partial<
+      Pick<
+        Product,
+        "inStock" | "isActive" | "featured" | "title" | "model" | "sku" | "price"
+      >
+    >
   ) => {
     const updatedProducts = await Promise.all(
       targetProducts.map(async (product) => {
@@ -107,13 +115,44 @@ const DashboardProductTable = () => {
           .join(" "),
       className: "min-w-[320px]",
       cell: (product) => (
-        <div>
+        <div className="space-y-1">
           <div className="text-lg font-semibold leading-6">
-            {sanitize(product.title || product.model || "Untitled product")}
+            <InlineTextEdit
+              value={product.title || ""}
+              displayValue={sanitize(product.title || product.model || "Untitled product")}
+              label={`${sanitize(product.model || product.title || "product")} title`}
+              inputClassName="min-w-[14rem] text-left"
+              onConfirm={async (nextTitle) => {
+                await updateProducts([product], { title: nextTitle });
+                toast.success("Title updated");
+              }}
+            />
           </div>
           <div className="text-sm text-[var(--site-muted)]">
-            Model: {sanitize(product.model || "-")}
-            {product.sku ? ` | SKU: ${sanitize(product.sku)}` : ""}
+            Model:{" "}
+            <InlineTextEdit
+              value={product.model || ""}
+              displayValue={sanitize(product.model || "-")}
+              label={`${sanitize(product.title || product.model || "product")} model`}
+              inputClassName="min-w-[12rem] text-left"
+              onConfirm={async (nextModel) => {
+                await updateProducts([product], { model: nextModel });
+                toast.success("Model updated");
+              }}
+            />
+          </div>
+          <div className="text-sm text-[var(--site-muted)]">
+            SKU:{" "}
+            <InlineTextEdit
+              value={product.sku || ""}
+              displayValue={sanitize(product.sku || "-")}
+              label={`${sanitize(product.title || product.model || "product")} sku`}
+              inputClassName="min-w-[10rem] text-left"
+              onConfirm={async (nextSku) => {
+                await updateProducts([product], { sku: nextSku || null });
+                toast.success("SKU updated");
+              }}
+            />
           </div>
           <div className="text-sm text-[var(--site-muted)]">
             {product.slug ? `/${sanitize(product.slug)}` : "No slug"}
@@ -237,8 +276,22 @@ const DashboardProductTable = () => {
       header: "Price",
       searchableText: (product) => `${product.price} ${product.taxRate ?? 0}`,
       cell: (product) => (
-        <div>
-          <div className="text-lg font-semibold">${product.price.toFixed(2)}</div>
+        <div className="space-y-1">
+          <div className="text-lg font-semibold">
+            <InlineTextEdit
+              value={String(product.price)}
+              displayValue={`$${product.price.toFixed(2)}`}
+              label={`${sanitize(product.title || product.model || "product")} price`}
+              type="number"
+              min={0}
+              step={0.01}
+              inputClassName="min-w-[8rem]"
+              onConfirm={async (nextPrice) => {
+                await updateProducts([product], { price: Number(nextPrice) });
+                toast.success("Price updated");
+              }}
+            />
+          </div>
           <div className="text-sm text-[var(--site-muted)]">Tax: {product.taxRate ?? 0}%</div>
         </div>
       ),
@@ -276,6 +329,7 @@ const DashboardProductTable = () => {
         searchPlaceholder="Search products..."
         className="xl:ml-5 max-xl:mt-5"
         tableClassName="text-base"
+        onRowClick={(product) => router.push(`/admin/products/${product.id}`)}
         actions={
           <Link href="/admin/products/new">
             <CustomButton

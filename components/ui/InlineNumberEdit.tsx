@@ -89,7 +89,10 @@ export default function InlineNumberEdit({
         ) : (
           <button
             type="button"
-            onClick={() => setIsEditing(true)}
+            onClick={(event) => {
+              event.stopPropagation();
+              setIsEditing(true);
+            }}
             className="rounded-md px-2 py-1 text-base font-medium text-[var(--site-text)] transition hover:bg-[var(--site-panel-soft)] hover:text-[var(--site-accent)]"
             aria-label={`Edit ${label}`}
           >
