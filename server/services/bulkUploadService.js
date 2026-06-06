@@ -24,7 +24,7 @@ function validateRow(row) {
   clean.price = Math.round(price * 100) / 100; // Keep 2 decimal places
   clean.categoryId = categoryId || null;
   clean.inStock = Math.floor(inStock); // Integer stock quantity
-  clean.model = String(row.model ?? title || slug || "").trim() || title;
+  clean.model = String(row.model ?? title ?? slug ?? "").trim() || title;
   clean.sku = row.sku ? String(row.sku).trim() : null;
 
   clean.manufacturer = row.manufacturer
