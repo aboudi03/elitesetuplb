@@ -49,7 +49,7 @@ export default function InlineSelectEdit({
         event.stopPropagation();
         setIsEditing(true);
       }}
-      className="rounded-md px-2 py-1 text-base font-medium text-[var(--site-text)] transition hover:bg-[var(--site-panel-soft)] hover:text-[var(--site-accent)]"
+      className="rounded-md px-1.5 py-0.5 text-sm font-medium text-[var(--site-text)] transition hover:bg-[var(--site-panel-soft)] hover:text-[var(--site-accent)]"
     >
       {displayValue || selectedOption?.label || value}
     </button>

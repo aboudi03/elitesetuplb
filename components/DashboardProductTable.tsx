@@ -22,10 +22,21 @@ import InlineTextEdit from "./ui/InlineTextEdit";
 import HoverImagePreview from "./ui/HoverImagePreview";
 import ViewActionLink from "./ui/ViewActionLink";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
+
+function truncateWords(value: string | null | undefined, limit = 4) {
+  const words = String(value || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (words.length <= limit) {
+    return words.join(" ");
+  }
+
+  return `${words.slice(0, limit).join(" ")}...`;
+}
 
 const DashboardProductTable = () => {
-  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
@@ -89,18 +100,18 @@ const DashboardProductTable = () => {
     {
       key: "image",
       header: "Image",
-      className: "min-w-[110px]",
+      className: "w-[72px]",
       cell: (product) => (
         <HoverImagePreview
           src={product.mainImage ? `/${product.mainImage}` : "/product_placeholder.jpg"}
           alt={sanitize(product.title) || "Product image"}
-          thumbnailClassName="mask mask-squircle h-14 w-14 overflow-hidden bg-[var(--site-panel-soft)]"
+          thumbnailClassName="mask mask-squircle h-12 w-12 overflow-hidden bg-[var(--site-panel-soft)]"
         />
       ),
     },
     {
-      key: "product",
-      header: "Product",
+      key: "name",
+      header: "Name",
       searchableText: (product) =>
         [
           product.title,
@@ -113,51 +124,62 @@ const DashboardProductTable = () => {
         ]
           .filter(Boolean)
           .join(" "),
-      className: "min-w-[320px]",
+      className: "w-[190px] min-w-0",
       cell: (product) => (
-        <div className="space-y-1">
-          <div className="text-lg font-semibold leading-6">
+        <div className="min-w-0 space-y-1">
+          <div className="min-w-0 text-sm font-semibold leading-5" title={sanitize(product.title || product.model || "Untitled product")}>
             <InlineTextEdit
               value={product.title || ""}
-              displayValue={sanitize(product.title || product.model || "Untitled product")}
+              displayValue={truncateWords(sanitize(product.title || product.model || "Untitled product"))}
               label={`${sanitize(product.model || product.title || "product")} title`}
-              inputClassName="min-w-[14rem] text-left"
+              inputClassName="min-w-[11rem] text-left"
               onConfirm={async (nextTitle) => {
                 await updateProducts([product], { title: nextTitle });
                 toast.success("Title updated");
               }}
             />
           </div>
-          <div className="text-sm text-[var(--site-muted)]">
-            Model:{" "}
-            <InlineTextEdit
-              value={product.model || ""}
-              displayValue={sanitize(product.model || "-")}
-              label={`${sanitize(product.title || product.model || "product")} model`}
-              inputClassName="min-w-[12rem] text-left"
-              onConfirm={async (nextModel) => {
-                await updateProducts([product], { model: nextModel });
-                toast.success("Model updated");
-              }}
-            />
-          </div>
-          <div className="text-sm text-[var(--site-muted)]">
-            SKU:{" "}
-            <InlineTextEdit
-              value={product.sku || ""}
-              displayValue={sanitize(product.sku || "-")}
-              label={`${sanitize(product.title || product.model || "product")} sku`}
-              inputClassName="min-w-[10rem] text-left"
-              onConfirm={async (nextSku) => {
-                await updateProducts([product], { sku: nextSku || null });
-                toast.success("SKU updated");
-              }}
-            />
-          </div>
-          <div className="text-sm text-[var(--site-muted)]">
-            {product.slug ? `/${sanitize(product.slug)}` : "No slug"}
-          </div>
-          <div className="text-base text-[var(--site-muted)]">{sanitize(product.manufacturer || "-")}</div>
+          <div className="truncate text-xs text-[var(--site-muted)]">{sanitize(product.manufacturer || "-")}</div>
+        </div>
+      ),
+    },
+    {
+      key: "model",
+      header: "Model",
+      searchableText: (product) => product.model || "",
+      className: "w-[190px] min-w-0",
+      cell: (product) => (
+        <div className="min-w-0 text-sm" title={sanitize(product.model || "-")}>
+          <InlineTextEdit
+            value={product.model || ""}
+            displayValue={truncateWords(sanitize(product.model || "-"))}
+            label={`${sanitize(product.title || product.model || "product")} model`}
+            inputClassName="min-w-[11rem] text-left"
+            onConfirm={async (nextModel) => {
+              await updateProducts([product], { model: nextModel });
+              toast.success("Model updated");
+            }}
+          />
+        </div>
+      ),
+    },
+    {
+      key: "sku",
+      header: "SKU",
+      searchableText: (product) => product.sku || "",
+      className: "w-[110px] min-w-0",
+      cell: (product) => (
+        <div className="min-w-0 text-sm" title={sanitize(product.sku || "-")}>
+          <InlineTextEdit
+            value={product.sku || ""}
+            displayValue={sanitize(product.sku || "-")}
+            label={`${sanitize(product.title || product.model || "product")} sku`}
+            inputClassName="min-w-[7rem] text-left"
+            onConfirm={async (nextSku) => {
+              await updateProducts([product], { sku: nextSku || null });
+              toast.success("SKU updated");
+            }}
+          />
         </div>
       ),
     },
@@ -166,18 +188,20 @@ const DashboardProductTable = () => {
       header: "Merchant",
       searchableText: (product) => product.merchant?.name || "",
       accessor: (product) => product.merchant?.name || "-",
+      className: "w-[110px] text-sm",
     },
     {
       key: "category",
       header: "Category",
       searchableText: (product) => product.category?.name || "",
       accessor: (product) => product.category?.name || "Uncategorized",
+      className: "w-[120px] text-sm",
     },
     {
       key: "stock",
       header: "Stock",
       searchableText: (product) => String(product.inStock),
-      className: "min-w-[240px]",
+      className: "w-[108px]",
       cell: (product) => (
         <InlineNumberEdit
           value={product.inStock}
@@ -199,6 +223,7 @@ const DashboardProductTable = () => {
       key: "featured",
       header: "Featured",
       searchableText: (product) => (product.featured ? "featured yes" : "featured no"),
+      className: "w-[88px]",
       cell: (product) => (
         <InlineSelectEdit
           value={product.featured ? "yes" : "no"}
@@ -223,6 +248,7 @@ const DashboardProductTable = () => {
       key: "visibility",
       header: "Visibility",
       searchableText: (product) => (product.isActive ? "enabled" : "disabled"),
+      className: "w-[96px]",
       cell: (product) => (
         <InlineSelectEdit
           value={product.isActive ? "enabled" : "disabled"}
@@ -248,10 +274,11 @@ const DashboardProductTable = () => {
       header: "Storefront",
       searchableText: (product) =>
         `${product.isActive ? "enabled" : "disabled"} ${product.featured ? "featured" : "standard"}`,
+      className: "w-[108px]",
       cell: (product) => (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+            className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
               product.isActive
                 ? "bg-green-100 text-green-700"
                 : "bg-gray-200 text-gray-700"
@@ -260,7 +287,7 @@ const DashboardProductTable = () => {
             {product.isActive ? "On" : "Off"}
           </span>
           <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+            className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
               product.featured
                 ? "bg-amber-100 text-amber-700"
                 : "bg-[var(--site-panel-soft)] text-[var(--site-muted)]"
@@ -275,9 +302,10 @@ const DashboardProductTable = () => {
       key: "price",
       header: "Price",
       searchableText: (product) => `${product.price} ${product.taxRate ?? 0}`,
+      className: "w-[96px]",
       cell: (product) => (
         <div className="space-y-1">
-          <div className="text-lg font-semibold">
+          <div className="text-base font-semibold">
             <InlineTextEdit
               value={String(product.price)}
               displayValue={`$${product.price.toFixed(2)}`}
@@ -292,7 +320,7 @@ const DashboardProductTable = () => {
               }}
             />
           </div>
-          <div className="text-sm text-[var(--site-muted)]">Tax: {product.taxRate ?? 0}%</div>
+          <div className="text-xs text-[var(--site-muted)]">Tax: {product.taxRate ?? 0}%</div>
         </div>
       ),
     },
@@ -302,7 +330,7 @@ const DashboardProductTable = () => {
       searchableText: (product) => product.updatedAt || "",
       accessor: (product) =>
         product.updatedAt ? new Date(product.updatedAt).toLocaleDateString() : "-",
-      className: "text-lg font-semibold",
+      className: "w-[86px] text-sm font-semibold",
     },
     {
       key: "actions",
@@ -327,9 +355,8 @@ const DashboardProductTable = () => {
         onSelectionChange={setSelectedProductIds}
         enableSearch
         searchPlaceholder="Search products..."
-        className="xl:ml-5 max-xl:mt-5"
-        tableClassName="text-base"
-        onRowClick={(product) => router.push(`/admin/products/${product.id}`)}
+        className="w-full"
+        tableClassName="table-fixed text-sm"
         actions={
           <Link href="/admin/products/new">
             <CustomButton

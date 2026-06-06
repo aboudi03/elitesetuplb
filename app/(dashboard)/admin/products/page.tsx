@@ -8,7 +8,7 @@ import React from "react";
 
 const DashboardProducts = () => {
   return (
-    <div className="bg-[var(--site-bg)] text-[var(--site-text)] flex justify-start max-w-screen-2xl mx-auto h-full max-xl:flex-col max-xl:h-fit max-xl:gap-y-4">
+    <div className="mx-auto flex h-full w-full max-w-[1760px] justify-start gap-3 bg-[var(--site-bg)] px-3 text-[var(--site-text)] max-xl:h-fit max-xl:flex-col max-xl:gap-y-4 max-sm:px-2">
       <DashboardSidebar />
         <DashboardProductTable />
     </div>

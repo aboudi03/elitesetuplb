@@ -181,7 +181,7 @@ export default function DataTable<T>({
       {(title || description || actions || enableSearch) && (
         <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
           <div>
-            {title && <h1 className="text-4xl font-semibold tracking-tight">{title}</h1>}
+            {title && <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>}
             {description && (
               <p className="mt-2 max-w-3xl text-sm text-[var(--site-muted)]">
                 {description}
@@ -195,7 +195,7 @@ export default function DataTable<T>({
                 value={currentSearch}
                 onChange={(event) => updateSearch(event.target.value)}
                 placeholder={searchPlaceholder}
-                className="min-h-11 rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 text-base text-[var(--site-text)] outline-none transition focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent-soft)]"
+                className="min-h-10 rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 text-sm text-[var(--site-text)] outline-none transition focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent-soft)]"
               />
             )}
             {actions}
@@ -208,7 +208,7 @@ export default function DataTable<T>({
           <thead>
             <tr>
               {enableSelection && (
-                <th className="w-12 px-4 py-3 text-center">
+                <th className="w-10 px-2 py-3 text-center">
                   <input
                     type="checkbox"
                     className="checkbox checkbox-sm"
@@ -221,9 +221,9 @@ export default function DataTable<T>({
               {columns.map((column) => (
                 <th
                   key={column.key}
-                  className={`px-4 py-4 text-center text-sm font-semibold uppercase tracking-[0.08em] text-[var(--site-muted)] ${column.headerClassName || ""}`}
+                  className={`px-2 py-3 text-left text-xs font-semibold uppercase tracking-[0.08em] text-[var(--site-muted)] ${column.headerClassName || ""}`}
                 >
-                  <div className="flex w-full items-center justify-center text-center">
+                  <div className="flex w-full items-center justify-start text-left">
                     {column.header}
                   </div>
                 </th>
@@ -260,7 +260,7 @@ export default function DataTable<T>({
                     onClick={() => onRowClick?.(row)}
                   >
                     {enableSelection && (
-                      <td className="px-4 py-3 text-center align-middle">
+                      <td className="px-2 py-3 text-center align-middle">
                         <input
                           type="checkbox"
                           className="checkbox checkbox-sm"
@@ -274,9 +274,9 @@ export default function DataTable<T>({
                     {columns.map((column) => (
                       <td
                         key={column.key}
-                        className={`px-4 py-4 text-center align-middle ${column.className || ""}`}
+                        className={`px-2 py-3 align-middle ${column.className || ""}`}
                       >
-                        <div className="flex w-full items-center justify-center text-center">
+                        <div className="flex min-w-0 w-full items-center justify-start text-left">
                           {column.select ? (
                             <TableCellSelect row={row} select={column.select} />
                           ) : column.cell ? (
