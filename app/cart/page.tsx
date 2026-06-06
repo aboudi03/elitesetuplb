@@ -6,6 +6,8 @@ import { Loader } from "@/components/Loader";
 import { CartModule } from "@/components/modules/cart";
 import { Suspense } from "react";
 
+export const dynamic = "force-dynamic";
+
 const CartPage = () => {
   return (
     <div className="bg-[var(--site-bg)] text-[var(--site-text)]">
