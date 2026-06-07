@@ -30,6 +30,7 @@ model Product {
   inStock        Int                      @default(0)
   isActive       Boolean                  @default(true)
   featured       Boolean                  @default(false)
+  featuredSortOrder Int?
   categoryId     String?
   category       Category?                @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   customerOrders customer_order_product[]

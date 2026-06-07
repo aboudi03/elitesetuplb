@@ -5,7 +5,7 @@ const { asyncHandler, handleServerError, AppError } = require("../utills/errorHa
 const ALLOWED_FILTER_TYPES = ['price', 'rating', 'category', 'inStock', 'outOfStock'];
 const ALLOWED_OPERATORS = ['gte', 'lte', 'gt', 'lt', 'equals', 'contains'];
 const ALLOWED_SORT_VALUES = ['defaultSort', 'titleAsc', 'titleDesc', 'lowPrice', 'highPrice'];
-const FEATURED_PRODUCTS_LIMIT = 12;
+const FEATURED_PRODUCTS_LIMIT = 14;
 
 function normalizeText(value) {
   if (value === undefined) return undefined;
@@ -120,6 +120,48 @@ async function ensureFeaturedSlotOrThrow(nextFeaturedValue, productIdToExclude =
   }
 }
 
+async function getNextFeaturedSortOrder(tx) {
+  const featuredProduct = await tx.product.findFirst({
+    where: {
+      featured: true,
+    },
+    orderBy: {
+      featuredSortOrder: "desc",
+    },
+    select: {
+      featuredSortOrder: true,
+    },
+  });
+
+  return (featuredProduct?.featuredSortOrder || 0) + 1;
+}
+
+async function compactFeaturedSortOrders(tx) {
+  const featuredProducts = await tx.product.findMany({
+    where: {
+      featured: true,
+    },
+    orderBy: [
+      { featuredSortOrder: "asc" },
+      { updatedAt: "desc" },
+    ],
+    select: {
+      id: true,
+    },
+  });
+
+  await Promise.all(
+    featuredProducts.map((product, index) =>
+      tx.product.update({
+        where: { id: product.id },
+        data: {
+          featuredSortOrder: index + 1,
+        },
+      })
+    )
+  );
+}
+
 // Security: Safe filter object builder
 function buildSafeFilterObject(filterArray) {
   const filterObj = {};
@@ -157,7 +199,7 @@ const getAllProducts = asyncHandler(async (request, response) => {
   const mode = request.query.mode || "";
   const featuredOnly = normalizeBoolean(request.query.featured, false);
   const includePagination = normalizeBoolean(request.query.includePagination, false);
-  const pageSize = 12;
+  const pageSize = featuredOnly && !includePagination ? FEATURED_PRODUCTS_LIMIT : 12;
   
   // checking if we are on the admin products page because we don't want to have filtering, sorting and pagination there
   if(mode === "admin"){
@@ -312,7 +354,12 @@ const getAllProducts = asyncHandler(async (request, response) => {
               },
             },
           },
-          orderBy: Object.keys(sortObj).length > 0 ? sortObj : featuredOnly ? { createdAt: "desc" } : undefined,
+          orderBy:
+            Object.keys(sortObj).length > 0
+              ? sortObj
+              : featuredOnly
+                ? [{ featuredSortOrder: "asc" }, { createdAt: "desc" }]
+                : undefined,
         }),
         includePagination ? prisma.product.count({ where: queryWhere }) : Promise.resolve(0),
       ]);
@@ -343,7 +390,12 @@ const getAllProducts = asyncHandler(async (request, response) => {
               },
             },
             where: queryWhere,
-            orderBy: Object.keys(sortObj).length > 0 ? sortObj : featuredOnly ? { createdAt: "desc" } : undefined,
+            orderBy:
+              Object.keys(sortObj).length > 0
+                ? sortObj
+                : featuredOnly
+                  ? [{ featuredSortOrder: "asc" }, { createdAt: "desc" }]
+                  : undefined,
           }),
           includePagination ? prisma.product.count({ where: queryWhere }) : Promise.resolve(0),
         ]);
@@ -363,7 +415,12 @@ const getAllProducts = asyncHandler(async (request, response) => {
               },
             },
             where: baseWhereClause,
-            orderBy: Object.keys(sortObj).length > 0 ? sortObj : featuredOnly ? { createdAt: "desc" } : undefined,
+            orderBy:
+              Object.keys(sortObj).length > 0
+                ? sortObj
+                : featuredOnly
+                  ? [{ featuredSortOrder: "asc" }, { createdAt: "desc" }]
+                  : undefined,
           }),
           includePagination ? prisma.product.count({ where: baseWhereClause }) : Promise.resolve(0),
         ]);
@@ -441,27 +498,35 @@ const createProduct = asyncHandler(async (request, response) => {
     sku,
   });
 
-  const product = await prisma.product.create({
-    data: {
-      ...(id ? { id } : {}),
-      merchantId: normalizeText(merchantId),
-      slug: resolvedSlug,
-      title: normalizeText(title),
-      model: normalizedModel,
-      sku: normalizeText(sku),
-      mainImage: normalizeText(mainImage),
-      price: normalizeNumber(price, 0),
-      taxRate: normalizeNumber(taxRate, 0),
-      rating: 5,
-      description: normalizeText(description),
-      manufacturer: normalizeText(manufacturer),
-      colors: normalizeText(colors),
-      sizes: normalizeText(sizes),
-      categoryId: normalizeText(categoryId),
-      inStock: Math.max(0, normalizeInteger(inStock, 0)),
-      isActive: normalizeBoolean(isActive, true),
-      featured: normalizeBoolean(featured, false),
-    },
+  const nextFeaturedValue = normalizeBoolean(featured, false);
+  const product = await prisma.$transaction(async (tx) => {
+    const featuredSortOrder = nextFeaturedValue
+      ? await getNextFeaturedSortOrder(tx)
+      : null;
+
+    return tx.product.create({
+      data: {
+        ...(id ? { id } : {}),
+        merchantId: normalizeText(merchantId),
+        slug: resolvedSlug,
+        title: normalizeText(title),
+        model: normalizedModel,
+        sku: normalizeText(sku),
+        mainImage: normalizeText(mainImage),
+        price: normalizeNumber(price, 0),
+        taxRate: normalizeNumber(taxRate, 0),
+        rating: 5,
+        description: normalizeText(description),
+        manufacturer: normalizeText(manufacturer),
+        colors: normalizeText(colors),
+        sizes: normalizeText(sizes),
+        categoryId: normalizeText(categoryId),
+        inStock: Math.max(0, normalizeInteger(inStock, 0)),
+        isActive: normalizeBoolean(isActive, true),
+        featured: nextFeaturedValue,
+        featuredSortOrder,
+      },
+    });
   });
   return response.status(201).json(product);
 });
@@ -537,32 +602,153 @@ const updateProduct = asyncHandler(async (request, response) => {
         });
 
   // Updating found product
-  const updatedProduct = await prisma.product.update({
-    where: {
-      id,
-    },
-    data: {
-      merchantId: merchantId === undefined ? existingProduct.merchantId : normalizeText(merchantId),
-      title: title === undefined ? existingProduct.title : normalizeText(title),
-      model: nextModel,
-      sku: sku === undefined ? existingProduct.sku : normalizeText(sku),
-      mainImage: mainImage === undefined ? existingProduct.mainImage : normalizeText(mainImage),
-      slug: nextSlug,
-      price: price === undefined ? existingProduct.price : normalizeNumber(price, existingProduct.price),
-      taxRate: taxRate === undefined ? existingProduct.taxRate : normalizeNumber(taxRate, existingProduct.taxRate),
-      rating: rating === undefined ? existingProduct.rating : normalizeInteger(rating, existingProduct.rating),
-      description: description === undefined ? existingProduct.description : normalizeText(description),
-      manufacturer: manufacturer === undefined ? existingProduct.manufacturer : normalizeText(manufacturer),
-      colors: colors === undefined ? existingProduct.colors : normalizeText(colors),
-      sizes: sizes === undefined ? existingProduct.sizes : normalizeText(sizes),
-      categoryId: categoryId === undefined ? existingProduct.categoryId : normalizeText(categoryId),
-      inStock: inStock === undefined ? existingProduct.inStock : Math.max(0, normalizeInteger(inStock, existingProduct.inStock)),
-      isActive: isActive === undefined ? existingProduct.isActive : normalizeBoolean(isActive, existingProduct.isActive),
-      featured: nextFeaturedValue,
-    },
+  const updatedProduct = await prisma.$transaction(async (tx) => {
+    let featuredSortOrder = existingProduct.featuredSortOrder;
+
+    if (nextFeaturedValue && !existingProduct.featured) {
+      featuredSortOrder = await getNextFeaturedSortOrder(tx);
+    }
+
+    if (!nextFeaturedValue) {
+      featuredSortOrder = null;
+    }
+
+    const nextProduct = await tx.product.update({
+      where: {
+        id,
+      },
+      data: {
+        merchantId: merchantId === undefined ? existingProduct.merchantId : normalizeText(merchantId),
+        title: title === undefined ? existingProduct.title : normalizeText(title),
+        model: nextModel,
+        sku: sku === undefined ? existingProduct.sku : normalizeText(sku),
+        mainImage: mainImage === undefined ? existingProduct.mainImage : normalizeText(mainImage),
+        slug: nextSlug,
+        price: price === undefined ? existingProduct.price : normalizeNumber(price, existingProduct.price),
+        taxRate: taxRate === undefined ? existingProduct.taxRate : normalizeNumber(taxRate, existingProduct.taxRate),
+        rating: rating === undefined ? existingProduct.rating : normalizeInteger(rating, existingProduct.rating),
+        description: description === undefined ? existingProduct.description : normalizeText(description),
+        manufacturer: manufacturer === undefined ? existingProduct.manufacturer : normalizeText(manufacturer),
+        colors: colors === undefined ? existingProduct.colors : normalizeText(colors),
+        sizes: sizes === undefined ? existingProduct.sizes : normalizeText(sizes),
+        categoryId: categoryId === undefined ? existingProduct.categoryId : normalizeText(categoryId),
+        inStock: inStock === undefined ? existingProduct.inStock : Math.max(0, normalizeInteger(inStock, existingProduct.inStock)),
+        isActive: isActive === undefined ? existingProduct.isActive : normalizeBoolean(isActive, existingProduct.isActive),
+        featured: nextFeaturedValue,
+        featuredSortOrder,
+      },
+    });
+
+    if (!nextFeaturedValue && existingProduct.featured) {
+      await compactFeaturedSortOrders(tx);
+      return tx.product.findUnique({
+        where: { id },
+      });
+    }
+
+    return nextProduct;
   });
 
   return response.status(200).json(updatedProduct);
+});
+
+const updateFeaturedProductOrder = asyncHandler(async (request, response) => {
+  const { productIds } = request.body;
+
+  if (!Array.isArray(productIds) || productIds.length === 0) {
+    throw new AppError("Featured product order is required", 400);
+  }
+
+  if (productIds.length > FEATURED_PRODUCTS_LIMIT) {
+    throw new AppError(`Featured products cannot exceed ${FEATURED_PRODUCTS_LIMIT}`, 400);
+  }
+
+  const uniqueIds = [...new Set(productIds.map((value) => String(value).trim()).filter(Boolean))];
+
+  if (uniqueIds.length !== productIds.length) {
+    throw new AppError("Featured product order contains duplicate entries", 400);
+  }
+
+  const featuredProducts = await prisma.product.findMany({
+    where: {
+      id: {
+        in: uniqueIds,
+      },
+      featured: true,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (featuredProducts.length !== uniqueIds.length) {
+    throw new AppError("Only featured products can be reordered", 400);
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await Promise.all(
+      uniqueIds.map((productId, index) =>
+        tx.product.update({
+          where: { id: productId },
+          data: {
+            featuredSortOrder: index + 1,
+          },
+        })
+      )
+    );
+
+    const remainingFeaturedProducts = await tx.product.findMany({
+      where: {
+        featured: true,
+        id: {
+          notIn: uniqueIds,
+        },
+      },
+      orderBy: [
+        { featuredSortOrder: "asc" },
+        { updatedAt: "desc" },
+      ],
+      select: {
+        id: true,
+      },
+    });
+
+    await Promise.all(
+      remainingFeaturedProducts.map((product, index) =>
+        tx.product.update({
+          where: { id: product.id },
+          data: {
+            featuredSortOrder: uniqueIds.length + index + 1,
+          },
+        })
+      )
+    );
+  });
+
+  const orderedFeaturedProducts = await prisma.product.findMany({
+    where: {
+      featured: true,
+    },
+    include: {
+      category: {
+        select: {
+          name: true,
+        },
+      },
+      merchant: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+    orderBy: [
+      { featuredSortOrder: "asc" },
+      { updatedAt: "desc" },
+    ],
+  });
+
+  return response.status(200).json(orderedFeaturedProducts);
 });
 
 // Method for deleting a product
@@ -658,6 +844,7 @@ module.exports = {
   getAllProducts,
   createProduct,
   updateProduct,
+  updateFeaturedProductOrder,
   deleteProduct,
   searchProducts,
   getProductById,

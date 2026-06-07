@@ -60,7 +60,10 @@ const ProductMediaManager = ({
                   const galleryIndex = galleryRows.findIndex((galleryRow) => galleryRow.id === row.id);
 
                   return (
-                    <tr key={row.id} className="border-b border-[var(--site-border)] last:border-b-0">
+                    <tr
+                      key={row.id}
+                      className="border-b border-[var(--site-border)] text-[var(--site-text)] transition hover:bg-[var(--site-panel)] last:border-b-0"
+                    >
                       <td className="px-4 py-3">
                         <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl border border-[var(--site-border)] bg-[var(--site-panel)]">
                           <Image
@@ -99,13 +102,13 @@ const ProductMediaManager = ({
                           </span>
                         ) : (
                           <div className="flex items-center gap-2">
-                            <span className="inline-flex min-w-10 justify-center rounded-lg border border-[var(--site-border)] bg-[var(--site-panel)] px-3 py-2 font-semibold">
+                            <span className="inline-flex min-w-10 justify-center rounded-lg border border-[var(--site-border)] bg-[var(--site-panel)] px-3 py-2 font-semibold text-[var(--site-text)]">
                               {galleryIndex + 1}
                             </span>
                             <button
                               type="button"
                               onClick={() => onMoveRow(row.id, "up")}
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--site-border)] bg-[var(--site-panel)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--site-border)] bg-[var(--site-panel)] text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:bg-[var(--site-accent-soft)] hover:text-[var(--site-accent)] disabled:cursor-not-allowed disabled:opacity-50"
                               aria-label={`Move ${row.fileName} up`}
                               disabled={galleryIndex <= 0}
                             >
@@ -114,7 +117,7 @@ const ProductMediaManager = ({
                             <button
                               type="button"
                               onClick={() => onMoveRow(row.id, "down")}
-                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--site-border)] bg-[var(--site-panel)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)] disabled:cursor-not-allowed disabled:opacity-50"
+                              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--site-border)] bg-[var(--site-panel)] text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:bg-[var(--site-accent-soft)] hover:text-[var(--site-accent)] disabled:cursor-not-allowed disabled:opacity-50"
                               aria-label={`Move ${row.fileName} down`}
                               disabled={galleryIndex === -1 || galleryIndex >= galleryRows.length - 1}
                             >

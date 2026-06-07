@@ -66,41 +66,31 @@ const AddNewProduct = () => {
     "block w-full rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 py-3 text-base text-[var(--site-text)] shadow-sm outline-none transition focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent-soft)]";
   const sectionClassName =
     "rounded-3xl border border-[var(--site-border)] bg-[var(--site-panel)] p-6 shadow-sm";
+  const selectedColors = product.colors
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const selectedSizes = product.sizes
+    .split(",")
+    .map((value) => value.trim().toUpperCase())
+    .filter(Boolean);
 
-  const toggleColor = (colorLabel: string) => {
-    setProduct((currentProduct) => {
-      const currentColors = currentProduct.colors
-        .split(",")
-        .map((value) => value.trim())
-        .filter(Boolean);
-      const hasColor = currentColors.includes(colorLabel);
-      const nextColors = hasColor
-        ? currentColors.filter((value) => value !== colorLabel)
-        : [...currentColors, colorLabel];
-
-      return {
-        ...currentProduct,
-        colors: nextColors.join(", "),
-      };
-    });
+  const handleColorsChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const nextColors = Array.from(event.target.selectedOptions).map((option) => option.value);
+    setProduct((currentProduct) => ({
+      ...currentProduct,
+      colors: nextColors.join(", "),
+    }));
   };
 
-  const toggleSize = (sizeLabel: (typeof PRODUCT_SIZE_PRESETS)[number]) => {
-    setProduct((currentProduct) => {
-      const currentSizes = currentProduct.sizes
-        .split(",")
-        .map((value) => value.trim().toUpperCase())
-        .filter(Boolean);
-      const hasSize = currentSizes.includes(sizeLabel);
-      const nextSizes = hasSize
-        ? currentSizes.filter((value) => value !== sizeLabel)
-        : [...currentSizes, sizeLabel];
-
-      return {
-        ...currentProduct,
-        sizes: nextSizes.join(", "),
-      };
-    });
+  const handleSizesChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const nextSizes = Array.from(event.target.selectedOptions).map((option) =>
+      option.value.toUpperCase()
+    );
+    setProduct((currentProduct) => ({
+      ...currentProduct,
+      sizes: nextSizes.join(", "),
+    }));
   };
 
   const addProduct = async () => {
@@ -398,32 +388,41 @@ const AddNewProduct = () => {
                 <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
                   Colors
                 </span>
-                <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-                  {PRODUCT_COLOR_PRESETS.map((color) => {
-                    const isSelected = product.colors
-                      .split(",")
-                      .map((value) => value.trim())
-                      .includes(color.label);
-
-                    return (
-                      <button
-                        key={color.key}
-                        type="button"
-                        onClick={() => toggleColor(color.label)}
-                        className={`flex min-h-12 items-center gap-3 rounded-xl border px-3 py-2 text-left transition ${
-                          isSelected
-                            ? "border-[var(--site-accent)] bg-[var(--site-accent-soft)]"
-                            : "border-[var(--site-border)] bg-[var(--site-panel-soft)] hover:border-[var(--site-accent)]"
-                        }`}
-                      >
+                <select
+                  multiple
+                  size={Math.min(6, PRODUCT_COLOR_PRESETS.length)}
+                  className={`${fieldClassName} min-h-[13rem]`}
+                  value={selectedColors}
+                  onChange={handleColorsChange}
+                >
+                  {PRODUCT_COLOR_PRESETS.map((color) => (
+                    <option key={color.key} value={color.label}>
+                      {color.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-2 text-xs text-[var(--site-muted)]">
+                  Hold `Ctrl` or `Cmd` to select multiple colors.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {selectedColors.length > 0 ? (
+                    PRODUCT_COLOR_PRESETS.filter((color) => selectedColors.includes(color.label)).map(
+                      (color) => (
                         <span
-                          className="h-5 w-5 rounded-full border border-black/10"
-                          style={{ backgroundColor: color.swatch }}
-                        />
-                        <span className="text-sm font-medium text-[var(--site-text)]">{color.label}</span>
-                      </button>
-                    );
-                  })}
+                          key={color.key}
+                          className="inline-flex items-center gap-2 rounded-full border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 py-1.5 text-sm font-medium text-[var(--site-text)]"
+                        >
+                          <span
+                            className="h-4 w-4 rounded-full border border-black/10"
+                            style={{ backgroundColor: color.swatch }}
+                          />
+                          {color.label}
+                        </span>
+                      )
+                    )
+                  ) : (
+                    <span className="text-sm text-[var(--site-muted)]">No colors selected.</span>
+                  )}
                 </div>
               </label>
 
@@ -431,28 +430,35 @@ const AddNewProduct = () => {
                 <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
                   Sizes
                 </span>
-                <div className="flex flex-wrap gap-3">
-                  {PRODUCT_SIZE_PRESETS.map((size) => {
-                    const isSelected = product.sizes
-                      .split(",")
-                      .map((value) => value.trim().toUpperCase())
-                      .includes(size);
-
-                    return (
-                      <button
+                <select
+                  multiple
+                  size={PRODUCT_SIZE_PRESETS.length}
+                  className={`${fieldClassName} min-h-[11rem]`}
+                  value={selectedSizes}
+                  onChange={handleSizesChange}
+                >
+                  {PRODUCT_SIZE_PRESETS.map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-2 text-xs text-[var(--site-muted)]">
+                  Hold `Ctrl` or `Cmd` to select multiple sizes.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {selectedSizes.length > 0 ? (
+                    selectedSizes.map((size) => (
+                      <span
                         key={size}
-                        type="button"
-                        onClick={() => toggleSize(size)}
-                        className={`min-w-14 rounded-xl border px-4 py-2 text-sm font-semibold transition ${
-                          isSelected
-                            ? "border-[var(--site-accent)] bg-[var(--site-accent-soft)] text-[var(--site-accent)]"
-                            : "border-[var(--site-border)] bg-[var(--site-panel-soft)] text-[var(--site-text)] hover:border-[var(--site-accent)]"
-                        }`}
+                        className="inline-flex items-center rounded-full border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 py-1.5 text-sm font-semibold text-[var(--site-text)]"
                       >
                         {size}
-                      </button>
-                    );
-                  })}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-sm text-[var(--site-muted)]">No sizes selected.</span>
+                  )}
                 </div>
               </label>
 

@@ -22,6 +22,8 @@ import InlineTextEdit from "./ui/InlineTextEdit";
 import HoverImagePreview from "./ui/HoverImagePreview";
 import ViewActionLink from "./ui/ViewActionLink";
 import toast from "react-hot-toast";
+import Image from "next/image";
+import { FaGripVertical, FaXmark } from "react-icons/fa6";
 
 function truncateWords(value: string | null | undefined, limit = 4) {
   const words = String(value || "")
@@ -40,9 +42,14 @@ const DashboardProductTable = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [isFeaturedOrderDialogOpen, setIsFeaturedOrderDialogOpen] = useState(false);
+  const [featuredDraftProducts, setFeaturedDraftProducts] = useState<Product[]>([]);
+  const [draggedFeaturedProductId, setDraggedFeaturedProductId] = useState<string | null>(null);
+  const [isSavingFeaturedOrder, setIsSavingFeaturedOrder] = useState(false);
 
-  useEffect(() => {
-    apiClient
+  const loadProducts = () => {
+    setLoading(true);
+    return apiClient
       .get("/api/products?mode=admin", { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
@@ -50,9 +57,89 @@ const DashboardProductTable = () => {
       })
       .catch((error) => {
         console.error(error);
+        toast.error("Failed to load products");
       })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadProducts();
   }, []);
+
+  const getSortedFeaturedProducts = (productList: Product[]) =>
+    productList
+      .filter((product) => product.featured)
+      .sort((firstProduct, secondProduct) => {
+        const firstOrder = firstProduct.featuredSortOrder ?? Number.MAX_SAFE_INTEGER;
+        const secondOrder = secondProduct.featuredSortOrder ?? Number.MAX_SAFE_INTEGER;
+
+        if (firstOrder !== secondOrder) {
+          return firstOrder - secondOrder;
+        }
+
+        return (firstProduct.title || firstProduct.model || "").localeCompare(
+          secondProduct.title || secondProduct.model || ""
+        );
+      });
+
+  const openFeaturedOrderDialog = () => {
+    setFeaturedDraftProducts(getSortedFeaturedProducts(products));
+    setIsFeaturedOrderDialogOpen(true);
+  };
+
+  const closeFeaturedOrderDialog = () => {
+    if (isSavingFeaturedOrder) return;
+    setIsFeaturedOrderDialogOpen(false);
+    setDraggedFeaturedProductId(null);
+  };
+
+  const moveFeaturedDraftProduct = (draggedId: string, targetId: string) => {
+    if (!draggedId || draggedId === targetId) return;
+
+    setFeaturedDraftProducts((currentProducts) => {
+      const nextProducts = [...currentProducts];
+      const draggedIndex = nextProducts.findIndex((product) => product.id === draggedId);
+      const targetIndex = nextProducts.findIndex((product) => product.id === targetId);
+
+      if (draggedIndex === -1 || targetIndex === -1) {
+        return currentProducts;
+      }
+
+      const [draggedProduct] = nextProducts.splice(draggedIndex, 1);
+      nextProducts.splice(targetIndex, 0, draggedProduct);
+      return nextProducts;
+    });
+  };
+
+  const saveFeaturedOrder = async () => {
+    setIsSavingFeaturedOrder(true);
+
+    try {
+      const response = await apiClient.put("/api/products/featured-order", {
+        productIds: featuredDraftProducts.map((product) => product.id),
+      });
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseData?.details || responseData?.error || "Failed to save featured order");
+      }
+
+      setProducts((currentProducts) =>
+        currentProducts.map((product) => {
+          const reorderedProduct = responseData.find((current: Product) => current.id === product.id);
+          return reorderedProduct ? { ...product, ...reorderedProduct } : product;
+        })
+      );
+      setFeaturedDraftProducts(responseData);
+      setIsFeaturedOrderDialogOpen(false);
+      setDraggedFeaturedProductId(null);
+      toast.success("Featured product order updated");
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to save featured order");
+    } finally {
+      setIsSavingFeaturedOrder(false);
+    }
+  };
 
   const getTargetProducts = (product: Product) =>
     selectedProductIds.includes(product.id)
@@ -220,6 +307,21 @@ const DashboardProductTable = () => {
       ),
     },
     {
+      key: "featuredOrder",
+      header: "Feature order",
+      searchableText: (product) =>
+        product.featured ? `feature order ${product.featuredSortOrder || ""}` : "not featured",
+      className: "w-[104px]",
+      cell: (product) =>
+        product.featured ? (
+          <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
+            #{product.featuredSortOrder || "-"}
+          </span>
+        ) : (
+          <span className="text-xs text-[var(--site-muted)]">-</span>
+        ),
+    },
+    {
       key: "featured",
       header: "Featured",
       searchableText: (product) => (product.featured ? "featured yes" : "featured no"),
@@ -235,6 +337,7 @@ const DashboardProductTable = () => {
           onChange={async (value) => {
             const targetProducts = getTargetProducts(product);
             await updateProducts(targetProducts, { featured: value === "yes" });
+            await loadProducts();
             toast.success(
               targetProducts.length > 1
                 ? `Featured state updated for ${targetProducts.length} products`
@@ -358,18 +461,128 @@ const DashboardProductTable = () => {
         className="w-full"
         tableClassName="table-fixed text-sm"
         actions={
-          <Link href="/admin/products/new">
-            <CustomButton
-              buttonType="button"
-              customWidth="110px"
-              paddingX={10}
-              paddingY={5}
-              textSize="base"
-              text="Add new product"
-            />
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={openFeaturedOrderDialog}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 text-sm font-semibold text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
+            >
+              Order featured products
+            </button>
+            <Link href="/admin/products/new">
+              <CustomButton
+                buttonType="button"
+                customWidth="110px"
+                paddingX={10}
+                paddingY={5}
+                textSize="base"
+                text="Add new product"
+              />
+            </Link>
+          </div>
         }
       />
+      {isFeaturedOrderDialogOpen && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/55 px-4 py-6">
+          <div className="w-full max-w-3xl rounded-3xl border border-[var(--site-border)] bg-[var(--site-panel)] shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-[var(--site-border)] px-6 py-5">
+              <div>
+                <h2 className="text-2xl font-semibold text-[var(--site-text)]">Featured order</h2>
+                <p className="mt-2 text-sm text-[var(--site-muted)]">
+                  Drag products into the exact order they should appear on the main page. Maximum 14 featured products.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeFeaturedOrderDialog}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
+                aria-label="Close featured order dialog"
+              >
+                <FaXmark />
+              </button>
+            </div>
+
+            <div className="max-h-[70vh] overflow-y-auto px-6 py-5">
+              <div className="mb-4 flex items-center justify-between rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 py-3 text-sm text-[var(--site-muted)]">
+                <span>{featuredDraftProducts.length} / 14 featured products selected</span>
+                <span>Drag and drop to reorder</span>
+              </div>
+
+              <div className="space-y-3">
+                {featuredDraftProducts.length > 0 ? (
+                  featuredDraftProducts.map((product, index) => (
+                    <div
+                      key={product.id}
+                      draggable
+                      onDragStart={() => setDraggedFeaturedProductId(product.id)}
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={() => {
+                        if (draggedFeaturedProductId) {
+                          moveFeaturedDraftProduct(draggedFeaturedProductId, product.id);
+                        }
+                      }}
+                      onDragEnd={() => setDraggedFeaturedProductId(null)}
+                      className={`flex items-center gap-4 rounded-2xl border px-4 py-3 transition ${
+                        draggedFeaturedProductId === product.id
+                          ? "border-[var(--site-accent)] bg-[var(--site-accent-soft)]"
+                          : "border-[var(--site-border)] bg-[var(--site-panel-soft)]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="inline-flex min-w-10 justify-center rounded-xl border border-[var(--site-border)] bg-[var(--site-panel)] px-3 py-2 text-sm font-bold text-[var(--site-text)]">
+                          {index + 1}
+                        </span>
+                        <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--site-border)] bg-[var(--site-panel)] text-[var(--site-muted)]">
+                          <FaGripVertical />
+                        </span>
+                      </div>
+                      <div className="overflow-hidden rounded-xl border border-[var(--site-border)] bg-[var(--site-panel)]">
+                        <Image
+                          src={product.mainImage ? `/${product.mainImage}` : "/product_placeholder.jpg"}
+                          alt={sanitize(product.title || product.model || "Featured product")}
+                          width={64}
+                          height={64}
+                          className="h-16 w-16 object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold text-[var(--site-text)]">
+                          {sanitize(product.title || product.model || "Untitled product")}
+                        </p>
+                        <p className="mt-1 truncate text-sm text-[var(--site-muted)]">
+                          {sanitize(product.model || "-")} {product.sku ? `| SKU: ${sanitize(product.sku)}` : ""}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 py-8 text-center text-sm text-[var(--site-muted)]">
+                    No featured products selected yet.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap justify-end gap-3 border-t border-[var(--site-border)] px-6 py-5">
+              <button
+                type="button"
+                onClick={closeFeaturedOrderDialog}
+                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-5 text-sm font-semibold text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={saveFeaturedOrder}
+                disabled={isSavingFeaturedOrder || featuredDraftProducts.length === 0}
+                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--site-accent)] px-5 text-sm font-semibold text-white transition hover:bg-[var(--site-accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSavingFeaturedOrder ? "Saving..." : "Save featured order"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

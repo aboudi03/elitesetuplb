@@ -5,12 +5,14 @@ const {
   getAllProducts,
   createProduct,
   updateProduct,
+  updateFeaturedProductOrder,
   deleteProduct,
   searchProducts,
   getProductById,
 } = require("../controllers/products");
 
 router.route("/").get(getAllProducts).post(createProduct);
+router.route("/featured-order").put(updateFeaturedProductOrder);
 
 
 router

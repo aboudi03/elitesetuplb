@@ -16,6 +16,7 @@ interface Product {
   inStock: number;
   isActive: boolean;
   featured?: boolean;
+  featuredSortOrder?: number | null;
   taxRate?: number;
   merchantId?: string | null;
   merchant?: { id: string; name: string } | null;
