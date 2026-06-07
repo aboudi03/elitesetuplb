@@ -4,9 +4,9 @@ export default function Home() {
   return (
     <>
     <Hero />
+    <BuildPcFloatingButton />
     <CategoryMenu />
     <ProductsSection />
-    <BuildPcFloatingButton />
     </>
   );
 }
