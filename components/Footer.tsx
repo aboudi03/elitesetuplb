@@ -9,8 +9,10 @@
 // *********************
 
 import { navigation } from "@/lib/utils";
+import { STORE_NAME } from "@/lib/seo";
 import Link from "next/link";
 import React from "react";
+import EliteSetupLogo from "./EliteSetupLogo";
 
 const hiddenFooterLinks = new Set([
   "Elite Setup Loyalty Card",
@@ -78,6 +80,20 @@ const Footer = () => {
                 ))}
               </ul>
             </div>
+          </div>
+          <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-[var(--site-border)] pt-6 text-center sm:flex-row sm:text-left">
+            <div className="flex items-center gap-3">
+              <EliteSetupLogo
+                href="/"
+                showText={false}
+                className="gap-0"
+                iconClassName="h-10 max-md:h-10 max-sm:h-10"
+              />
+              <span className="text-base font-bold text-[var(--site-text)]">{STORE_NAME}</span>
+            </div>
+            <p className="text-sm text-[var(--site-muted)]">
+              © {new Date().getFullYear()} {STORE_NAME}. All rights reserved.
+            </p>
           </div>
         </div>
       </div>

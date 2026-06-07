@@ -224,11 +224,13 @@ const RichTextEditor = ({
       <div
         ref={editorRef}
         className={`rich-text-content block w-full overflow-auto px-4 py-3 text-base text-[var(--site-text)] outline-none ${minHeightClassName}`}
+        dir="ltr"
         contentEditable
         suppressContentEditableWarning
         onPaste={handlePaste}
         onInput={emitChange}
         onBlur={emitChange}
+        style={{ direction: "ltr", textAlign: "left" }}
         dangerouslySetInnerHTML={{ __html: value || "" }}
       />
     </div>

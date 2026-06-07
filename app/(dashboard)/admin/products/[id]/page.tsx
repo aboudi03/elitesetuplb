@@ -3,6 +3,7 @@ import { DashboardSidebar, RichTextEditor } from "@/components";
 import ProductMediaManager from "@/components/ProductMediaManager";
 import ProductResearchAssistant from "@/components/ProductResearchAssistant";
 import { sanitizeFormData } from "@/lib/form-sanitize";
+import { PRODUCT_COLOR_PRESETS, PRODUCT_SIZE_PRESETS } from "@/lib/productColors";
 import {
   appendMediaRows,
   buildMediaRows,
@@ -39,6 +40,46 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
     "block w-full rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 py-3 text-base text-[var(--site-text)] shadow-sm outline-none transition focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent-soft)]";
   const sectionClassName =
     "rounded-3xl border border-[var(--site-border)] bg-[var(--site-panel)] p-6 shadow-sm";
+
+  const toggleColor = (colorLabel: string) => {
+    setProduct((currentProduct) => {
+      if (!currentProduct) return currentProduct;
+
+      const currentColors = (currentProduct.colors || "")
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean);
+      const hasColor = currentColors.includes(colorLabel);
+      const nextColors = hasColor
+        ? currentColors.filter((value) => value !== colorLabel)
+        : [...currentColors, colorLabel];
+
+      return {
+        ...currentProduct,
+        colors: nextColors.join(", "),
+      };
+    });
+  };
+
+  const toggleSize = (sizeLabel: (typeof PRODUCT_SIZE_PRESETS)[number]) => {
+    setProduct((currentProduct) => {
+      if (!currentProduct) return currentProduct;
+
+      const currentSizes = (currentProduct.sizes || "")
+        .split(",")
+        .map((value) => value.trim().toUpperCase())
+        .filter(Boolean);
+      const hasSize = currentSizes.includes(sizeLabel);
+      const nextSizes = hasSize
+        ? currentSizes.filter((value) => value !== sizeLabel)
+        : [...currentSizes, sizeLabel];
+
+      return {
+        ...currentProduct,
+        sizes: nextSizes.join(", "),
+      };
+    });
+  };
 
   // functionality for deleting product
   const deleteProduct = async () => {
@@ -398,26 +439,62 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
                 <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
                   Colors
                 </span>
-                <input
-                  type="text"
-                  className={fieldClassName}
-                  placeholder="Black, White, Red"
-                  value={product?.colors || ""}
-                  onChange={(e) => setProduct({ ...product!, colors: e.target.value })}
-                />
+                <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+                  {PRODUCT_COLOR_PRESETS.map((color) => {
+                    const isSelected = (product?.colors || "")
+                      .split(",")
+                      .map((value) => value.trim())
+                      .includes(color.label);
+
+                    return (
+                      <button
+                        key={color.key}
+                        type="button"
+                        onClick={() => toggleColor(color.label)}
+                        className={`flex min-h-12 items-center gap-3 rounded-xl border px-3 py-2 text-left transition ${
+                          isSelected
+                            ? "border-[var(--site-accent)] bg-[var(--site-accent-soft)]"
+                            : "border-[var(--site-border)] bg-[var(--site-panel-soft)] hover:border-[var(--site-accent)]"
+                        }`}
+                      >
+                        <span
+                          className="h-5 w-5 rounded-full border border-black/10"
+                          style={{ backgroundColor: color.swatch }}
+                        />
+                        <span className="text-sm font-medium text-[var(--site-text)]">{color.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </label>
 
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
                   Sizes
                 </span>
-                <input
-                  type="text"
-                  className={fieldClassName}
-                  placeholder="S, M, L or 41, 42, 43"
-                  value={product?.sizes || ""}
-                  onChange={(e) => setProduct({ ...product!, sizes: e.target.value })}
-                />
+                <div className="flex flex-wrap gap-3">
+                  {PRODUCT_SIZE_PRESETS.map((size) => {
+                    const isSelected = (product?.sizes || "")
+                      .split(",")
+                      .map((value) => value.trim().toUpperCase())
+                      .includes(size);
+
+                    return (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => toggleSize(size)}
+                        className={`min-w-14 rounded-xl border px-4 py-2 text-sm font-semibold transition ${
+                          isSelected
+                            ? "border-[var(--site-accent)] bg-[var(--site-accent-soft)] text-[var(--site-accent)]"
+                            : "border-[var(--site-border)] bg-[var(--site-panel-soft)] text-[var(--site-text)] hover:border-[var(--site-accent)]"
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    );
+                  })}
+                </div>
               </label>
 
               <label className="block md:col-span-2">

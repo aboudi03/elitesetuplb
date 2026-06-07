@@ -26,6 +26,30 @@ const COLOR_NAME_TO_HEX: Record<string, string> = {
   transparent: "transparent",
 };
 
+export const PRODUCT_COLOR_PRESETS = [
+  "Black",
+  "White",
+  "Red",
+  "Blue",
+  "Green",
+  "Yellow",
+  "Orange",
+  "Purple",
+  "Pink",
+  "Gray",
+  "Silver",
+  "Gold",
+  "Navy",
+  "Beige",
+  "Brown",
+].map((label) => ({
+  key: label.toLowerCase(),
+  label,
+  swatch: COLOR_NAME_TO_HEX[label.toLowerCase()] || "#d1d5db",
+}));
+
+export const PRODUCT_SIZE_PRESETS = ["S", "M", "L", "XL", "XXL"] as const;
+
 const COLOR_LINE_REGEX = /^\s*colors?\s*:\s*(.+)$/im;
 const HEX_COLOR_REGEX = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
@@ -100,7 +124,8 @@ export const getProductSizes = (product?: Pick<Product, "sizes"> | null) => {
   const seen = new Set<string>();
 
   return tokens.reduce<Array<{ key: string; label: string }>>((accumulator, token) => {
-    const key = token.toLowerCase();
+    const normalizedLabel = token.trim().toUpperCase();
+    const key = normalizedLabel.toLowerCase();
     if (!key || seen.has(key)) {
       return accumulator;
     }
@@ -108,7 +133,7 @@ export const getProductSizes = (product?: Pick<Product, "sizes"> | null) => {
     seen.add(key);
     accumulator.push({
       key,
-      label: toLabel(token),
+      label: normalizedLabel,
     });
 
     return accumulator;
