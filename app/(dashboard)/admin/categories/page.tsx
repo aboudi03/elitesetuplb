@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import { FaGripVertical } from "react-icons/fa6";
 import { formatCategoryName } from "../../../../utils/categoryFormating";
 
-type CategoryDraftMap = Record<string, { name: string; parentId: string }>;
+type CategoryDraftMap = Record<string, { name: string; parentId: string; menuImage: string }>;
 
 type CategoryRow = Category & {
   level: number;
@@ -35,6 +35,7 @@ const DashboardCategory = () => {
           accumulator[category.id] = {
             name: category.name,
             parentId: category.parentId || "",
+            menuImage: category.menuImage || "",
           };
           return accumulator;
         }, {})
@@ -85,7 +86,10 @@ const DashboardCategory = () => {
     return directChildren.flatMap((child) => [child.id, ...getDescendantIds(child.id)]);
   };
 
-  const updateDraft = (categoryId: string, updates: Partial<{ name: string; parentId: string }>) => {
+  const updateDraft = (
+    categoryId: string,
+    updates: Partial<{ name: string; parentId: string; menuImage: string }>
+  ) => {
     setDrafts((currentDrafts) => ({
       ...currentDrafts,
       [categoryId]: {
@@ -107,6 +111,7 @@ const DashboardCategory = () => {
       const response = await apiClient.put(`/api/categories/${categoryId}`, {
         name: draft.name.trim().toLowerCase().split(" ").join("-"),
         parentId: draft.parentId || null,
+        menuImage: draft.menuImage.trim() || null,
       });
 
       const responseData = await response.json();
@@ -260,6 +265,7 @@ const DashboardCategory = () => {
                     const draft = drafts[category.id] || {
                       name: category.name,
                       parentId: category.parentId || "",
+                      menuImage: category.menuImage || "",
                     };
                     const descendantIds = getDescendantIds(category.id);
                     const currentSiblingIds = (categoriesByParent.get(category.parentId || "root") || [])
@@ -346,14 +352,23 @@ const DashboardCategory = () => {
                         <td className="px-4 py-4 align-middle text-sm text-[var(--site-muted)]">
                           /shop/{category.name}
                         </td>
-                        <td className="px-4 py-4 align-middle text-sm text-[var(--site-muted)]">
-                          {category.menuImage ? (
-                            <span className="inline-flex items-center rounded-full bg-[var(--site-accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--site-accent)]">
-                              Set
-                            </span>
-                          ) : (
-                            "Not shown"
-                          )}
+                        <td className="px-4 py-4 align-middle">
+                          <div className="space-y-2">
+                            <input
+                              type="text"
+                              className="w-full min-w-[220px] rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 py-2 text-sm text-[var(--site-text)] outline-none transition focus:border-[var(--site-accent)]"
+                              placeholder="uploads/category-icon.png"
+                              value={draft.menuImage}
+                              onChange={(event) =>
+                                updateDraft(category.id, { menuImage: event.target.value })
+                              }
+                            />
+                            <p className="text-xs text-[var(--site-muted)]">
+                              {draft.menuImage.trim()
+                                ? "Saved image path shows this category on the main page."
+                                : "Leave empty to hide this category from the main page."}
+                            </p>
+                          </div>
                         </td>
                         <td className="px-4 py-4 align-middle text-sm font-semibold">
                           {category._count?.children || 0}

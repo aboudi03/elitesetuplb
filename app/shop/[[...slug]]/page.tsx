@@ -3,11 +3,13 @@ export const revalidate = 0;
 
 import {
   Breadcrumb,
+  CatalogViewToggle,
   Filters,
   Pagination,
   Products,
   SortBy,
 } from "@/components";
+import { getProductsPageData } from "@/components/Products";
 import type { Metadata } from "next";
 import React from "react";
 import { sanitize } from "@/lib/sanitize";
@@ -66,6 +68,10 @@ const ShopPage = async ({ params, searchParams }: { params: Promise<{ slug?: str
   // Await both params and searchParams
   const awaitedParams = await params;
   const awaitedSearchParams = await searchParams;
+  const productPageData = await getProductsPageData({
+    params: awaitedParams,
+    searchParams: awaitedSearchParams,
+  });
   
   return (
     <div className="bg-[var(--site-bg)] text-[var(--site-text)]">
@@ -81,11 +87,18 @@ const ShopPage = async ({ params, searchParams }: { params: Promise<{ slug?: str
                   : "All products"}
               </h2>
 
-              <SortBy />
+              <div className="flex items-end gap-3 max-lg:flex-col max-lg:items-stretch">
+                <CatalogViewToggle />
+                <SortBy />
+              </div>
             </div>
             <div className="divider my-3"></div>
-            <Products params={awaitedParams} searchParams={awaitedSearchParams} />
-            <Pagination />
+            <Products
+              params={awaitedParams}
+              searchParams={awaitedSearchParams}
+              data={productPageData}
+            />
+            <Pagination totalPages={productPageData.totalPages} />
           </div>
         </div>
       </div>

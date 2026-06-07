@@ -1,0 +1,9 @@
+/mouse icon.png
+/keyboardcategory.svg
+/headphone icon.png
+/tablet icon.png
+/support icon.png
+/laptop icon.png
+/pc icon.png
+/ear buds icon.png
+/monitorcategory.svg

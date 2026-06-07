@@ -9,16 +9,23 @@
 // *********************
 
 import React from "react";
-import ProductItem from "./ProductItem";
 import apiClient from "@/lib/api";
+import ProductResultsBrowser from "./ProductResultsBrowser";
 
-const Products = async ({ params, searchParams }: { params: { slug?: string[] }, searchParams: { [key: string]: string | string[] | undefined } }) => {
+export async function getProductsPageData({
+  params,
+  searchParams,
+}: {
+  params: { slug?: string[] };
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
   // getting all data from URL slug and preparing everything for sending GET request
   const showInStock = searchParams?.inStock !== "false";
   const showOutOfStock = searchParams?.outOfStock !== "false";
   const page = searchParams?.page ? Number(searchParams?.page) : 1;
 
   let products = [];
+  let totalPages = 1;
 
   try {
     const queryParts = [
@@ -26,6 +33,7 @@ const Products = async ({ params, searchParams }: { params: { slug?: string[] },
       `filters[rating][$gte]=${encodeURIComponent(String(Number(searchParams?.rating) || 0))}`,
       `sort=${encodeURIComponent(String(searchParams?.sort || "defaultSort"))}`,
       `page=${encodeURIComponent(String(page))}`,
+      "includePagination=true",
     ];
 
     if (showInStock && !showOutOfStock) {
@@ -48,26 +56,33 @@ const Products = async ({ params, searchParams }: { params: { slug?: string[] },
       products = [];
     } else {
       const result = await data.json();
-      products = Array.isArray(result) ? result : [];
+      products = Array.isArray(result?.products) ? result.products : [];
+      totalPages = Number(result?.pagination?.totalPages) > 0 ? Number(result.pagination.totalPages) : 1;
     }
   } catch (error) {
     console.error('Error fetching products:', error);
     products = [];
   }
 
-  return (
-    <div className="grid grid-cols-3 gap-4 max-[1300px]:grid-cols-3 max-lg:grid-cols-2 max-[500px]:grid-cols-1">
-      {products.length > 0 ? (
-        products.map((product: any) => (
-          <ProductItem key={product.id} product={product} color="black" />
-        ))
-      ) : (
-        <h3 className="col-span-full mt-6 w-full text-center text-xl max-[500px]:text-base">
-          No products found for specified query
-        </h3>
-      )}
-    </div>
-  );
+  return {
+    products,
+    totalPages,
+  };
+}
+
+const Products = async ({
+  params,
+  searchParams,
+  data,
+}: {
+  params: { slug?: string[] };
+  searchParams: { [key: string]: string | string[] | undefined };
+  data?: { products: any[]; totalPages: number };
+}) => {
+  const resolvedData = data || (await getProductsPageData({ params, searchParams }));
+  const products = resolvedData.products;
+
+  return <ProductResultsBrowser products={products as Product[]} />;
 };
 
 export default Products;

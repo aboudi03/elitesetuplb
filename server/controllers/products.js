@@ -156,6 +156,8 @@ function buildSafeFilterObject(filterArray) {
 const getAllProducts = asyncHandler(async (request, response) => {
   const mode = request.query.mode || "";
   const featuredOnly = normalizeBoolean(request.query.featured, false);
+  const includePagination = normalizeBoolean(request.query.includePagination, false);
+  const pageSize = 12;
   
   // checking if we are on the admin products page because we don't want to have filtering, sorting and pagination there
   if(mode === "admin"){
@@ -290,66 +292,102 @@ const getAllProducts = asyncHandler(async (request, response) => {
     }
 
     let products;
+    let totalCount = 0;
 
     const baseWhereClause = featuredOnly
       ? { ...whereClause, featured: true }
       : whereClause;
 
     if (Object.keys(filterObj).length === 0) {
-      products = await prisma.product.findMany({
-        skip: (validatedPage - 1) * 10,
-        take: 12,
-        where: featuredOnly ? { isActive: true, featured: true } : { isActive: true },
-        include: {
-          category: {
-            select: {
-              name: true,
+      const queryWhere = featuredOnly ? { isActive: true, featured: true } : { isActive: true };
+      const [productRows, productCount] = await Promise.all([
+        prisma.product.findMany({
+          skip: (validatedPage - 1) * pageSize,
+          take: pageSize,
+          where: queryWhere,
+          include: {
+            category: {
+              select: {
+                name: true,
+              },
             },
           },
-        },
-        orderBy: Object.keys(sortObj).length > 0 ? sortObj : featuredOnly ? { createdAt: "desc" } : undefined,
-      });
+          orderBy: Object.keys(sortObj).length > 0 ? sortObj : featuredOnly ? { createdAt: "desc" } : undefined,
+        }),
+        includePagination ? prisma.product.count({ where: queryWhere }) : Promise.resolve(0),
+      ]);
+
+      products = productRows;
+      totalCount = productCount;
     } else {
       // Security: Handle category filter with proper validation
       if (filterObj.category && filterObj.category.equals) {
-        products = await prisma.product.findMany({
-          skip: (validatedPage - 1) * 10,
-          take: 12,
-          include: {
-            category: {
-              select: {
-                name: true,
-              },
+        const queryWhere = {
+          ...baseWhereClause,
+          category: {
+            name: {
+              equals: filterObj.category.equals,
             },
           },
-          where: {
-            ...baseWhereClause,
-            category: {
-              name: {
-                equals: filterObj.category.equals,
+        };
+
+        const [productRows, productCount] = await Promise.all([
+          prisma.product.findMany({
+            skip: (validatedPage - 1) * pageSize,
+            take: pageSize,
+            include: {
+              category: {
+                select: {
+                  name: true,
+                },
               },
             },
-          },
-          orderBy: Object.keys(sortObj).length > 0 ? sortObj : featuredOnly ? { createdAt: "desc" } : undefined,
-        });
+            where: queryWhere,
+            orderBy: Object.keys(sortObj).length > 0 ? sortObj : featuredOnly ? { createdAt: "desc" } : undefined,
+          }),
+          includePagination ? prisma.product.count({ where: queryWhere }) : Promise.resolve(0),
+        ]);
+
+        products = productRows;
+        totalCount = productCount;
       } else {
-        products = await prisma.product.findMany({
-          skip: (validatedPage - 1) * 10,
-          take: 12,
-          include: {
-            category: {
-              select: {
-                name: true,
+        const [productRows, productCount] = await Promise.all([
+          prisma.product.findMany({
+            skip: (validatedPage - 1) * pageSize,
+            take: pageSize,
+            include: {
+              category: {
+                select: {
+                  name: true,
+                },
               },
             },
-          },
-          where: baseWhereClause,
-          orderBy: Object.keys(sortObj).length > 0 ? sortObj : featuredOnly ? { createdAt: "desc" } : undefined,
-        });
+            where: baseWhereClause,
+            orderBy: Object.keys(sortObj).length > 0 ? sortObj : featuredOnly ? { createdAt: "desc" } : undefined,
+          }),
+          includePagination ? prisma.product.count({ where: baseWhereClause }) : Promise.resolve(0),
+        ]);
+
+        products = productRows;
+        totalCount = productCount;
       }
     }
 
-    return response.json(products);
+    if (!includePagination) {
+      return response.json(products);
+    }
+
+    const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+
+    return response.json({
+      products,
+      pagination: {
+        page: Math.min(validatedPage, totalPages),
+        pageSize,
+        totalCount,
+        totalPages,
+      },
+    });
   }
 });
 

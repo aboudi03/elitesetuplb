@@ -16,6 +16,7 @@ export { default as RangeWithLabels } from "./RangeWithLabels";
 export { default as Breadcrumb } from "./Breadcrumb";
 export { default as Products } from "./Products";
 export { default as Pagination } from "./Pagination";
+export { default as CatalogViewToggle } from "./CatalogViewToggle";
 export { default as QuantityInput } from "./QuantityInput";
 export { default as UrgencyText } from "./UrgencyText";
 export { default as StockAvailabillity } from "./StockAvailabillity";

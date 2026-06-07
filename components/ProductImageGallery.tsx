@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { FaAnglesLeft, FaAnglesRight, FaChevronLeft, FaChevronRight } from "react-icons/fa6";
+import { FaAnglesLeft, FaAnglesRight, FaChevronLeft, FaChevronRight, FaXmark } from "react-icons/fa6";
 
 type ProductGalleryImage = {
   imageID: string;
@@ -37,6 +37,7 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
     [images, mainImage, title]
   );
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [previousRippleKey, setPreviousRippleKey] = useState(0);
   const [nextRippleKey, setNextRippleKey] = useState(0);
   const autoplayTimerRef = useRef<number | null>(null);
@@ -60,6 +61,22 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
       }
     };
   }, [activeIndex, slides.length]);
+
+  useEffect(() => {
+    if (!isLightboxOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsLightboxOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isLightboxOpen]);
 
   const activeSlide = slides[activeIndex] || slides[0];
   const hasMultipleSlides = slides.length > 1;
@@ -134,6 +151,12 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
       >
+        <button
+          type="button"
+          onClick={() => setIsLightboxOpen(true)}
+          className="absolute inset-0 z-10 cursor-zoom-in"
+          aria-label="Open product image in full view"
+        />
         <Image
           key={activeSlide.src}
           src={activeSlide.src}
@@ -141,7 +164,7 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
           height={560}
           alt={activeSlide.alt}
           priority
-          className="relative z-10 h-full max-h-[520px] w-full animate-[productImageFade_450ms_ease-out] object-contain"
+          className="relative z-0 h-full max-h-[520px] w-full animate-[productImageFade_450ms_ease-out] object-contain"
         />
         {hasMultipleSlides ? (
           <>
@@ -223,6 +246,38 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
           </>
         ) : null}
       </div>
+
+      {isLightboxOpen ? (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/82 px-4 py-6 backdrop-blur-sm"
+          onClick={() => setIsLightboxOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Expanded product image"
+        >
+          <button
+            type="button"
+            onClick={() => setIsLightboxOpen(false)}
+            className="absolute right-4 top-4 z-[101] flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/55 text-white transition hover:bg-black/75"
+            aria-label="Close enlarged image"
+          >
+            <FaXmark className="h-5 w-5" />
+          </button>
+          <div
+            className="relative flex h-full max-h-[92vh] w-full max-w-6xl items-center justify-center"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <Image
+              src={activeSlide.src}
+              width={1600}
+              height={1600}
+              alt={activeSlide.alt}
+              priority
+              className="h-auto max-h-[92vh] w-auto max-w-full object-contain"
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };
