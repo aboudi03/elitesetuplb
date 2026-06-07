@@ -45,7 +45,12 @@ const ProductsSection = async () => {
         <div className="grid grid-cols-4 gap-4 max-xl:grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1">
           {products.length > 0 ? (
             products.map((product: any) => (
-              <ProductItem key={product.id} product={product} color="theme" />
+              <ProductItem
+                key={product.id}
+                product={product}
+                color="theme"
+                quickAddEnabled
+              />
             ))
           ) : (
             <div className="col-span-full rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] py-12 text-center text-[var(--site-muted)]">

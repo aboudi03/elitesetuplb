@@ -1,3 +1,5 @@
+"use client";
+
 // *********************
 // Role of the component: Product item component 
 // Name of the component: ProductItem.tsx
@@ -11,20 +13,84 @@
 import Image from "next/image";
 import React from "react";
 import Link from "next/link";
+import toast from "react-hot-toast";
+import { HiOutlineShoppingBag } from "react-icons/hi2";
+import { useSession } from "next-auth/react";
 
 import { sanitize } from "@/lib/sanitize";
 import type { CatalogViewMode } from "@/app/_zustand/catalogViewStore";
+import { useProductStore } from "@/app/_zustand/store";
+import { trackCartAdd } from "@/lib/cartTracking";
+
+const PUBLIC_ORDER_LIMIT = 10;
 
 const ProductItem = ({
   product,
   viewMode = "grid",
+  quickAddEnabled = false,
 }: {
   product: Product;
   color?: string;
   viewMode?: CatalogViewMode;
+  quickAddEnabled?: boolean;
 }) => {
+  const { data: session } = useSession();
+  const cartState = useProductStore();
+  const addToCart =
+    typeof cartState?.addToCart === "function" ? cartState.addToCart : () => undefined;
+  const calculateTotals =
+    typeof cartState?.calculateTotals === "function"
+      ? cartState.calculateTotals
+      : () => undefined;
+  const products = Array.isArray(cartState?.products) ? cartState.products : [];
   const isListView = viewMode === "list";
   const productDescription = sanitize(product.description || "").trim();
+  const displayTitle = product.title || product.model || "Product";
+  const displayImage = product.mainImage || "/product_placeholder.jpg";
+  const cartItemId = `${product.id}::default`;
+
+  const handleQuickAdd = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (product.inStock <= 0) {
+      toast.error("This product is currently unavailable.");
+      return;
+    }
+
+    const existingQuantityForProduct = products
+      .filter((item) => item.id === product.id)
+      .reduce((sum, item) => sum + item.amount, 0);
+
+    if (existingQuantityForProduct + 1 > PUBLIC_ORDER_LIMIT) {
+      toast.error("Maximum online order is 10. Please contact support for larger quantities.");
+      return;
+    }
+
+    if (existingQuantityForProduct + 1 > product.inStock) {
+      toast.error("Requested quantity is not available right now.");
+      return;
+    }
+
+    addToCart({
+      cartItemId,
+      id: product.id.toString(),
+      title: displayTitle,
+      price: product.price,
+      taxRate: product.taxRate || 0,
+      image: displayImage,
+      amount: 1,
+      stock: product.inStock,
+    });
+    calculateTotals();
+    await trackCartAdd({
+      productId: product.id,
+      productTitle: displayTitle,
+      quantity: 1,
+      userId: (session?.user as { id?: string } | undefined)?.id,
+    });
+    toast.success("Product added to the cart");
+  };
 
   return (
     <div
@@ -40,6 +106,16 @@ const ProductItem = ({
             : "aspect-[5/4]"
         }`}
       >
+        {quickAddEnabled ? (
+          <button
+            type="button"
+            onClick={handleQuickAdd}
+            className="absolute right-3 top-3 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-[var(--site-border)] bg-[var(--site-panel)]/95 text-[var(--site-text)] shadow-sm backdrop-blur transition hover:scale-105 hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
+            aria-label={`Add ${sanitize(displayTitle)} to cart`}
+          >
+            <HiOutlineShoppingBag className="h-5 w-5" />
+          </button>
+        ) : null}
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_srgb,white_12%,transparent),transparent_42%,color-mix(in_srgb,var(--site-accent-soft)_18%,transparent))]" />
         <Image
           src={

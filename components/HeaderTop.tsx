@@ -77,7 +77,7 @@ const HeaderTop = () => {
           ) :  (<>
           <span className="ml-10 text-base">{session.user?.email}</span>
           <li className="flex items-center">
-            <button onClick={() => handleLogout()} className="flex items-center gap-x-2 font-semibold">
+            <button onClick={() => handleLogout()} className={authLinkClassName}>
               <FaRegUser className="text-[var(--site-accent)]" />
               <span>Log out</span>
             </button>

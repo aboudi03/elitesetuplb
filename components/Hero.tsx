@@ -168,11 +168,20 @@ const Hero = () => {
       if (autoplayTimerRef.current) {
         window.clearTimeout(autoplayTimerRef.current);
       }
+    };
+  }, [activeSlide, slides.length]);
+
+  useEffect(() => {
+    return () => {
+      if (autoplayTimerRef.current) {
+        window.clearTimeout(autoplayTimerRef.current);
+      }
+
       if (transitionUnlockTimerRef.current) {
         window.clearTimeout(transitionUnlockTimerRef.current);
       }
     };
-  }, [activeSlide, slides.length]);
+  }, []);
 
   const slide = slides[activeSlide] ?? fallbackSlides[0];
   const beginSlideTransition = () => {
