@@ -25,6 +25,8 @@ model Product {
   rating         Int                      @default(0)
   description    String?                  @db.Text
   manufacturer   String?
+  colors         String?                  @db.Text
+  sizes          String?                  @db.Text
   inStock        Int                      @default(0)
   isActive       Boolean                  @default(true)
   featured       Boolean                  @default(false)
@@ -165,6 +167,7 @@ model customer_order_product {
   productId       String?
   quantity        Int
   selectedColor   String?
+  selectedSize    String?
 }
 
 model Category {

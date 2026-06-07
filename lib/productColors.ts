@@ -47,6 +47,12 @@ const resolveColorSwatch = (value: string) => {
   return COLOR_NAME_TO_HEX[normalized] || "#d1d5db";
 };
 
+const parseOptionTokens = (value?: string | null) =>
+  String(value || "")
+    .split(",")
+    .map((token) => token.trim())
+    .filter(Boolean);
+
 export const getProductColorsFromDescription = (description?: string | null) => {
   if (!description) {
     return [] as ParsedProductColor[];
@@ -57,11 +63,11 @@ export const getProductColorsFromDescription = (description?: string | null) => 
     return [] as ParsedProductColor[];
   }
 
-  const tokens = match[1]
-    .split(",")
-    .map((token) => token.trim())
-    .filter(Boolean);
+  return parseColorTokens(match[1]);
+};
 
+export const parseColorTokens = (value?: string | null) => {
+  const tokens = parseOptionTokens(value);
   const seen = new Set<string>();
 
   return tokens.reduce<ParsedProductColor[]>((accumulator, token) => {
@@ -75,6 +81,34 @@ export const getProductColorsFromDescription = (description?: string | null) => 
       key,
       label: toLabel(token),
       swatch: resolveColorSwatch(token),
+    });
+
+    return accumulator;
+  }, []);
+};
+
+export const getProductColors = (product?: Pick<Product, "colors" | "description"> | null) => {
+  if (product?.colors && product.colors.trim().length > 0) {
+    return parseColorTokens(product.colors);
+  }
+
+  return getProductColorsFromDescription(product?.description);
+};
+
+export const getProductSizes = (product?: Pick<Product, "sizes"> | null) => {
+  const tokens = parseOptionTokens(product?.sizes);
+  const seen = new Set<string>();
+
+  return tokens.reduce<Array<{ key: string; label: string }>>((accumulator, token) => {
+    const key = token.toLowerCase();
+    if (!key || seen.has(key)) {
+      return accumulator;
+    }
+
+    seen.add(key);
+    accumulator.push({
+      key,
+      label: toLabel(token),
     });
 
     return accumulator;

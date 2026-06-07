@@ -14,6 +14,7 @@ interface OrderProduct {
   productId: string | null;
   quantity: number;
   selectedColor?: string | null;
+  selectedSize?: string | null;
   product: {
     id: string;
     slug: string | null;
@@ -428,6 +429,11 @@ const AdminSingleOrder = () => {
                       {product?.selectedColor && (
                         <p className="mt-1 text-sm text-[var(--site-muted)]">
                           Color: <span className="font-medium text-[var(--site-text)]">{product.selectedColor}</span>
+                        </p>
+                      )}
+                      {product?.selectedSize && (
+                        <p className="mt-1 text-sm text-[var(--site-muted)]">
+                          Size: <span className="font-medium text-[var(--site-text)]">{product.selectedSize}</span>
                         </p>
                       )}
                     </div>

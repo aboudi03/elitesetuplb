@@ -99,6 +99,8 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
         sku: product.sku?.trim() === "" ? null : product.sku,
         title: product.title?.trim() === "" ? null : product.title,
         manufacturer: product.manufacturer?.trim() === "" ? null : product.manufacturer,
+        colors: product.colors?.trim() === "" ? null : product.colors,
+        sizes: product.sizes?.trim() === "" ? null : product.sizes,
         description: product.description?.trim() === "" ? null : product.description,
         slug: product.slug?.trim() === "" ? null : product.slug,
         mainImage: mainImageRow?.path || null,
@@ -390,6 +392,32 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
                       </option>
                     ))}
                 </select>
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
+                  Colors
+                </span>
+                <input
+                  type="text"
+                  className={fieldClassName}
+                  placeholder="Black, White, Red"
+                  value={product?.colors || ""}
+                  onChange={(e) => setProduct({ ...product!, colors: e.target.value })}
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
+                  Sizes
+                </span>
+                <input
+                  type="text"
+                  className={fieldClassName}
+                  placeholder="S, M, L or 41, 42, 43"
+                  value={product?.sizes || ""}
+                  onChange={(e) => setProduct({ ...product!, sizes: e.target.value })}
+                />
               </label>
 
               <label className="block md:col-span-2">

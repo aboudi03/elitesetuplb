@@ -29,6 +29,8 @@ const createEmptyProduct = () => ({
   inStock: 0,
   mainImage: "",
   description: "",
+  colors: "",
+  sizes: "",
   slug: "",
   categoryId: "",
   isActive: true,
@@ -48,6 +50,8 @@ const AddNewProduct = () => {
     inStock: number;
     mainImage: string;
     description: string;
+    colors: string;
+    sizes: string;
     slug: string;
     categoryId: string;
     isActive: boolean;
@@ -100,6 +104,8 @@ const AddNewProduct = () => {
         sku: product.sku.trim() === "" ? null : product.sku,
         title: product.title.trim() === "" ? null : product.title,
         manufacturer: product.manufacturer.trim() === "" ? null : product.manufacturer,
+        colors: product.colors.trim() === "" ? null : product.colors,
+        sizes: product.sizes.trim() === "" ? null : product.sizes,
         description: product.description.trim() === "" ? null : product.description,
         slug: product.slug.trim() === "" ? null : product.slug,
         mainImage: mainImageRow?.path || null,
@@ -197,6 +203,8 @@ const AddNewProduct = () => {
       ...(fields.sku !== undefined ? { sku: fields.sku || "" } : {}),
       ...(fields.manufacturer !== undefined ? { manufacturer: fields.manufacturer || "" } : {}),
       ...(fields.description !== undefined ? { description: fields.description || "" } : {}),
+      ...(fields.colors !== undefined ? { colors: fields.colors || "" } : {}),
+      ...(fields.sizes !== undefined ? { sizes: fields.sizes || "" } : {}),
       ...(fields.mainImage !== undefined ? { mainImage: fields.mainImage || "" } : {}),
       ...(fields.price !== undefined ? { price: fields.price } : {}),
       ...(fields.taxRate !== undefined ? { taxRate: fields.taxRate || 0 } : {}),
@@ -346,6 +354,32 @@ const AddNewProduct = () => {
                   className={fieldClassName}
                   value={product?.manufacturer}
                   onChange={(e) => setProduct({ ...product, manufacturer: e.target.value })}
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
+                  Colors
+                </span>
+                <input
+                  type="text"
+                  className={fieldClassName}
+                  placeholder="Black, White, Red"
+                  value={product?.colors}
+                  onChange={(e) => setProduct({ ...product, colors: e.target.value })}
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
+                  Sizes
+                </span>
+                <input
+                  type="text"
+                  className={fieldClassName}
+                  placeholder="S, M, L or 41, 42, 43"
+                  value={product?.sizes}
+                  onChange={(e) => setProduct({ ...product, sizes: e.target.value })}
                 />
               </label>
 

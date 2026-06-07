@@ -17,7 +17,7 @@ async function getPreparationStatusCodes(tx) {
 }
 
 const createOrderProduct = asyncHandler(async (request, response) => {
-  const { customerOrderId, productId, quantity, selectedColor } = request.body;
+  const { customerOrderId, productId, quantity, selectedColor, selectedSize } = request.body;
   
   // Validate required fields
   if (!customerOrderId) {
@@ -89,6 +89,10 @@ const createOrderProduct = asyncHandler(async (request, response) => {
           typeof selectedColor === "string" && selectedColor.trim().length > 0
             ? selectedColor.trim()
             : null,
+        selectedSize:
+          typeof selectedSize === "string" && selectedSize.trim().length > 0
+            ? selectedSize.trim()
+            : null,
       }
     });
 
@@ -100,7 +104,7 @@ const createOrderProduct = asyncHandler(async (request, response) => {
 
 const updateProductOrder = asyncHandler(async (request, response) => {
   const { id } = request.params;
-  const { customerOrderId, productId, quantity, selectedColor } = request.body;
+  const { customerOrderId, productId, quantity, selectedColor, selectedSize } = request.body;
 
   if (!id) {
     throw new AppError("Order product ID is required", 400);
@@ -177,6 +181,12 @@ const updateProductOrder = asyncHandler(async (request, response) => {
               : typeof selectedColor === "string" && selectedColor.trim().length > 0
               ? selectedColor.trim()
               : null,
+          selectedSize:
+            selectedSize === undefined
+              ? existingOrder.selectedSize
+              : typeof selectedSize === "string" && selectedSize.trim().length > 0
+              ? selectedSize.trim()
+              : null,
         }
       });
   });
@@ -236,6 +246,7 @@ const getAllProductOrders = asyncHandler(async (request, response) => {
       productId: true,
       quantity: true,
       selectedColor: true,
+      selectedSize: true,
       customerOrder: {
         select: {
           id: true,
@@ -289,12 +300,24 @@ const getAllProductOrders = asyncHandler(async (request, response) => {
         };
 
     if (ordersMap.has(id)) {
-      ordersMap.get(id).products.push({ ...productSummary, quantity, selectedColor: order.selectedColor });
+      ordersMap.get(id).products.push({
+        ...productSummary,
+        quantity,
+        selectedColor: order.selectedColor,
+        selectedSize: order.selectedSize,
+      });
     } else {
       ordersMap.set(id, {
         customerOrderId: id,
         customerOrder: orderDetails,
-        products: [{ ...productSummary, quantity, selectedColor: order.selectedColor }]
+        products: [
+          {
+            ...productSummary,
+            quantity,
+            selectedColor: order.selectedColor,
+            selectedSize: order.selectedSize,
+          },
+        ]
       });
     }
   }

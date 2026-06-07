@@ -9,6 +9,8 @@ interface Product {
   description?: string | null;
   mainImage?: string | null;
   manufacturer?: string | null;
+  colors?: string | null;
+  sizes?: string | null;
   categoryId: string | null;
   category?: { name: string } | null;
   inStock: number;
@@ -102,6 +104,7 @@ interface SingleProductBtnProps {
   product: Product;
   quantityCount: number;
   selectedColor?: string;
+  selectedSize?: string;
 }
 
 

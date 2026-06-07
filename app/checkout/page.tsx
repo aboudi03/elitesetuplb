@@ -28,6 +28,7 @@ type CheckoutSuccessSummary = {
     amount: number;
     price: number;
     selectedColor?: string;
+    selectedSize?: string;
   }>;
   subtotal: number;
   deliveryFee: number;
@@ -306,7 +307,8 @@ const CheckoutPage = () => {
           orderId,
           products[i].id,
           products[i].amount,
-          products[i].selectedColor
+          products[i].selectedColor,
+          products[i].selectedSize
         );
         console.log(`✅ Product ${i + 1} added successfully`);
       }
@@ -322,6 +324,7 @@ const CheckoutPage = () => {
           amount: product.amount,
           price: product.price,
           selectedColor: product.selectedColor,
+          selectedSize: product.selectedSize,
         })),
         subtotal: total,
         deliveryFee,
@@ -388,7 +391,8 @@ const CheckoutPage = () => {
     orderId: string,
     productId: string,
     productQuantity: number,
-    selectedColor?: string
+    selectedColor?: string,
+    selectedSize?: string
   ) => {
     try {
       console.log("️ Adding product to order:", {
@@ -402,6 +406,7 @@ const CheckoutPage = () => {
         productId: productId,
         quantity: productQuantity,
         selectedColor,
+        selectedSize,
       });
 
       console.log("📡 Product order response:", response);
@@ -495,6 +500,9 @@ const CheckoutPage = () => {
                     <p className="text-[var(--site-muted)]">x{product?.amount}</p>
                     {product.selectedColor && (
                       <p className="text-[var(--site-muted)]">Color: {product.selectedColor}</p>
+                    )}
+                    {product.selectedSize && (
+                      <p className="text-[var(--site-muted)]">Size: {product.selectedSize}</p>
                     )}
                   </div>
                   <p className="flex-none text-base font-medium">
@@ -972,6 +980,7 @@ const CheckoutPage = () => {
                       <p className="mt-1 text-sm text-[var(--site-muted)]">
                         Qty: {item.amount}
                         {item.selectedColor ? ` | Color: ${item.selectedColor}` : ""}
+                        {item.selectedSize ? ` | Size: ${item.selectedSize}` : ""}
                       </p>
                     </div>
                     <p className="text-sm font-semibold text-[var(--site-text)]">

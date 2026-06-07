@@ -95,6 +95,11 @@ export const CartModule = () => {
                         Color: <span className="font-medium text-[var(--site-text)]">{product.selectedColor}</span>
                       </p>
                     )}
+                    {product.selectedSize && (
+                      <p className="mt-1 text-sm text-[var(--site-muted)]">
+                        Size: <span className="font-medium text-[var(--site-text)]">{product.selectedSize}</span>
+                      </p>
+                    )}
                   </div>
 
                   <div className="mt-4 sm:mt-0 sm:pr-9">

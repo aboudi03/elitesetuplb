@@ -9,6 +9,7 @@ export type ProductInCart = {
   taxRate?: number;
   image: string;
   selectedColor?: string;
+  selectedSize?: string;
   amount: number;
   stock?: number;
 };
@@ -122,7 +123,8 @@ export const useProductStore = create<State & Actions>()(
           products: persistedState.products.map((product: ProductInCart & { cartItemId?: string }) => ({
             ...product,
             cartItemId:
-              product.cartItemId || `${product.id}::${product.selectedColor || "default"}`,
+              product.cartItemId ||
+                `${product.id}::${product.selectedColor || "default"}::${product.selectedSize || "default"}`,
           })),
         };
       },

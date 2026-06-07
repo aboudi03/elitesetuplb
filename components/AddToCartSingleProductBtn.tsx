@@ -23,6 +23,7 @@ const AddToCartSingleProductBtn = ({
   product,
   quantityCount,
   selectedColor,
+  selectedSize,
 }: SingleProductBtnProps) => {
   const { data: session } = useSession();
   const cartState = useProductStore();
@@ -33,7 +34,7 @@ const AddToCartSingleProductBtn = ({
       ? cartState.calculateTotals
       : () => undefined;
   const products = Array.isArray(cartState?.products) ? cartState.products : [];
-  const cartItemId = `${product.id}::${selectedColor || "default"}`;
+  const cartItemId = `${product.id}::${selectedColor || "default"}::${selectedSize || "default"}`;
   const displayTitle = product.title || product.model || "Product";
   const displayImage = product.mainImage || "/product_placeholder.jpg";
 
@@ -60,6 +61,7 @@ const AddToCartSingleProductBtn = ({
       taxRate: product?.taxRate || 0,
       image: displayImage,
       selectedColor,
+      selectedSize,
       amount: quantityCount,
       stock: product?.inStock,
     });

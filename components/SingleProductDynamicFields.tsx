@@ -13,7 +13,7 @@ import React, { useState } from "react";
 import QuantityInput from "./QuantityInput";
 import AddToCartSingleProductBtn from "./AddToCartSingleProductBtn";
 import BuyNowSingleProductBtn from "./BuyNowSingleProductBtn";
-import { getProductColorsFromDescription } from "@/lib/productColors";
+import { getProductColors, getProductSizes } from "@/lib/productColors";
 import { contactEmails } from "@/lib/utils";
 import { pcBuilderWhatsAppNumber } from "@/lib/pc-builder";
 
@@ -22,10 +22,12 @@ const supportWhatsappHref = `https://wa.me/${pcBuilderWhatsAppNumber}`;
 
 const SingleProductDynamicFields = ({ product }: { product: Product }) => {
   const [quantityCount, setQuantityCount] = useState<number>(1);
-  const colorOptions = getProductColorsFromDescription(product?.description || "");
+  const colorOptions = getProductColors(product);
+  const sizeOptions = getProductSizes(product);
   const [selectedColor, setSelectedColor] = useState<string | undefined>(
     colorOptions[0]?.label
   );
+  const [selectedSize, setSelectedSize] = useState<string | undefined>(sizeOptions[0]?.label);
 
   return (
     <>
@@ -66,6 +68,37 @@ const SingleProductDynamicFields = ({ product }: { product: Product }) => {
           </div>
         </div>
       )}
+      {sizeOptions.length > 0 && (
+        <div className="mb-5">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--site-muted)]">
+              Size
+            </span>
+            <span className="text-sm font-medium text-[var(--site-text)]">{selectedSize}</span>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-3">
+            {sizeOptions.map((size) => {
+              const isSelected = selectedSize === size.label;
+              return (
+                <button
+                  key={size.key}
+                  type="button"
+                  aria-label={`Select size ${size.label}`}
+                  aria-pressed={isSelected}
+                  onClick={() => setSelectedSize(size.label)}
+                  className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+                    isSelected
+                      ? "border-[var(--site-accent)] bg-[var(--site-accent-soft)] text-[var(--site-accent)]"
+                      : "border-[var(--site-border)] bg-[var(--site-panel-soft)] text-[var(--site-text)] hover:border-[var(--site-accent)]"
+                  }`}
+                >
+                  {size.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
       <QuantityInput
         quantityCount={quantityCount}
         setQuantityCount={setQuantityCount}
@@ -98,11 +131,13 @@ const SingleProductDynamicFields = ({ product }: { product: Product }) => {
             quantityCount={quantityCount}
             product={product}
             selectedColor={selectedColor}
+            selectedSize={selectedSize}
           />
           <BuyNowSingleProductBtn
             quantityCount={quantityCount}
             product={product}
             selectedColor={selectedColor}
+            selectedSize={selectedSize}
           />
         </div>
       )}
