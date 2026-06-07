@@ -14,8 +14,11 @@ import QuantityInput from "./QuantityInput";
 import AddToCartSingleProductBtn from "./AddToCartSingleProductBtn";
 import BuyNowSingleProductBtn from "./BuyNowSingleProductBtn";
 import { getProductColorsFromDescription } from "@/lib/productColors";
+import { contactEmails } from "@/lib/utils";
+import { pcBuilderWhatsAppNumber } from "@/lib/pc-builder";
 
 const PUBLIC_ORDER_LIMIT = 10;
+const supportWhatsappHref = `https://wa.me/${pcBuilderWhatsAppNumber}`;
 
 const SingleProductDynamicFields = ({ product }: { product: Product }) => {
   const [quantityCount, setQuantityCount] = useState<number>(1);
@@ -68,9 +71,27 @@ const SingleProductDynamicFields = ({ product }: { product: Product }) => {
         setQuantityCount={setQuantityCount}
         maxQuantity={PUBLIC_ORDER_LIMIT}
       />
-      <p className="mt-2 text-sm text-[var(--site-muted)] max-[500px]:text-center">
-        Maximum online order is {PUBLIC_ORDER_LIMIT}. For larger quantities, please contact support.
-      </p>
+      {quantityCount >= PUBLIC_ORDER_LIMIT ? (
+        <p className="mt-2 text-sm text-[var(--site-muted)] max-[500px]:text-center">
+          For more than {PUBLIC_ORDER_LIMIT} quantity, please{" "}
+          <a
+            href={supportWhatsappHref}
+            target="_blank"
+            rel="noreferrer"
+            className="font-semibold text-[var(--site-accent)] underline-offset-2 transition hover:text-[var(--site-accent-strong)] hover:underline"
+          >
+            contact us on WhatsApp
+          </a>{" "}
+          or{" "}
+          <a
+            href={`mailto:${contactEmails.support}`}
+            className="font-semibold text-[var(--site-accent)] underline-offset-2 transition hover:text-[var(--site-accent-strong)] hover:underline"
+          >
+            email support
+          </a>
+          .
+        </p>
+      ) : null}
       {product.inStock > 0 && (
         <div className="flex gap-x-5 max-[500px]:flex-col max-[500px]:items-center max-[500px]:gap-y-1">
           <AddToCartSingleProductBtn

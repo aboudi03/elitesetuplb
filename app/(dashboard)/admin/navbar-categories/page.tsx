@@ -6,6 +6,7 @@ import apiClient from "@/lib/api";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { FaArrowDown, FaArrowUp, FaPlus, FaTrash } from "react-icons/fa6";
+import { formatCategoryName } from "@/utils/categoryFormating";
 
 const createBlankChild = (): NavbarCategoryItem => ({
   id: `child-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -23,19 +24,29 @@ const createBlankParent = (): NavbarCategoryItem => ({
 const fieldClassName =
   "block w-full rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 py-3 text-base text-[var(--site-text)] shadow-sm outline-none transition focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent-soft)]";
 
+const buildShopHref = (categoryName: string) => `/shop/${categoryName}`;
+
+const getCategoryValueFromHref = (href: string) =>
+  href.startsWith("/shop/") ? href.replace("/shop/", "").trim() : "";
+
 export default function NavbarCategoriesPage() {
   const [categories, setCategories] = useState<NavbarCategoryItem[]>([]);
+  const [productCategories, setProductCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    apiClient
-      .get("/api/navbar-categories", { cache: "no-store" })
-      .then((response) => response.json())
-      .then((data) => {
-        setCategories(Array.isArray(data) ? data : []);
+    Promise.all([
+      apiClient.get("/api/navbar-categories", { cache: "no-store" }).then((response) =>
+        response.json()
+      ),
+      apiClient.get("/api/categories", { cache: "no-store" }).then((response) => response.json()),
+    ])
+      .then(([navbarData, categoryData]) => {
+        setCategories(Array.isArray(navbarData) ? navbarData : []);
+        setProductCategories(Array.isArray(categoryData) ? categoryData : []);
       })
-      .catch(() => toast.error("Failed to load navbar categories"))
+      .catch(() => toast.error("Failed to load navbar category data"))
       .finally(() => setIsLoading(false));
   }, []);
 
@@ -218,6 +229,24 @@ export default function NavbarCategoriesPage() {
                     </button>
                   </div>
                 </div>
+                <div className="mt-4">
+                  <select
+                    className={fieldClassName}
+                    value={getCategoryValueFromHref(category.href)}
+                    onChange={(event) =>
+                      updateParent(categoryIndex, {
+                        href: event.target.value ? buildShopHref(event.target.value) : "",
+                      })
+                    }
+                  >
+                    <option value="">Select existing product category for this link</option>
+                    {productCategories.map((productCategory) => (
+                      <option key={productCategory.id} value={productCategory.name}>
+                        {formatCategoryName(productCategory.name)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
                 <div className="mt-5 rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-4">
                   <div className="mb-4 flex items-center justify-between gap-4">
@@ -306,6 +335,24 @@ export default function NavbarCategoriesPage() {
                             >
                               <FaTrash />
                             </button>
+                          </div>
+                          <div className="lg:col-span-4">
+                            <select
+                              className={fieldClassName}
+                              value={getCategoryValueFromHref(childCategory.href)}
+                              onChange={(event) =>
+                                updateChild(categoryIndex, childIndex, {
+                                  href: event.target.value ? buildShopHref(event.target.value) : "",
+                                })
+                              }
+                            >
+                              <option value="">Select existing product category for this link</option>
+                              {productCategories.map((productCategory) => (
+                                <option key={productCategory.id} value={productCategory.name}>
+                                  {formatCategoryName(productCategory.name)}
+                                </option>
+                              ))}
+                            </select>
                           </div>
                         </div>
                       ))

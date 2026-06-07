@@ -38,6 +38,7 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
   );
   const [activeIndex, setActiveIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [isLightboxZoomed, setIsLightboxZoomed] = useState(false);
   const [previousRippleKey, setPreviousRippleKey] = useState(0);
   const [nextRippleKey, setNextRippleKey] = useState(0);
   const autoplayTimerRef = useRef<number | null>(null);
@@ -45,6 +46,14 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
   const touchDeltaXRef = useRef(0);
 
   useEffect(() => {
+    if (isLightboxOpen) {
+      if (autoplayTimerRef.current) {
+        window.clearTimeout(autoplayTimerRef.current);
+      }
+
+      return;
+    }
+
     if (slides.length <= 1) return;
 
     if (autoplayTimerRef.current) {
@@ -60,7 +69,7 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
         window.clearTimeout(autoplayTimerRef.current);
       }
     };
-  }, [activeIndex, slides.length]);
+  }, [activeIndex, isLightboxOpen, slides.length]);
 
   useEffect(() => {
     if (!isLightboxOpen) return;
@@ -68,6 +77,15 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setIsLightboxOpen(false);
+        setIsLightboxZoomed(false);
+      }
+
+      if (event.key === "ArrowLeft") {
+        goToPreviousSlide();
+      }
+
+      if (event.key === "ArrowRight") {
+        goToNextSlide();
       }
     };
 
@@ -84,6 +102,7 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
   const goToPreviousSlide = () => {
     if (!hasMultipleSlides) return;
 
+    setIsLightboxZoomed(false);
     setPreviousRippleKey((currentKey) => currentKey + 1);
     setActiveIndex((currentIndex) => (currentIndex - 1 + slides.length) % slides.length);
   };
@@ -91,6 +110,7 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
   const goToNextSlide = () => {
     if (!hasMultipleSlides) return;
 
+    setIsLightboxZoomed(false);
     setNextRippleKey((currentKey) => currentKey + 1);
     setActiveIndex((currentIndex) => (currentIndex + 1) % slides.length);
   };
@@ -153,7 +173,10 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
       >
         <button
           type="button"
-          onClick={() => setIsLightboxOpen(true)}
+          onClick={() => {
+            setIsLightboxZoomed(false);
+            setIsLightboxOpen(true);
+          }}
           className="absolute inset-0 z-10 cursor-zoom-in"
           aria-label="Open product image in full view"
         />
@@ -228,7 +251,7 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
               </span>
             </button>
 
-            <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 gap-2">
+            <div className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 gap-2">
               {slides.map((slide, index) => (
                 <button
                   key={`dot-${slide.id}`}
@@ -250,7 +273,10 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
       {isLightboxOpen ? (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/82 px-4 py-6 backdrop-blur-sm animate-[lightboxFadeIn_220ms_ease-out]"
-          onClick={() => setIsLightboxOpen(false)}
+          onClick={() => {
+            setIsLightboxOpen(false);
+            setIsLightboxZoomed(false);
+          }}
           role="dialog"
           aria-modal="true"
           aria-label="Expanded product image"
@@ -261,19 +287,46 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
           >
             <button
               type="button"
-              onClick={() => setIsLightboxOpen(false)}
+              onClick={() => {
+                setIsLightboxOpen(false);
+                setIsLightboxZoomed(false);
+              }}
               className="absolute right-2 top-2 z-[101] flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-black/60 text-white transition hover:scale-105 hover:bg-black/80 sm:right-3 sm:top-3"
               aria-label="Close enlarged image"
             >
               <FaXmark className="h-5 w-5" />
             </button>
+            {hasMultipleSlides ? (
+              <>
+                <button
+                  type="button"
+                  onClick={goToPreviousSlide}
+                  className="absolute left-2 top-1/2 z-[101] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-black/60 text-white transition hover:scale-105 hover:bg-black/80 sm:left-3"
+                  aria-label="Previous enlarged image"
+                >
+                  <FaChevronLeft className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={goToNextSlide}
+                  className="absolute right-2 top-1/2 z-[101] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-black/60 text-white transition hover:scale-105 hover:bg-black/80 sm:right-3"
+                  aria-label="Next enlarged image"
+                >
+                  <FaChevronRight className="h-4 w-4" />
+                </button>
+              </>
+            ) : null}
             <Image
+              key={`lightbox-${activeSlide.src}-${isLightboxZoomed ? "zoomed" : "base"}`}
               src={activeSlide.src}
               width={1600}
               height={1600}
               alt={activeSlide.alt}
               priority
-              className="h-auto max-h-[92vh] w-auto max-w-full rounded-md object-contain"
+              onClick={() => setIsLightboxZoomed((current) => !current)}
+              className={`h-auto max-h-[92vh] w-auto max-w-full rounded-md object-contain transition-transform duration-300 ease-out ${
+                isLightboxZoomed ? "cursor-zoom-out scale-[1.75]" : "cursor-zoom-in scale-100"
+              }`}
             />
           </div>
         </div>
