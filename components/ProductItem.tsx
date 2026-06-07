@@ -24,6 +24,7 @@ const ProductItem = ({
   viewMode?: CatalogViewMode;
 }) => {
   const isListView = viewMode === "list";
+  const productDescription = sanitize(product.description || "").trim();
 
   return (
     <div
@@ -66,8 +67,8 @@ const ProductItem = ({
             ${product.price.toFixed(2)}
           </p>
           {isListView ? (
-            <p className="mt-3 text-sm leading-6 text-[var(--site-muted)]">
-              Browse this product page for specs, gallery images, and checkout details.
+            <p className="mt-3 line-clamp-3 text-sm leading-6 text-[var(--site-muted)]">
+              {productDescription || "No description available for this product yet."}
             </p>
           ) : null}
         </div>

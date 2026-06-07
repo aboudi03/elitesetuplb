@@ -98,6 +98,22 @@ const ProductTabs = ({ product }: { product: Product }) => {
   const [canExpandDescription, setCanExpandDescription] = useState(false);
   const descriptionRef = useRef<HTMLDivElement>(null);
   const sanitizedDescription = formatDescription(product?.description);
+  const additionalInfoItems = [
+    {
+      label: "Manufacturer",
+      value: sanitize(product?.manufacturer) || "Not specified",
+    },
+    {
+      label: "Category",
+      value: product?.category?.name
+        ? sanitize(formatCategoryName(product?.category?.name))
+        : "No category",
+    },
+    {
+      label: "Color",
+      value: "Check available options above",
+    },
+  ];
 
   useEffect(() => {
     if (currentProductTab !== 0) return;
@@ -116,11 +132,11 @@ const ProductTabs = ({ product }: { product: Product }) => {
   }, [currentProductTab, sanitizedDescription, isDescriptionExpanded]);
 
   return (
-    <div className="px-5 text-black">
-      <div role="tablist" className="tabs tabs-bordered">
+    <div className="px-5 text-[var(--site-text)] max-sm:px-0">
+      <div role="tablist" className="tabs tabs-bordered w-full">
         <a
           role="tab"
-          className={`tab text-lg text-black pb-8 max-[500px]:text-base max-[400px]:text-sm max-[370px]:text-xs ${
+          className={`tab flex-1 text-center text-lg text-[var(--site-text)] pb-8 max-[500px]:text-sm max-[400px]:px-2 max-[400px]:text-xs ${
             currentProductTab === 0 && "tab-active"
           }`}
           onClick={() => setCurrentProductTab(0)}
@@ -129,7 +145,7 @@ const ProductTabs = ({ product }: { product: Product }) => {
         </a>
         <a
           role="tab"
-          className={`tab text-black text-lg pb-8 max-[500px]:text-base max-[400px]:text-sm max-[370px]:text-xs ${
+          className={`tab flex-1 text-center text-lg text-[var(--site-text)] pb-8 max-[500px]:text-sm max-[400px]:px-2 max-[400px]:text-xs ${
             currentProductTab === 1 && "tab-active"
           }`}
           onClick={() => setCurrentProductTab(1)}
@@ -165,30 +181,20 @@ const ProductTabs = ({ product }: { product: Product }) => {
         )}
 
         {currentProductTab === 1 && (
-          <div className="overflow-x-auto">
-            <table className="table text-xl text-center max-[500px]:text-base">
-              <tbody>
-                {/* row 1 */}
-                <tr>
-                  <th>Manufacturer:</th>
-                  <td>{sanitize(product?.manufacturer)}</td>
-                </tr>
-                {/* row 2 */}
-                <tr>
-                  <th>Category:</th>
-                  <td>
-                    {product?.category?.name
-                      ? sanitize(formatCategoryName(product?.category?.name))
-                      : "No category"}
-                  </td>
-                </tr>
-                {/* row 3 */}
-                <tr>
-                  <th>Color:</th>
-                  <td>Silver, LightSlateGray, Blue</td>
-                </tr>
-              </tbody>
-            </table>
+          <div className="grid gap-3 pt-1 sm:gap-4">
+            {additionalInfoItems.map((item) => (
+              <div
+                key={item.label}
+                className="rounded-2xl border border-[var(--site-border)] bg-[linear-gradient(180deg,var(--site-panel),var(--site-panel-soft))] px-4 py-4 shadow-sm"
+              >
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--site-muted)]">
+                  {item.label}
+                </p>
+                <p className="mt-2 break-words text-base font-semibold text-[var(--site-text)] sm:text-lg">
+                  {item.value}
+                </p>
+              </div>
+            ))}
           </div>
         )}
       </div>

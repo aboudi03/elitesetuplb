@@ -15,6 +15,8 @@ import AddToCartSingleProductBtn from "./AddToCartSingleProductBtn";
 import BuyNowSingleProductBtn from "./BuyNowSingleProductBtn";
 import { getProductColorsFromDescription } from "@/lib/productColors";
 
+const PUBLIC_ORDER_LIMIT = 10;
+
 const SingleProductDynamicFields = ({ product }: { product: Product }) => {
   const [quantityCount, setQuantityCount] = useState<number>(1);
   const colorOptions = getProductColorsFromDescription(product?.description || "");
@@ -64,8 +66,11 @@ const SingleProductDynamicFields = ({ product }: { product: Product }) => {
       <QuantityInput
         quantityCount={quantityCount}
         setQuantityCount={setQuantityCount}
-        maxQuantity={product.inStock}
+        maxQuantity={PUBLIC_ORDER_LIMIT}
       />
+      <p className="mt-2 text-sm text-[var(--site-muted)] max-[500px]:text-center">
+        Maximum online order is {PUBLIC_ORDER_LIMIT}. For larger quantities, please contact support.
+      </p>
       {product.inStock > 0 && (
         <div className="flex gap-x-5 max-[500px]:flex-col max-[500px]:items-center max-[500px]:gap-y-1">
           <AddToCartSingleProductBtn

@@ -249,31 +249,31 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
 
       {isLightboxOpen ? (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/82 px-4 py-6 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/82 px-4 py-6 backdrop-blur-sm animate-[lightboxFadeIn_220ms_ease-out]"
           onClick={() => setIsLightboxOpen(false)}
           role="dialog"
           aria-modal="true"
           aria-label="Expanded product image"
         >
-          <button
-            type="button"
-            onClick={() => setIsLightboxOpen(false)}
-            className="absolute right-4 top-4 z-[101] flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-black/55 text-white transition hover:bg-black/75"
-            aria-label="Close enlarged image"
-          >
-            <FaXmark className="h-5 w-5" />
-          </button>
           <div
-            className="relative flex h-full max-h-[92vh] w-full max-w-6xl items-center justify-center"
+            className="relative inline-flex max-h-[92vh] max-w-full items-start justify-center animate-[lightboxZoomIn_260ms_cubic-bezier(0.22,1,0.36,1)]"
             onClick={(event) => event.stopPropagation()}
           >
+            <button
+              type="button"
+              onClick={() => setIsLightboxOpen(false)}
+              className="absolute right-2 top-2 z-[101] flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-black/60 text-white transition hover:scale-105 hover:bg-black/80 sm:right-3 sm:top-3"
+              aria-label="Close enlarged image"
+            >
+              <FaXmark className="h-5 w-5" />
+            </button>
             <Image
               src={activeSlide.src}
               width={1600}
               height={1600}
               alt={activeSlide.alt}
               priority
-              className="h-auto max-h-[92vh] w-auto max-w-full object-contain"
+              className="h-auto max-h-[92vh] w-auto max-w-full rounded-md object-contain"
             />
           </div>
         </div>

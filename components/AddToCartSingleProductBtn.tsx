@@ -17,6 +17,8 @@ import toast from "react-hot-toast";
 import { trackCartAdd } from "@/lib/cartTracking";
 import { useSession } from "next-auth/react";
 
+const PUBLIC_ORDER_LIMIT = 10;
+
 const AddToCartSingleProductBtn = ({
   product,
   quantityCount,
@@ -40,8 +42,13 @@ const AddToCartSingleProductBtn = ({
       .filter((item) => item.id === product.id)
       .reduce((sum, item) => sum + item.amount, 0);
 
+    if (existingQuantityForProduct + quantityCount > PUBLIC_ORDER_LIMIT) {
+      toast.error("Maximum online order is 10. Please contact support for larger quantities.");
+      return;
+    }
+
     if (existingQuantityForProduct + quantityCount > product.inStock) {
-      toast.error(`Only ${product.inStock} left in stock`);
+      toast.error("Requested quantity is not available right now.");
       return;
     }
 

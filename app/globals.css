@@ -585,6 +585,35 @@ html[data-theme] textarea {
     }
 }
 
+@keyframes lightboxFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes lightboxZoomIn {
+    from {
+        opacity: 0;
+        transform: scale(0.94) translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [class*="lightboxFadeIn"],
+    [class*="lightboxZoomIn"] {
+        animation: none !important;
+    }
+}
+
 html[data-theme] .input::placeholder,
 html[data-theme] input::placeholder,
 html[data-theme] textarea::placeholder {

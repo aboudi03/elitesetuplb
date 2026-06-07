@@ -2,6 +2,20 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { asyncHandler, AppError } = require("../utills/errorHandler");
 
+async function getPreparationStatusCodes(tx) {
+  const statuses = await tx.orderStatus.findMany({
+    where: {
+      groupCode: "preparation",
+      isActive: true,
+    },
+    select: {
+      code: true,
+    },
+  });
+
+  return statuses.map((status) => status.code);
+}
+
 const createOrderProduct = asyncHandler(async (request, response) => {
   const { customerOrderId, productId, quantity, selectedColor } = request.body;
   
@@ -41,10 +55,28 @@ const createOrderProduct = asyncHandler(async (request, response) => {
       throw new AppError(`${existingProduct.title} is currently unavailable`, 400);
     }
 
-    if (existingProduct.inStock < requestedQuantity) {
+    const reservingStatuses = await getPreparationStatusCodes(tx);
+    const existingOrderQuantity = await tx.customer_order_product.aggregate({
+      where: {
+        productId,
+        customerOrder: {
+          status: {
+            in: reservingStatuses,
+          },
+        },
+      },
+      _sum: {
+        quantity: true,
+      },
+    });
+
+    const quantityAlreadyRequested = existingOrderQuantity._sum.quantity || 0;
+    const nextRequestedTotal = quantityAlreadyRequested + requestedQuantity;
+
+    if (existingProduct.inStock < nextRequestedTotal) {
       throw new AppError(
-        `Only ${existingProduct.inStock} item(s) left in stock for ${existingProduct.title}`,
-        400
+        "Requested quantity is not available right now.",
+        409
       );
     }
 
@@ -89,21 +121,64 @@ const updateProductOrder = asyncHandler(async (request, response) => {
     throw new AppError("Quantity must be greater than 0", 400);
   }
 
-  const updatedOrder = await prisma.customer_order_product.update({
-    where: {
-      id: existingOrder.id
-    },
-    data: {
-      customerOrderId: customerOrderId || existingOrder.customerOrderId,
-      productId: productId || existingOrder.productId,
-      quantity: quantity !== undefined ? quantity : existingOrder.quantity,
-      selectedColor:
-        selectedColor === undefined
-          ? existingOrder.selectedColor
-          : typeof selectedColor === "string" && selectedColor.trim().length > 0
-          ? selectedColor.trim()
-          : null,
-    }
+  const updatedOrder = await prisma.$transaction(async (tx) => {
+      const nextCustomerOrderId = customerOrderId || existingOrder.customerOrderId;
+      const nextProductId = productId || existingOrder.productId;
+      const nextQuantity = quantity !== undefined ? parseInt(quantity, 10) : existingOrder.quantity;
+
+      const targetProduct = await tx.product.findUnique({
+        where: { id: nextProductId },
+      });
+
+      if (!targetProduct) {
+        throw new AppError("Product not found", 404);
+      }
+
+      if (!targetProduct.isActive) {
+        throw new AppError(`${targetProduct.title} is currently unavailable`, 400);
+      }
+
+      const reservingStatuses = await getPreparationStatusCodes(tx);
+      const siblingOrderQuantity = await tx.customer_order_product.aggregate({
+        where: {
+          productId: nextProductId,
+          customerOrder: {
+            status: {
+              in: reservingStatuses,
+            },
+          },
+          id: {
+            not: existingOrder.id,
+          },
+        },
+        _sum: {
+          quantity: true,
+        },
+      });
+
+      const quantityAlreadyRequested = siblingOrderQuantity._sum.quantity || 0;
+      const nextRequestedTotal = quantityAlreadyRequested + nextQuantity;
+
+      if (targetProduct.inStock < nextRequestedTotal) {
+        throw new AppError("Requested quantity is not available right now.", 409);
+      }
+
+      return tx.customer_order_product.update({
+        where: {
+          id: existingOrder.id
+        },
+        data: {
+          customerOrderId: nextCustomerOrderId,
+          productId: nextProductId,
+          quantity: nextQuantity,
+          selectedColor:
+            selectedColor === undefined
+              ? existingOrder.selectedColor
+              : typeof selectedColor === "string" && selectedColor.trim().length > 0
+              ? selectedColor.trim()
+              : null,
+        }
+      });
   });
 
   return response.json(updatedOrder);
