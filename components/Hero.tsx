@@ -199,10 +199,10 @@ const Hero = () => {
       transitionLockRef.current = false;
     }, 900);
   };
-  const canChangeSlide = slides.length > 1 && !transitionLockRef.current;
+  const canChangeSlide = () => slides.length > 1 && !transitionLockRef.current;
 
   const goToPreviousSlide = () => {
-    if (!canChangeSlide) return;
+    if (!canChangeSlide()) return;
 
     beginSlideTransition();
     setPreviousRippleKey((current) => current + 1);
@@ -211,7 +211,7 @@ const Hero = () => {
   };
 
   const goToNextSlide = () => {
-    if (!canChangeSlide) return;
+    if (!canChangeSlide()) return;
 
     beginSlideTransition();
     setNextRippleKey((current) => current + 1);
@@ -251,7 +251,13 @@ const Hero = () => {
   return (
     <section className="bg-[var(--site-bg)] pb-8">
       <nav className="border-b border-[var(--site-border)] bg-[var(--site-panel)]">
-        <div className="mx-auto flex max-w-screen-2xl items-center justify-center gap-9 overflow-x-auto px-4 py-3 text-sm font-semibold text-[var(--site-text)] max-lg:justify-start lg:overflow-visible">
+        <div
+          className="mx-auto flex max-w-screen-2xl items-center justify-center gap-9 overflow-x-auto px-4 py-3 text-sm font-semibold text-[var(--site-text)] max-lg:justify-start lg:overflow-visible"
+          style={{
+            touchAction: "pan-x",
+            WebkitOverflowScrolling: "touch",
+          }}
+        >
           {heroCategories.map((category) => {
             const hasChildren = Array.isArray(category.children) && category.children.length > 0;
             const isExpandedOnMobile = expandedMobileCategoryId === category.id;
@@ -343,6 +349,7 @@ const Hero = () => {
       <div className="mx-auto max-w-screen-2xl px-4 pt-5 sm:px-6 lg:px-8">
         <div
           className="relative min-h-[460px] overflow-hidden border border-[var(--site-border)] bg-[var(--site-panel)] max-md:min-h-[680px] max-sm:min-h-[640px]"
+          style={{ touchAction: "pan-y" }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}

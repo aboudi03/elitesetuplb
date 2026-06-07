@@ -139,7 +139,7 @@ const PcBuilderExperience = () => {
               Custom Setup Request
             </p>
             <h1 className="mt-4 max-w-3xl text-4xl font-black uppercase leading-tight text-[var(--site-text)] md:text-5xl">
-              Build your PC online and send the full setup straight to WhatsApp
+              Build your PC online 
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-[var(--site-muted)]">
               Choose your target parts, keep the brand flexible, and we will answer with price, stock, and the closest available configuration.
