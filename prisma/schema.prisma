@@ -173,6 +173,7 @@ model customer_order_product {
 model Category {
   id        String    @id @default(uuid())
   name      String    @unique
+  menuImage String?
   parentId  String?
   parent    Category? @relation("CategoryChildren", fields: [parentId], references: [id], onDelete: SetNull)
   children  Category[] @relation("CategoryChildren")

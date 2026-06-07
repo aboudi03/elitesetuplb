@@ -18,7 +18,7 @@ echo "Generating root Prisma client..."
 npx prisma generate
 
 echo "Generating backend Prisma client..."
-npm --prefix server exec prisma generate
+npm --prefix server run db:generate
 
 echo "Applying Prisma migrations..."
 npx prisma migrate deploy

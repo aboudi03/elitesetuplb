@@ -181,12 +181,12 @@ async function main() {
   }
 
   try {
-    await runOnce("backend-prisma", npxCommand, ["prisma", "generate"], {
+    await runOnce("backend-prisma", npmCommand, ["--prefix", "server", "run", "db:generate"], {
       cwd: `${__dirname}/server`,
     });
   } catch (error) {
     console.log("[backend-prisma] generate failed. Continuing because the backend Prisma Client may already be generated.");
-    console.log("[backend-prisma] if the server fails later, run: npm --prefix server exec prisma generate");
+    console.log("[backend-prisma] if the server fails later, run: npm --prefix server run db:generate");
   }
 
   run("backend", npmCommand, ["--prefix", "server", "start"]);

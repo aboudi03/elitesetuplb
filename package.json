@@ -14,7 +14,7 @@
     "pm2:logs": "pm2 logs",
     "deploy:server": "bash scripts/deploy.sh",
     "lint": "next lint",
-    "db:generate": "prisma generate && npm --prefix server exec prisma generate",
+    "db:generate": "prisma generate && npm --prefix server run db:generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "seed:gaming": "node server/scripts/seed-gaming-store.js"
