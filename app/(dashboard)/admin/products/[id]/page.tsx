@@ -51,6 +51,12 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
     .map((value) => value.trim().toUpperCase())
     .filter(Boolean);
 
+  const buildProductFileNameSeed = () => {
+    const sku = String(product?.sku || "").trim();
+    const model = String(product?.model || "").trim();
+    return [sku, model].filter(Boolean).join("-");
+  };
+
   const handleColorsChange = (nextColors: string[]) => {
     setProduct((currentProduct) =>
       currentProduct
@@ -178,6 +184,7 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
     formData.append("uploadedFile", file);
     formData.append("productId", id);
     formData.append("assetType", assetType);
+    formData.append("fileNameSeed", buildProductFileNameSeed());
 
     try {
       const response = await fetch(`${getRuntimeApiBaseUrl()}/api/main-image`, {
@@ -317,6 +324,7 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
           productId: id,
           imageId: targetRow.imageId,
           assetType: targetRow.isMain ? "main" : "gallery",
+          fileNameSeed: buildProductFileNameSeed(),
         }),
       });
 

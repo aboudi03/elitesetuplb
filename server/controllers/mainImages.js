@@ -2,10 +2,17 @@ const fs = require("fs");
 const path = require("path");
 const prisma = require("../utills/db");
 const {
-  buildWebpFileName,
   convertPublicImageToWebp,
   writeWebpFromBuffer,
 } = require("../utills/imageConversion");
+
+function buildFileNameSeed(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 120);
+}
 
 async function uploadMainImage(req, res) {
   if (!req.files || Object.keys(req.files).length === 0) {
@@ -15,6 +22,9 @@ async function uploadMainImage(req, res) {
   const uploadedFile = req.files.uploadedFile;
   const safeName = uploadedFile.name.replace(/[^a-zA-Z0-9._-]/g, "-");
   const baseName = path.basename(safeName, path.extname(safeName)) || `image-${Date.now()}`;
+  const requestedFileNameSeed =
+    typeof req.body?.fileNameSeed === "string" ? req.body.fileNameSeed.trim() : "";
+  const normalizedFileNameSeed = buildFileNameSeed(requestedFileNameSeed) || buildFileNameSeed(baseName);
   const productId = typeof req.body?.productId === "string" ? req.body.productId.trim() : "";
   const assetType =
     typeof req.body?.assetType === "string" && req.body.assetType.trim() === "gallery"
@@ -39,12 +49,12 @@ async function uploadMainImage(req, res) {
 
     fileName =
       assetType === "gallery"
-        ? `gallery-${Date.now()}-${buildWebpFileName(baseName)}`
-        : "main-image.webp";
+        ? `${normalizedFileNameSeed}-gallery-${Date.now()}.webp`
+        : `${normalizedFileNameSeed}.webp`;
     relativePath = path.posix.join("uploads", "products", productId, fileName);
     destinationPath = path.join(uploadDir, fileName);
   } else {
-    fileName = `${Date.now()}-${buildWebpFileName(baseName)}`;
+    fileName = `${normalizedFileNameSeed || Date.now()}-${Date.now()}.webp`;
     relativePath = path.posix.join("uploads", fileName);
     destinationPath = path.join(uploadDir, fileName);
   }
@@ -54,11 +64,13 @@ async function uploadMainImage(req, res) {
   if (productId && assetType === "main") {
     const existingMainImages = fs
       .readdirSync(uploadDir, { withFileTypes: true })
-      .filter((entry) => entry.isFile() && /^main-image\./.test(entry.name))
+      .filter((entry) => entry.isFile())
       .map((entry) => path.join(uploadDir, entry.name));
 
     for (const existingFilePath of existingMainImages) {
-      if (existingFilePath !== destinationPath) {
+      const existingFileName = path.basename(existingFilePath).toLowerCase();
+      const isGalleryFile = existingFileName.includes("-gallery-");
+      if (!isGalleryFile && existingFilePath !== destinationPath) {
         fs.rmSync(existingFilePath, { force: true });
       }
     }
@@ -92,7 +104,12 @@ async function convertStoredImageToWebp(req, res) {
     }
 
     const conversionResult = await convertPublicImageToWebp(imagePath, {
-      preferredFileName: assetType === "main" ? "main-image.webp" : undefined,
+      preferredFileName:
+        assetType === "main"
+          ? `${buildFileNameSeed(
+              typeof req.body?.fileNameSeed === "string" ? req.body.fileNameSeed.trim() : ""
+            ) || "main-image"}.webp`
+          : undefined,
     });
 
     if (conversionResult.changed) {
