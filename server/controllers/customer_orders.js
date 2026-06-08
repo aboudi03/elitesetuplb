@@ -8,6 +8,118 @@ function normalizeStatusCode(status) {
   return status === 'canceled' ? 'cancelled' : status;
 }
 
+function parsePositiveInteger(value, fallback, { min = 1, max = 200 } = {}) {
+  const parsedValue = Number.parseInt(String(value ?? ""), 10);
+
+  if (!Number.isFinite(parsedValue)) {
+    return fallback;
+  }
+
+  return Math.min(Math.max(parsedValue, min), max);
+}
+
+function parseOptionalNumber(value) {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+
+  const parsedValue = Number(value);
+  return Number.isFinite(parsedValue) ? parsedValue : undefined;
+}
+
+function parseOptionalDate(value, { endOfDay = false } = {}) {
+  if (!value || typeof value !== "string") {
+    return undefined;
+  }
+
+  const normalizedValue = value.trim();
+
+  if (!normalizedValue) {
+    return undefined;
+  }
+
+  const dateValue = new Date(
+    endOfDay ? `${normalizedValue}T23:59:59.999Z` : `${normalizedValue}T00:00:00.000Z`
+  );
+
+  return Number.isNaN(dateValue.getTime()) ? undefined : dateValue;
+}
+
+function buildOrderSearchConditions(searchValue) {
+  if (!searchValue || typeof searchValue !== "string") {
+    return [];
+  }
+
+  const normalizedSearchValue = searchValue.trim();
+
+  if (!normalizedSearchValue) {
+    return [];
+  }
+
+  const searchConditions = [
+    {
+      id: {
+        contains: normalizedSearchValue,
+      },
+    },
+    {
+      name: {
+        contains: normalizedSearchValue,
+      },
+    },
+    {
+      lastname: {
+        contains: normalizedSearchValue,
+      },
+    },
+    {
+      email: {
+        contains: normalizedSearchValue,
+      },
+    },
+    {
+      phone: {
+        contains: normalizedSearchValue,
+      },
+    },
+    {
+      city: {
+        contains: normalizedSearchValue,
+      },
+    },
+  ];
+
+  const numericSearchValue = Number.parseInt(normalizedSearchValue, 10);
+
+  if (Number.isFinite(numericSearchValue)) {
+    searchConditions.push({
+      orderNumber: numericSearchValue,
+    });
+  }
+
+  return searchConditions;
+}
+
+function getOrderSort(sortBy, sortDirection) {
+  const normalizedDirection = sortDirection === "asc" ? "asc" : "desc";
+
+  switch (sortBy) {
+    case "orderNumber":
+      return [{ orderNumber: normalizedDirection }, { dateTime: "desc" }];
+    case "customer":
+      return [{ name: normalizedDirection }, { lastname: normalizedDirection }];
+    case "status":
+      return [{ status: normalizedDirection }, { dateTime: "desc" }];
+    case "total":
+      return [{ total: normalizedDirection }, { dateTime: "desc" }];
+    case "city":
+      return [{ city: normalizedDirection }, { dateTime: "desc" }];
+    case "date":
+    default:
+      return [{ dateTime: normalizedDirection }];
+  }
+}
+
 async function resolveStatusInfo(status) {
   const normalizedStatus = normalizeStatusCode(status);
   const statusInfo = await getStatusWithGroup(prisma, normalizedStatus);
@@ -554,28 +666,97 @@ async function getCustomerOrder(request, response) {
 async function getAllOrders(request, response) {
   try {
     await ensureDefaultOrderStatuses(prisma);
-    // Add pagination and filtering for better performance
-    const page = parseInt(request.query.page) || 1;
-    const limit = parseInt(request.query.limit) || 50;
+    const page = parsePositiveInteger(request.query.page, 1);
+    const limit = parsePositiveInteger(request.query.limit, 100);
     const offset = (page - 1) * limit;
-    
-    // Validate pagination parameters
-    if (page < 1 || limit < 1 || limit > 100) {
-      return response.status(400).json({
-        error: "Invalid pagination parameters",
-        details: "Page must be >= 1, limit must be between 1 and 100"
+
+    const search = typeof request.query.search === "string" ? request.query.search.trim() : "";
+    const status = typeof request.query.status === "string" ? normalizeStatusCode(request.query.status.trim()) : "";
+    const statusGroup = typeof request.query.statusGroup === "string" ? request.query.statusGroup.trim() : "";
+    const minTotal = parseOptionalNumber(request.query.minTotal);
+    const maxTotal = parseOptionalNumber(request.query.maxTotal);
+    const dateFrom = parseOptionalDate(request.query.dateFrom);
+    const dateTo = parseOptionalDate(request.query.dateTo, { endOfDay: true });
+    const sortBy = typeof request.query.sortBy === "string" ? request.query.sortBy.trim() : "date";
+    const sortDirection = request.query.sortDirection === "asc" ? "asc" : "desc";
+
+    let statusCodesForGroup = [];
+
+    if (statusGroup) {
+      const statusesInGroup = await prisma.orderStatus.findMany({
+        where: {
+          groupCode: statusGroup,
+          isActive: true,
+        },
+        select: {
+          code: true,
+        },
+      });
+
+      statusCodesForGroup = statusesInGroup.map((item) => item.code);
+    }
+
+    const whereClause = {};
+    const searchConditions = buildOrderSearchConditions(search);
+
+    if (searchConditions.length > 0) {
+      whereClause.OR = searchConditions;
+    }
+
+    if (status) {
+      whereClause.status = status;
+    } else if (statusGroup) {
+      whereClause.status = {
+        in: statusCodesForGroup,
+      };
+    }
+
+    if (minTotal !== undefined || maxTotal !== undefined) {
+      whereClause.total = {};
+
+      if (minTotal !== undefined) {
+        whereClause.total.gte = minTotal;
+      }
+
+      if (maxTotal !== undefined) {
+        whereClause.total.lte = maxTotal;
+      }
+    }
+
+    if (dateFrom || dateTo) {
+      whereClause.dateTime = {};
+
+      if (dateFrom) {
+        whereClause.dateTime.gte = dateFrom;
+      }
+
+      if (dateTo) {
+        whereClause.dateTime.lte = dateTo;
+      }
+    }
+
+    if (statusGroup && statusCodesForGroup.length === 0) {
+      return response.json({
+        orders: [],
+        pagination: {
+          page,
+          limit,
+          total: 0,
+          totalPages: 0,
+        },
       });
     }
 
     const [orders, totalCount] = await Promise.all([
       prisma.customer_order.findMany({
+        where: whereClause,
         skip: offset,
         take: limit,
-        orderBy: {
-          dateTime: 'desc'
-        }
+        orderBy: getOrderSort(sortBy, sortDirection),
       }),
-      prisma.customer_order.count()
+      prisma.customer_order.count({
+        where: whereClause,
+      })
     ]);
 
     const orderIds = orders.map((order) => order.id);

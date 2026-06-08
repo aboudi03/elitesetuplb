@@ -2,6 +2,7 @@
 import { DashboardSidebar, RichTextEditor } from "@/components";
 import ProductMediaManager from "@/components/ProductMediaManager";
 import ProductResearchAssistant from "@/components/ProductResearchAssistant";
+import MultiOptionSelect from "@/components/ui/MultiOptionSelect";
 import { sanitizeFormData } from "@/lib/form-sanitize";
 import { PRODUCT_COLOR_PRESETS, PRODUCT_SIZE_PRESETS } from "@/lib/productColors";
 import {
@@ -49,8 +50,7 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
     .map((value) => value.trim().toUpperCase())
     .filter(Boolean);
 
-  const handleColorsChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const nextColors = Array.from(event.target.selectedOptions).map((option) => option.value);
+  const handleColorsChange = (nextColors: string[]) => {
     setProduct((currentProduct) =>
       currentProduct
         ? {
@@ -61,10 +61,7 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
     );
   };
 
-  const handleSizesChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const nextSizes = Array.from(event.target.selectedOptions).map((option) =>
-      option.value.toUpperCase()
-    );
+  const handleSizesChange = (nextSizes: string[]) => {
     setProduct((currentProduct) =>
       currentProduct
         ? {
@@ -433,78 +430,33 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
                 <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
                   Colors
                 </span>
-                <select
-                  multiple
-                  size={Math.min(6, PRODUCT_COLOR_PRESETS.length)}
-                  className={`${fieldClassName} min-h-[13rem]`}
-                  value={selectedColors}
+                <MultiOptionSelect
+                  options={PRODUCT_COLOR_PRESETS.map((color) => ({
+                    label: color.label,
+                    value: color.label,
+                    swatch: color.swatch,
+                  }))}
+                  selectedValues={selectedColors}
                   onChange={handleColorsChange}
-                >
-                  {PRODUCT_COLOR_PRESETS.map((color) => (
-                    <option key={color.key} value={color.label}>
-                      {color.label}
-                    </option>
-                  ))}
-                </select>
-                <p className="mt-2 text-xs text-[var(--site-muted)]">
-                  Hold `Ctrl` or `Cmd` to select multiple colors.
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {selectedColors.length > 0 ? (
-                    PRODUCT_COLOR_PRESETS.filter((color) => selectedColors.includes(color.label)).map(
-                      (color) => (
-                        <span
-                          key={color.key}
-                          className="inline-flex items-center gap-2 rounded-full border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 py-1.5 text-sm font-medium text-[var(--site-text)]"
-                        >
-                          <span
-                            className="h-4 w-4 rounded-full border border-black/10"
-                            style={{ backgroundColor: color.swatch }}
-                          />
-                          {color.label}
-                        </span>
-                      )
-                    )
-                  ) : (
-                    <span className="text-sm text-[var(--site-muted)]">No colors selected.</span>
-                  )}
-                </div>
+                  placeholder="Select colors"
+                  emptySummary="No colors selected."
+                />
               </label>
 
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
                   Sizes
                 </span>
-                <select
-                  multiple
-                  size={PRODUCT_SIZE_PRESETS.length}
-                  className={`${fieldClassName} min-h-[11rem]`}
-                  value={selectedSizes}
+                <MultiOptionSelect
+                  options={PRODUCT_SIZE_PRESETS.map((size) => ({
+                    label: size,
+                    value: size,
+                  }))}
+                  selectedValues={selectedSizes}
                   onChange={handleSizesChange}
-                >
-                  {PRODUCT_SIZE_PRESETS.map((size) => (
-                    <option key={size} value={size}>
-                      {size}
-                    </option>
-                  ))}
-                </select>
-                <p className="mt-2 text-xs text-[var(--site-muted)]">
-                  Hold `Ctrl` or `Cmd` to select multiple sizes.
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {selectedSizes.length > 0 ? (
-                    selectedSizes.map((size) => (
-                      <span
-                        key={size}
-                        className="inline-flex items-center rounded-full border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 py-1.5 text-sm font-semibold text-[var(--site-text)]"
-                      >
-                        {size}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-sm text-[var(--site-muted)]">No sizes selected.</span>
-                  )}
-                </div>
+                  placeholder="Select sizes"
+                  emptySummary="No sizes selected."
+                />
               </label>
 
               <label className="block md:col-span-2">

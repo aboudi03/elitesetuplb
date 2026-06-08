@@ -150,6 +150,15 @@ const Hero = () => {
   }, [activeSlide, slides.length]);
 
   useEffect(() => {
+    if (
+      expandedMobileCategoryId &&
+      !heroCategories.some((category) => category.id === expandedMobileCategoryId)
+    ) {
+      setExpandedMobileCategoryId(null);
+    }
+  }, [expandedMobileCategoryId, heroCategories]);
+
+  useEffect(() => {
     if (autoplayTimerRef.current) {
       window.clearTimeout(autoplayTimerRef.current);
     }
@@ -248,6 +257,10 @@ const Hero = () => {
     );
   };
 
+  const expandedMobileCategory = heroCategories.find(
+    (category) => category.id === expandedMobileCategoryId
+  );
+
   return (
     <section className="bg-[var(--site-bg)] pb-8">
       <nav className="border-b border-[var(--site-border)] bg-[var(--site-panel)]">
@@ -320,30 +333,50 @@ const Hero = () => {
                         ))}
                       </div>
                     </div>
-
-                    <div
-                      className={`absolute left-0 top-full z-30 min-w-[240px] pt-3 lg:hidden ${
-                        isExpandedOnMobile ? "block" : "hidden"
-                      }`}
-                    >
-                      <div className="rounded-lg border border-[var(--site-border)] bg-[var(--site-panel)] p-2 shadow-[0_18px_45px_rgba(0,0,0,0.16)]">
-                      {category.children!.map((childCategory) => (
-                        <Link
-                          key={childCategory.id}
-                          href={childCategory.href}
-                          className="block rounded-lg px-3 py-2 text-sm font-semibold text-[var(--site-text)] transition hover:bg-[var(--site-panel-soft)] hover:text-[var(--site-accent)]"
-                        >
-                          {childCategory.label}
-                        </Link>
-                      ))}
-                      </div>
-                    </div>
                   </>
                 )}
               </div>
             );
           })}
         </div>
+        {expandedMobileCategory && Array.isArray(expandedMobileCategory.children) ? (
+          <div className="border-t border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 py-4 lg:hidden">
+            <div className="mx-auto max-w-screen-2xl rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel)] shadow-[0_18px_45px_rgba(0,0,0,0.12)]">
+              <div className="flex items-center justify-between gap-3 border-b border-[var(--site-border)] px-4 py-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--site-muted)]">
+                    Subcategories
+                  </p>
+                  <p className="truncate text-sm font-semibold text-[var(--site-text)]">
+                    {expandedMobileCategory.label}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setExpandedMobileCategoryId(null)}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--site-border)] bg-[var(--site-panel-soft)] text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
+                  aria-label={`Close ${expandedMobileCategory.label} subcategories`}
+                >
+                  <FaChevronLeft className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <div className="max-h-[320px] overflow-y-auto p-3">
+                <div className="grid gap-2">
+                  {expandedMobileCategory.children.map((childCategory) => (
+                    <Link
+                      key={childCategory.id}
+                      href={childCategory.href}
+                      onClick={() => setExpandedMobileCategoryId(null)}
+                      className="block rounded-xl border border-transparent bg-[var(--site-panel-soft)] px-4 py-3 text-sm font-semibold text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
+                    >
+                      {childCategory.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </nav>
 
       <div className="mx-auto max-w-screen-2xl px-4 pt-5 sm:px-6 lg:px-8">

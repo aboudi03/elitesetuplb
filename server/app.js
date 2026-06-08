@@ -22,6 +22,7 @@ const heroSlidesRouter = require("./routes/heroSlides");
 const orderStatusesRouter = require("./routes/orderStatuses");
 const dashboardMetricsRouter = require("./routes/dashboardMetrics");
 const cartEventsRouter = require("./routes/cartEvents");
+const featuredBrandsRouter = require("./routes/featuredBrands");
 const prisma = require("./utills/db");
 var cors = require("cors");
 
@@ -177,6 +178,7 @@ app.use("/api/hero-slides", heroSlidesRouter);
 app.use("/api/order-statuses", orderStatusesRouter);
 app.use("/api/dashboard-metrics", dashboardMetricsRouter);
 app.use("/api/cart-events", cartEventsRouter);
+app.use("/api/featured-brands", featuredBrandsRouter);
 
 // Health check endpoint (no rate limiting)
 app.get('/health', (req, res) => {

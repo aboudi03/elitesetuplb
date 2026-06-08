@@ -10,7 +10,7 @@
 // Output: Table with all orders
 // *********************
 
-import React, { useEffect, useState } from "react";
+import React, { useDeferredValue, useEffect, useMemo, useState } from "react";
 import apiClient from "@/lib/api";
 import toast from "react-hot-toast";
 import DataTable, { DataTableColumn } from "./ui/DataTable";
@@ -77,28 +77,118 @@ const readApiResponse = async (response: Response, fallback: string) => {
   return data;
 };
 
+const ORDER_SORT_OPTIONS = [
+  { label: "Newest first", value: "date:desc" },
+  { label: "Oldest first", value: "date:asc" },
+  { label: "Subtotal high to low", value: "total:desc" },
+  { label: "Subtotal low to high", value: "total:asc" },
+  { label: "Order number high to low", value: "orderNumber:desc" },
+  { label: "Order number low to high", value: "orderNumber:asc" },
+  { label: "Customer A-Z", value: "customer:asc" },
+  { label: "Customer Z-A", value: "customer:desc" },
+  { label: "Status A-Z", value: "status:asc" },
+  { label: "Status Z-A", value: "status:desc" },
+];
+
 const AdminOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [statusOptions, setStatusOptions] = useState<OrderStatusOption[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusGroupFilter, setStatusGroupFilter] = useState("all");
+  const [minTotalFilter, setMinTotalFilter] = useState("");
+  const [maxTotalFilter, setMaxTotalFilter] = useState("");
+  const [dateFromFilter, setDateFromFilter] = useState("");
+  const [dateToFilter, setDateToFilter] = useState("");
+  const [sortValue, setSortValue] = useState("date:desc");
+  const deferredSearch = useDeferredValue(search);
+
+  const statusGroups = useMemo(
+    () =>
+      Array.from(
+        new Map(
+          statusOptions.map((status) => [
+            status.groupCode,
+            { code: status.groupCode, name: status.groupCode.replace(/-/g, " ") },
+          ])
+        ).values()
+      ),
+    [statusOptions]
+  );
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchStatuses = async () => {
       try {
-        const ordersResponse = await apiClient.get("/api/orders");
-        const ordersData = await readApiResponse(
-          ordersResponse,
-          "Failed to load orders from the backend"
-        );
-
         const statusesResponse = await apiClient.get("/api/order-statuses");
         const statusesData = await readApiResponse(
           statusesResponse,
           "Failed to load order statuses from the backend"
         );
 
-        setOrders(ordersData?.orders || []);
         setStatusOptions(statusesData?.statuses || []);
+      } catch (error) {
+        console.error("Failed to load order statuses:", error);
+        toast.error(
+          error instanceof TypeError
+            ? "Backend is not reachable"
+            : error instanceof Error
+              ? error.message
+              : "Failed to load order statuses"
+        );
+      }
+    };
+
+    fetchStatuses();
+  }, []);
+
+  useEffect(() => {
+    const [sortBy, sortDirection] = sortValue.split(":");
+
+    const fetchOrders = async () => {
+      setLoading(true);
+
+      try {
+        const params = new URLSearchParams();
+        params.set("limit", "200");
+        params.set("sortBy", sortBy || "date");
+        params.set("sortDirection", sortDirection || "desc");
+
+        if (deferredSearch.trim()) {
+          params.set("search", deferredSearch.trim());
+        }
+
+        if (statusFilter !== "all") {
+          params.set("status", statusFilter);
+        }
+
+        if (statusGroupFilter !== "all") {
+          params.set("statusGroup", statusGroupFilter);
+        }
+
+        if (minTotalFilter.trim()) {
+          params.set("minTotal", minTotalFilter.trim());
+        }
+
+        if (maxTotalFilter.trim()) {
+          params.set("maxTotal", maxTotalFilter.trim());
+        }
+
+        if (dateFromFilter) {
+          params.set("dateFrom", dateFromFilter);
+        }
+
+        if (dateToFilter) {
+          params.set("dateTo", dateToFilter);
+        }
+
+        const ordersResponse = await apiClient.get(`/api/orders?${params.toString()}`);
+        const ordersData = await readApiResponse(
+          ordersResponse,
+          "Failed to load orders from the backend"
+        );
+
+        setOrders(ordersData?.orders || []);
       } catch (error) {
         console.error("Failed to load orders:", error);
         toast.error(
@@ -113,8 +203,17 @@ const AdminOrders = () => {
       }
     };
 
-    fetchData();
-  }, []);
+    fetchOrders();
+  }, [
+    dateFromFilter,
+    dateToFilter,
+    deferredSearch,
+    maxTotalFilter,
+    minTotalFilter,
+    sortValue,
+    statusFilter,
+    statusGroupFilter,
+  ]);
 
   const updateOrderStatus = async (order: Order, status: string) => {
     const previousStatus = order.status;
@@ -230,6 +329,17 @@ const AdminOrders = () => {
     },
   ];
 
+  const resetFilters = () => {
+    setSearch("");
+    setStatusFilter("all");
+    setStatusGroupFilter("all");
+    setMinTotalFilter("");
+    setMaxTotalFilter("");
+    setDateFromFilter("");
+    setDateToFilter("");
+    setSortValue("date:desc");
+  };
+
   return (
     <DataTable
       title="All orders"
@@ -240,12 +350,87 @@ const AdminOrders = () => {
       emptyMessage="No orders found."
       enableSelection
       enableSearch
+      searchValue={search}
+      onSearchChange={setSearch}
+      autoFilter={false}
       searchPlaceholder="Search by order number or customer..."
       className="w-full xl:ml-5 max-xl:mt-5"
       actions={
-        <span className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700">
-          Orders: {orders.length}
-        </span>
+        <div className="flex flex-wrap items-center gap-3">
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            className="min-h-10 rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 text-sm"
+          >
+            <option value="all">All statuses</option>
+            {statusOptions.map((status) => (
+              <option key={status.id} value={status.code}>
+                {status.name}
+              </option>
+            ))}
+          </select>
+          <select
+            value={statusGroupFilter}
+            onChange={(event) => setStatusGroupFilter(event.target.value)}
+            className="min-h-10 rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 text-sm"
+          >
+            <option value="all">All groups</option>
+            {statusGroups.map((group) => (
+              <option key={group.code} value={group.code}>
+                {group.name}
+              </option>
+            ))}
+          </select>
+          <input
+            type="number"
+            min="0"
+            value={minTotalFilter}
+            onChange={(event) => setMinTotalFilter(event.target.value)}
+            placeholder="Min subtotal"
+            className="min-h-10 w-28 rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 text-sm"
+          />
+          <input
+            type="number"
+            min="0"
+            value={maxTotalFilter}
+            onChange={(event) => setMaxTotalFilter(event.target.value)}
+            placeholder="Max subtotal"
+            className="min-h-10 w-28 rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 text-sm"
+          />
+          <input
+            type="date"
+            value={dateFromFilter}
+            onChange={(event) => setDateFromFilter(event.target.value)}
+            className="min-h-10 rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 text-sm"
+          />
+          <input
+            type="date"
+            value={dateToFilter}
+            onChange={(event) => setDateToFilter(event.target.value)}
+            className="min-h-10 rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 text-sm"
+          />
+          <select
+            value={sortValue}
+            onChange={(event) => setSortValue(event.target.value)}
+            className="min-h-10 rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 text-sm"
+          >
+            {ORDER_SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="min-h-10 rounded-md border border-[var(--site-border)] px-3 text-sm font-semibold transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
+          >
+            Reset
+          </button>
+          <span className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700">
+            Orders: {orders.length}
+          </span>
+        </div>
       }
     />
   );

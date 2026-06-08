@@ -11,7 +11,7 @@
 // *********************
 
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
+import React, { useDeferredValue, useEffect, useState } from "react";
 import CustomButton from "./CustomButton";
 import apiClient from "@/lib/api";
 import { sanitize } from "@/lib/sanitize";
@@ -42,28 +42,124 @@ const DashboardProductTable = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [merchants, setMerchants] = useState<Merchant[]>([]);
   const [isFeaturedOrderDialogOpen, setIsFeaturedOrderDialogOpen] = useState(false);
   const [featuredDraftProducts, setFeaturedDraftProducts] = useState<Product[]>([]);
   const [draggedFeaturedProductId, setDraggedFeaturedProductId] = useState<string | null>(null);
   const [isSavingFeaturedOrder, setIsSavingFeaturedOrder] = useState(false);
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [merchantFilter, setMerchantFilter] = useState("all");
+  const [featuredFilter, setFeaturedFilter] = useState("all");
+  const [visibilityFilter, setVisibilityFilter] = useState("all");
+  const [stockFilter, setStockFilter] = useState("all");
+  const [minPriceFilter, setMinPriceFilter] = useState("");
+  const [maxPriceFilter, setMaxPriceFilter] = useState("");
+  const [sortValue, setSortValue] = useState("updatedAt:desc");
+  const deferredSearch = useDeferredValue(search);
 
-  const loadProducts = () => {
+  const loadProducts = async () => {
     setLoading(true);
-    return apiClient
-      .get("/api/products?mode=admin", { cache: "no-store" })
-      .then((res) => res.json())
-      .then((data) => {
-        setProducts(data || []);
-      })
-      .catch((error) => {
-        console.error(error);
-        toast.error("Failed to load products");
-      })
-      .finally(() => setLoading(false));
+
+    try {
+      const [sortBy, sortDirection] = sortValue.split(":");
+      const params = new URLSearchParams();
+
+      params.set("mode", "admin");
+      params.set("sortBy", sortBy || "updatedAt");
+      params.set("sortDirection", sortDirection || "desc");
+
+      if (deferredSearch.trim()) {
+        params.set("search", deferredSearch.trim());
+      }
+
+      if (categoryFilter !== "all") {
+        params.set("categoryId", categoryFilter);
+      }
+
+      if (merchantFilter !== "all") {
+        params.set("merchantId", merchantFilter);
+      }
+
+      if (featuredFilter !== "all") {
+        params.set("featured", featuredFilter);
+      }
+
+      if (visibilityFilter !== "all") {
+        params.set("isActive", visibilityFilter);
+      }
+
+      if (stockFilter !== "all") {
+        params.set("stockStatus", stockFilter);
+      }
+
+      if (minPriceFilter.trim()) {
+        params.set("minPrice", minPriceFilter.trim());
+      }
+
+      if (maxPriceFilter.trim()) {
+        params.set("maxPrice", maxPriceFilter.trim());
+      }
+
+      const response = await apiClient.get(`/api/products?${params.toString()}`, {
+        cache: "no-store",
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.details || data?.error || "Failed to load products");
+      }
+
+      setProducts(Array.isArray(data) ? data : data?.products || []);
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error?.message || "Failed to load products");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     loadProducts();
+  }, [
+    categoryFilter,
+    deferredSearch,
+    featuredFilter,
+    maxPriceFilter,
+    merchantFilter,
+    minPriceFilter,
+    sortValue,
+    stockFilter,
+    visibilityFilter,
+  ]);
+
+  useEffect(() => {
+    const loadFilterOptions = async () => {
+      try {
+        const [categoriesResponse, merchantsResponse] = await Promise.all([
+          apiClient.get("/api/categories"),
+          apiClient.get("/api/merchants"),
+        ]);
+
+        const [categoriesData, merchantsData] = await Promise.all([
+          categoriesResponse.json(),
+          merchantsResponse.json(),
+        ]);
+
+        if (categoriesResponse.ok) {
+          setCategories(categoriesData || []);
+        }
+
+        if (merchantsResponse.ok) {
+          setMerchants(merchantsData || []);
+        }
+      } catch (error) {
+        console.error("Failed to load product filters:", error);
+      }
+    };
+
+    loadFilterOptions();
   }, []);
 
   const getSortedFeaturedProducts = (productList: Product[]) =>
@@ -444,6 +540,18 @@ const DashboardProductTable = () => {
     },
   ];
 
+  const resetFilters = () => {
+    setSearch("");
+    setCategoryFilter("all");
+    setMerchantFilter("all");
+    setFeaturedFilter("all");
+    setVisibilityFilter("all");
+    setStockFilter("all");
+    setMinPriceFilter("");
+    setMaxPriceFilter("");
+    setSortValue("updatedAt:desc");
+  };
+
   return (
     <div className="w-full">
       <DataTable
@@ -457,11 +565,106 @@ const DashboardProductTable = () => {
         selectedIds={selectedProductIds}
         onSelectionChange={setSelectedProductIds}
         enableSearch
+        searchValue={search}
+        onSearchChange={setSearch}
+        autoFilter={false}
         searchPlaceholder="Search products..."
         className="w-full"
         tableClassName="table-fixed text-sm"
         actions={
           <div className="flex flex-wrap gap-3">
+            <select
+              value={categoryFilter}
+              onChange={(event) => setCategoryFilter(event.target.value)}
+              className="min-h-11 rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 text-sm"
+            >
+              <option value="all">All categories</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+            <select
+              value={merchantFilter}
+              onChange={(event) => setMerchantFilter(event.target.value)}
+              className="min-h-11 rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 text-sm"
+            >
+              <option value="all">All merchants</option>
+              {merchants.map((merchant) => (
+                <option key={merchant.id} value={merchant.id}>
+                  {merchant.name}
+                </option>
+              ))}
+            </select>
+            <select
+              value={featuredFilter}
+              onChange={(event) => setFeaturedFilter(event.target.value)}
+              className="min-h-11 rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 text-sm"
+            >
+              <option value="all">Featured: all</option>
+              <option value="true">Featured only</option>
+              <option value="false">Standard only</option>
+            </select>
+            <select
+              value={visibilityFilter}
+              onChange={(event) => setVisibilityFilter(event.target.value)}
+              className="min-h-11 rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 text-sm"
+            >
+              <option value="all">Visibility: all</option>
+              <option value="true">Enabled</option>
+              <option value="false">Disabled</option>
+            </select>
+            <select
+              value={stockFilter}
+              onChange={(event) => setStockFilter(event.target.value)}
+              className="min-h-11 rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 text-sm"
+            >
+              <option value="all">Stock: all</option>
+              <option value="in">In stock</option>
+              <option value="low">Low stock</option>
+              <option value="out">Out of stock</option>
+            </select>
+            <input
+              type="number"
+              min="0"
+              value={minPriceFilter}
+              onChange={(event) => setMinPriceFilter(event.target.value)}
+              placeholder="Min price"
+              className="min-h-11 w-28 rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 text-sm"
+            />
+            <input
+              type="number"
+              min="0"
+              value={maxPriceFilter}
+              onChange={(event) => setMaxPriceFilter(event.target.value)}
+              placeholder="Max price"
+              className="min-h-11 w-28 rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 text-sm"
+            />
+            <select
+              value={sortValue}
+              onChange={(event) => setSortValue(event.target.value)}
+              className="min-h-11 rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 text-sm"
+            >
+              <option value="updatedAt:desc">Recently updated</option>
+              <option value="updatedAt:asc">Oldest updated</option>
+              <option value="title:asc">Name A-Z</option>
+              <option value="title:desc">Name Z-A</option>
+              <option value="price:desc">Price high to low</option>
+              <option value="price:asc">Price low to high</option>
+              <option value="inStock:desc">Stock high to low</option>
+              <option value="inStock:asc">Stock low to high</option>
+              <option value="featuredSortOrder:asc">Featured order</option>
+              <option value="merchant:asc">Merchant A-Z</option>
+              <option value="category:asc">Category A-Z</option>
+            </select>
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 text-sm font-semibold text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
+            >
+              Reset
+            </button>
             <button
               type="button"
               onClick={openFeaturedOrderDialog}
@@ -469,6 +672,9 @@ const DashboardProductTable = () => {
             >
               Order featured products
             </button>
+            <span className="inline-flex min-h-11 items-center rounded-xl border border-blue-200 bg-blue-50 px-4 text-sm font-semibold text-blue-700">
+              Products: {products.length}
+            </span>
             <Link href="/admin/products/new">
               <CustomButton
                 buttonType="button"

@@ -12,9 +12,11 @@ import React from "react";
 import ProductItem from "./ProductItem";
 import Heading from "./Heading";
 import apiClient from "@/lib/api";
+import FeaturedBrandShowcase from "./FeaturedBrandShowcase";
 
 const ProductsSection = async () => {
   let products = [];
+  let featuredBrands = [];
   
   try {
     // sending API request for getting all products
@@ -33,8 +35,24 @@ const ProductsSection = async () => {
     products = [];
   }
 
+  try {
+    const response = await apiClient.get("/api/featured-brands");
+
+    if (!response.ok) {
+      console.error("Failed to fetch featured brands:", response.statusText);
+      featuredBrands = [];
+    } else {
+      const result = await response.json();
+      featuredBrands = Array.isArray(result) ? result : [];
+    }
+  } catch (error) {
+    console.error("Error fetching featured brands:", error);
+    featuredBrands = [];
+  }
+
   return (
-    <section className="bg-[var(--site-bg)] px-4 pb-16 pt-4 sm:px-6 lg:px-8">
+    <>
+      <section className="bg-[var(--site-bg)] px-4 pb-16 pt-4 sm:px-6 lg:px-8">
       <div className="max-w-screen-2xl mx-auto">
         <div className="mb-6 flex items-end justify-between">
           <div>
@@ -59,7 +77,9 @@ const ProductsSection = async () => {
           )}
         </div>
       </div>
-    </section>
+      </section>
+      <FeaturedBrandShowcase brands={featuredBrands} />
+    </>
   );
 };
 

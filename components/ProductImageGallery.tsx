@@ -39,11 +39,16 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
   const [activeIndex, setActiveIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [isLightboxZoomed, setIsLightboxZoomed] = useState(false);
+  const [hoverZoomPosition, setHoverZoomPosition] = useState({ x: 50, y: 50 });
+  const [isHoverZoomActive, setIsHoverZoomActive] = useState(false);
+  const [lightboxZoomOrigin, setLightboxZoomOrigin] = useState({ x: 50, y: 50 });
   const [previousRippleKey, setPreviousRippleKey] = useState(0);
   const [nextRippleKey, setNextRippleKey] = useState(0);
   const autoplayTimerRef = useRef<number | null>(null);
   const touchStartXRef = useRef<number | null>(null);
   const touchDeltaXRef = useRef(0);
+  const galleryFrameRef = useRef<HTMLDivElement | null>(null);
+  const lightboxImageRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
     if (isLightboxOpen) {
@@ -138,6 +143,45 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
     touchDeltaXRef.current = 0;
   };
 
+  const updatePositionFromClientPoint = (
+    clientX: number,
+    clientY: number,
+    target: HTMLElement | null,
+    onChange: (value: { x: number; y: number }) => void
+  ) => {
+    if (!target) {
+      return;
+    }
+
+    const bounds = target.getBoundingClientRect();
+    const x = ((clientX - bounds.left) / bounds.width) * 100;
+    const y = ((clientY - bounds.top) / bounds.height) * 100;
+
+    onChange({
+      x: Math.min(100, Math.max(0, x)),
+      y: Math.min(100, Math.max(0, y)),
+    });
+  };
+
+  const handleGalleryMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    updatePositionFromClientPoint(
+      event.clientX,
+      event.clientY,
+      galleryFrameRef.current,
+      setHoverZoomPosition
+    );
+  };
+
+  const toggleLightboxZoomAtPoint = (clientX: number, clientY: number) => {
+    updatePositionFromClientPoint(
+      clientX,
+      clientY,
+      lightboxImageRef.current,
+      setLightboxZoomOrigin
+    );
+    setIsLightboxZoomed((current) => !current);
+  };
+
   return (
     <div className="flex w-full max-w-2xl gap-4 max-sm:flex-col-reverse">
       <div className="flex max-h-[520px] w-24 shrink-0 flex-col gap-3 overflow-y-auto pr-1 max-sm:w-full max-sm:flex-row max-sm:overflow-x-auto max-sm:overflow-y-hidden max-sm:pr-0">
@@ -165,11 +209,15 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
       </div>
 
       <div
+        ref={galleryFrameRef}
         className="relative flex aspect-square min-h-[320px] flex-1 items-center justify-center overflow-hidden rounded-md border border-[var(--site-bg)] bg-[var(--site-bg)] p-4"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
+        onMouseEnter={() => setIsHoverZoomActive(true)}
+        onMouseLeave={() => setIsHoverZoomActive(false)}
+        onMouseMove={handleGalleryMouseMove}
       >
         <button
           type="button"
@@ -189,6 +237,20 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
           priority
           className="relative z-0 h-full max-h-[520px] w-full animate-[productImageFade_450ms_ease-out] object-contain"
         />
+        <div
+          className={`pointer-events-none absolute inset-0 hidden rounded-md border border-white/20 bg-no-repeat shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] transition-opacity duration-150 lg:block ${
+            isHoverZoomActive ? "opacity-100" : "opacity-0"
+          }`}
+          style={{
+            backgroundImage: `url(${activeSlide.src})`,
+            backgroundPosition: `${hoverZoomPosition.x}% ${hoverZoomPosition.y}%`,
+            backgroundSize: "220%",
+          }}
+          aria-hidden="true"
+        />
+        <div className="pointer-events-none absolute bottom-4 right-4 z-20 hidden rounded-full border border-[var(--site-border)] bg-[var(--site-panel)]/90 px-3 py-1.5 text-xs font-semibold text-[var(--site-muted)] backdrop-blur lg:block">
+          Hover to zoom
+        </div>
         {hasMultipleSlides ? (
           <>
             <button
@@ -318,15 +380,51 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
             ) : null}
             <Image
               key={`lightbox-${activeSlide.src}-${isLightboxZoomed ? "zoomed" : "base"}`}
+              ref={lightboxImageRef}
               src={activeSlide.src}
               width={1600}
               height={1600}
               alt={activeSlide.alt}
               priority
-              onClick={() => setIsLightboxZoomed((current) => !current)}
+              onClick={(event) => toggleLightboxZoomAtPoint(event.clientX, event.clientY)}
+              onTouchStart={(event) => {
+                const touch = event.touches[0];
+
+                if (!touch) {
+                  return;
+                }
+
+                updatePositionFromClientPoint(
+                  touch.clientX,
+                  touch.clientY,
+                  lightboxImageRef.current,
+                  setLightboxZoomOrigin
+                );
+              }}
+              onTouchMove={(event) => {
+                if (!isLightboxZoomed) {
+                  return;
+                }
+
+                const touch = event.touches[0];
+
+                if (!touch) {
+                  return;
+                }
+
+                updatePositionFromClientPoint(
+                  touch.clientX,
+                  touch.clientY,
+                  lightboxImageRef.current,
+                  setLightboxZoomOrigin
+                );
+              }}
               className={`h-auto max-h-[92vh] w-auto max-w-full rounded-md object-contain transition-transform duration-300 ease-out ${
                 isLightboxZoomed ? "cursor-zoom-out scale-[1.75]" : "cursor-zoom-in scale-100"
               }`}
+              style={{
+                transformOrigin: `${lightboxZoomOrigin.x}% ${lightboxZoomOrigin.y}%`,
+              }}
             />
           </div>
         </div>

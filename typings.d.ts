@@ -101,6 +101,22 @@ interface Order {
   cancelledHistoryCount?: number;
 }
 
+interface FeaturedBrand {
+  id: string;
+  title: string;
+  logo: string;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt?: string;
+  updatedAt?: string;
+  products: Array<{
+    id: string;
+    sortOrder: number;
+    productId: string;
+    product: Product;
+  }>;
+}
+
 interface SingleProductBtnProps {
   product: Product;
   quantityCount: number;

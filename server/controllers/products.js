@@ -6,6 +6,20 @@ const ALLOWED_FILTER_TYPES = ['price', 'rating', 'category', 'inStock', 'outOfSt
 const ALLOWED_OPERATORS = ['gte', 'lte', 'gt', 'lt', 'equals', 'contains'];
 const ALLOWED_SORT_VALUES = ['defaultSort', 'titleAsc', 'titleDesc', 'lowPrice', 'highPrice'];
 const FEATURED_PRODUCTS_LIMIT = 14;
+const ADMIN_PRODUCT_SORT_FIELDS = new Set([
+  "updatedAt",
+  "createdAt",
+  "title",
+  "model",
+  "sku",
+  "price",
+  "inStock",
+  "featuredSortOrder",
+  "merchant",
+  "category",
+  "isActive",
+  "featured",
+]);
 
 function normalizeText(value) {
   if (value === undefined) return undefined;
@@ -72,6 +86,130 @@ function normalizeBoolean(value, defaultValue = true) {
   return defaultValue;
 }
 
+function normalizeNullableBooleanQuery(value) {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  const normalizedValue = String(value).trim().toLowerCase();
+
+  if (["true", "1", "yes", "enabled", "featured"].includes(normalizedValue)) {
+    return true;
+  }
+
+  if (["false", "0", "no", "disabled", "standard"].includes(normalizedValue)) {
+    return false;
+  }
+
+  return undefined;
+}
+
+function parsePositiveInteger(value, fallback, { min = 1, max = 250 } = {}) {
+  const parsedValue = Number.parseInt(String(value ?? ""), 10);
+
+  if (!Number.isFinite(parsedValue)) {
+    return fallback;
+  }
+
+  return Math.min(Math.max(parsedValue, min), max);
+}
+
+function parseOptionalNumber(value) {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+
+  const parsedValue = Number(value);
+  return Number.isFinite(parsedValue) ? parsedValue : undefined;
+}
+
+function buildAdminProductWhereClause(query) {
+  const search = normalizeText(query.search);
+  const categoryId = normalizeText(query.categoryId);
+  const merchantId = normalizeText(query.merchantId);
+  const featured = normalizeNullableBooleanQuery(query.featured);
+  const isActive = normalizeNullableBooleanQuery(query.isActive);
+  const minPrice = parseOptionalNumber(query.minPrice);
+  const maxPrice = parseOptionalNumber(query.maxPrice);
+  const stockStatus = normalizeText(query.stockStatus)?.toLowerCase();
+
+  const whereClause = {};
+
+  if (search) {
+    whereClause.OR = [
+      { title: { contains: search } },
+      { model: { contains: search } },
+      { sku: { contains: search } },
+      { manufacturer: { contains: search } },
+      { slug: { contains: search } },
+      { category: { name: { contains: search } } },
+      { merchant: { name: { contains: search } } },
+    ];
+  }
+
+  if (categoryId) {
+    whereClause.categoryId = categoryId;
+  }
+
+  if (merchantId) {
+    whereClause.merchantId = merchantId;
+  }
+
+  if (featured !== undefined) {
+    whereClause.featured = featured;
+  }
+
+  if (isActive !== undefined) {
+    whereClause.isActive = isActive;
+  }
+
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    whereClause.price = {};
+
+    if (minPrice !== undefined) {
+      whereClause.price.gte = minPrice;
+    }
+
+    if (maxPrice !== undefined) {
+      whereClause.price.lte = maxPrice;
+    }
+  }
+
+  if (stockStatus === "in") {
+    whereClause.inStock = { gt: 0 };
+  } else if (stockStatus === "out") {
+    whereClause.inStock = { lte: 0 };
+  } else if (stockStatus === "low") {
+    whereClause.inStock = { gt: 0, lte: 5 };
+  }
+
+  return whereClause;
+}
+
+function getAdminProductOrderBy(sortBy, sortDirection) {
+  const normalizedSortBy = ADMIN_PRODUCT_SORT_FIELDS.has(sortBy) ? sortBy : "updatedAt";
+  const normalizedDirection = sortDirection === "asc" ? "asc" : "desc";
+
+  switch (normalizedSortBy) {
+    case "merchant":
+      return [{ merchant: { name: normalizedDirection } }, { updatedAt: "desc" }];
+    case "category":
+      return [{ category: { name: normalizedDirection } }, { updatedAt: "desc" }];
+    case "featuredSortOrder":
+      return [
+        { featured: "desc" },
+        { featuredSortOrder: normalizedDirection },
+        { updatedAt: "desc" },
+      ];
+    default:
+      return [{ [normalizedSortBy]: normalizedDirection }, { updatedAt: "desc" }];
+  }
+}
+
 // Security: Input validation functions
 function validateFilterType(filterType) {
   return ALLOWED_FILTER_TYPES.includes(filterType);
@@ -136,7 +274,41 @@ async function getNextFeaturedSortOrder(tx) {
   return (featuredProduct?.featuredSortOrder || 0) + 1;
 }
 
+async function ensureFeaturedSortOrders(tx) {
+  const featuredProductsWithoutOrder = await tx.product.findMany({
+    where: {
+      featured: true,
+      featuredSortOrder: null,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (featuredProductsWithoutOrder.length === 0) {
+    return;
+  }
+
+  let nextFeaturedSortOrder = await getNextFeaturedSortOrder(tx);
+
+  await Promise.all(
+    featuredProductsWithoutOrder.map((product, index) =>
+      tx.product.update({
+        where: { id: product.id },
+        data: {
+          featuredSortOrder: nextFeaturedSortOrder + index,
+        },
+      })
+    )
+  );
+}
+
 async function compactFeaturedSortOrders(tx) {
+  await ensureFeaturedSortOrders(tx);
+
   const featuredProducts = await tx.product.findMany({
     where: {
       featured: true,
@@ -201,9 +373,23 @@ const getAllProducts = asyncHandler(async (request, response) => {
   const includePagination = normalizeBoolean(request.query.includePagination, false);
   const pageSize = featuredOnly && !includePagination ? FEATURED_PRODUCTS_LIMIT : 12;
   
-  // checking if we are on the admin products page because we don't want to have filtering, sorting and pagination there
+  // checking if we are on the admin products page because we don't want storefront filtering behaviour there
   if(mode === "admin"){
-    const adminProducts = await prisma.product.findMany({
+    await prisma.$transaction(async (tx) => {
+      await ensureFeaturedSortOrders(tx);
+    });
+
+    const includeAdminPagination = normalizeBoolean(request.query.includePagination, false);
+    const page = parsePositiveInteger(request.query.page, 1);
+    const limit = parsePositiveInteger(request.query.limit, 100);
+    const whereClause = buildAdminProductWhereClause(request.query);
+    const orderBy = getAdminProductOrderBy(
+      normalizeText(request.query.sortBy) || "updatedAt",
+      normalizeText(request.query.sortDirection) || "desc"
+    );
+
+    const queryOptions = {
+      where: whereClause,
       include: {
         category: {
           select: {
@@ -217,12 +403,42 @@ const getAllProducts = asyncHandler(async (request, response) => {
           },
         },
       },
-      orderBy: {
-        updatedAt: "desc",
+      orderBy,
+    };
+
+    if (!includeAdminPagination) {
+      const adminProducts = await prisma.product.findMany(queryOptions);
+      return response.json(adminProducts);
+    }
+
+    const skip = (page - 1) * limit;
+    const [adminProducts, totalCount] = await Promise.all([
+      prisma.product.findMany({
+        ...queryOptions,
+        skip,
+        take: limit,
+      }),
+      prisma.product.count({
+        where: whereClause,
+      }),
+    ]);
+
+    return response.json({
+      products: adminProducts,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
       },
     });
-    return response.json(adminProducts);
   } else {
+    if (featuredOnly) {
+      await prisma.$transaction(async (tx) => {
+        await ensureFeaturedSortOrders(tx);
+      });
+    }
+
     const dividerLocation = request.url.indexOf("?");
     let filterObj = {};
     let sortObj = {};

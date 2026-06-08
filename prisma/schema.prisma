@@ -42,6 +42,7 @@ model Product {
   updatedAt      DateTime                 @default(now()) @updatedAt
   // Back relation for bulk upload items
   bulkUploadItems bulk_upload_item[]      @relation("ProductBulkItems")
+  featuredBrandItems FeaturedBrandProduct[]
 }
 
 model HeroSlide {
@@ -63,6 +64,28 @@ model Image {
   productID String
   image     String
   sortOrder Int    @default(0)
+}
+
+model FeaturedBrand {
+  id        String                 @id @default(uuid())
+  title     String
+  logo      String
+  isActive  Boolean                @default(true)
+  sortOrder Int                    @default(0)
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+  products  FeaturedBrandProduct[]
+}
+
+model FeaturedBrandProduct {
+  id              String        @id @default(uuid())
+  featuredBrandId String
+  productId       String
+  sortOrder       Int           @default(0)
+  featuredBrand   FeaturedBrand @relation(fields: [featuredBrandId], references: [id], onDelete: Cascade)
+  product         Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([featuredBrandId, productId])
 }
 
 model User {
