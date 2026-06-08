@@ -29,7 +29,7 @@ const products = [
     rating: 5,
     manufacturer: "Logitech",
     category: "gaming-keyboards",
-    mainImage: "pc icon.png",
+    mainImage: "pc icon.webp",
     inStock: 12,
     description:
       "Wireless tenkeyless esports keyboard with LIGHTSPEED connectivity, RGB, and compact tournament layout.",

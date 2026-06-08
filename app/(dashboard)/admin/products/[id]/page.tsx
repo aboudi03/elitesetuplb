@@ -36,6 +36,7 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
   const [categories, setCategories] = useState<Category[]>();
   const [mediaRows, setMediaRows] = useState<ProductMediaRow[]>([]);
   const [removedMediaPaths, setRemovedMediaPaths] = useState<string[]>([]);
+  const [convertingRowId, setConvertingRowId] = useState<string | null>(null);
   const router = useRouter();
   const fieldClassName =
     "block w-full rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 py-3 text-base text-[var(--site-text)] shadow-sm outline-none transition focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent-soft)]";
@@ -293,6 +294,59 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
 
       return removeMediaRow(currentRows, rowId);
     });
+  };
+
+  const handleConvertMediaRowToWebp = async (rowId: string) => {
+    const targetRow = mediaRows.find((row) => row.id === rowId);
+
+    if (!targetRow?.path) {
+      toast.error("Image path is missing");
+      return;
+    }
+
+    setConvertingRowId(rowId);
+
+    try {
+      const response = await fetch(`${getRuntimeApiBaseUrl()}/api/main-image/convert`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          path: targetRow.path,
+          productId: id,
+          imageId: targetRow.imageId,
+          assetType: targetRow.isMain ? "main" : "gallery",
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data?.path) {
+        throw new Error(data?.message || "Failed to convert image");
+      }
+
+      setMediaRows((currentRows) =>
+        currentRows.map((row) =>
+          row.id === rowId
+            ? {
+                ...row,
+                id: row.isMain ? `main-${data.path}` : row.id,
+                path: data.path,
+                previewUrl: `/${data.path}`,
+                fileName: data.fileName || data.path.split("/").pop() || row.fileName,
+                source: row.isMain ? "existing-main" : "existing-gallery",
+              }
+            : row
+        )
+      );
+      toast.success(data.changed ? "Converted to WebP" : "Already using WebP");
+    } catch (error) {
+      console.error("Failed to convert product image:", error);
+      toast.error("Failed to convert image to WebP");
+    } finally {
+      setConvertingRowId(null);
+    }
   };
 
   return (
@@ -592,6 +646,8 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
                 setMediaRows((currentRows) => moveMediaRow(currentRows, rowId, direction))
               }
               onRemoveRow={handleRemoveMediaRow}
+              onConvertToWebp={handleConvertMediaRowToWebp}
+              convertingRowId={convertingRowId}
             />
 
             <section className={sectionClassName}>

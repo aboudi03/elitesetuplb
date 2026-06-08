@@ -410,7 +410,7 @@ const AdminSingleOrder = () => {
                     key={product?.id}
                   >
                     <Image
-                      src={product?.product?.mainImage ? `/${product?.product?.mainImage}` : "/product_placeholder.jpg"}
+                      src={product?.product?.mainImage ? `/${product?.product?.mainImage}` : "/product_placeholder.webp"}
                       alt={product?.product?.title || product?.product?.model || "Deleted product"}
                       width={64}
                       height={64}

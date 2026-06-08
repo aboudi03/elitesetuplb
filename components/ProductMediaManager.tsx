@@ -3,7 +3,7 @@
 import type { ProductMediaRow } from "@/lib/productMedia";
 import Image from "next/image";
 import React from "react";
-import { FaArrowDown, FaArrowUp, FaTrash } from "react-icons/fa6";
+import { FaArrowDown, FaArrowUp, FaTrash, FaWandMagicSparkles } from "react-icons/fa6";
 
 type ProductMediaManagerProps = {
   rows: ProductMediaRow[];
@@ -11,6 +11,8 @@ type ProductMediaManagerProps = {
   onSetMain: (rowId: string) => void;
   onMoveRow: (rowId: string, direction: "up" | "down") => void;
   onRemoveRow: (rowId: string) => void;
+  onConvertToWebp?: (rowId: string) => void | Promise<void>;
+  convertingRowId?: string | null;
 };
 
 const ProductMediaManager = ({
@@ -19,6 +21,8 @@ const ProductMediaManager = ({
   onSetMain,
   onMoveRow,
   onRemoveRow,
+  onConvertToWebp,
+  convertingRowId,
 }: ProductMediaManagerProps) => {
   const galleryRows = rows.filter((row) => !row.isMain);
 
@@ -58,6 +62,11 @@ const ProductMediaManager = ({
               {rows.length > 0 ? (
                 rows.map((row) => {
                   const galleryIndex = galleryRows.findIndex((galleryRow) => galleryRow.id === row.id);
+                  const canConvertToWebp =
+                    row.source !== "pending" &&
+                    Boolean(row.path) &&
+                    !row.fileName.toLowerCase().endsWith(".webp");
+                  const isConverting = convertingRowId === row.id;
 
                   return (
                     <tr
@@ -127,14 +136,32 @@ const ProductMediaManager = ({
                         )}
                       </td>
                       <td className="px-4 py-3 text-right align-middle">
-                        <button
-                          type="button"
-                          onClick={() => onRemoveRow(row.id)}
-                          className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 transition hover:bg-red-100"
-                          aria-label={`Remove ${row.fileName}`}
-                        >
-                          <FaTrash />
-                        </button>
+                        <div className="flex justify-end gap-2">
+                          {canConvertToWebp ? (
+                            <button
+                              type="button"
+                              onClick={() => onConvertToWebp?.(row.id)}
+                              disabled={!onConvertToWebp || isConverting}
+                              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-[var(--site-border)] bg-[var(--site-panel)] px-3 text-xs font-bold uppercase tracking-[0.08em] text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                              aria-label={`Convert ${row.fileName} to WebP`}
+                            >
+                              <FaWandMagicSparkles />
+                              {isConverting ? "Converting" : "WebP"}
+                            </button>
+                          ) : (
+                            <span className="inline-flex h-10 items-center justify-center rounded-lg border border-[var(--site-border)] bg-[var(--site-panel)] px-3 text-xs font-bold uppercase tracking-[0.08em] text-[var(--site-muted)]">
+                              {row.source === "pending" ? "Auto WebP" : "WebP"}
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => onRemoveRow(row.id)}
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 transition hover:bg-red-100"
+                            aria-label={`Remove ${row.fileName}`}
+                          >
+                            <FaTrash />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

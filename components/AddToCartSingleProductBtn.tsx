@@ -36,7 +36,7 @@ const AddToCartSingleProductBtn = ({
   const products = Array.isArray(cartState?.products) ? cartState.products : [];
   const cartItemId = `${product.id}::${selectedColor || "default"}::${selectedSize || "default"}`;
   const displayTitle = product.title || product.model || "Product";
-  const displayImage = product.mainImage || "/product_placeholder.jpg";
+  const displayImage = product.mainImage || "/product_placeholder.webp";
 
   const handleAddToCart = async () => {
     const existingQuantityForProduct = products

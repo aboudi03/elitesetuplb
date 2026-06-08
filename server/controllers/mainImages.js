@@ -1,5 +1,11 @@
 const fs = require("fs");
 const path = require("path");
+const prisma = require("../utills/db");
+const {
+  buildWebpFileName,
+  convertPublicImageToWebp,
+  writeWebpFromBuffer,
+} = require("../utills/imageConversion");
 
 async function uploadMainImage(req, res) {
   if (!req.files || Object.keys(req.files).length === 0) {
@@ -8,12 +14,12 @@ async function uploadMainImage(req, res) {
 
   const uploadedFile = req.files.uploadedFile;
   const safeName = uploadedFile.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+  const baseName = path.basename(safeName, path.extname(safeName)) || `image-${Date.now()}`;
   const productId = typeof req.body?.productId === "string" ? req.body.productId.trim() : "";
   const assetType =
     typeof req.body?.assetType === "string" && req.body.assetType.trim() === "gallery"
       ? "gallery"
       : "main";
-  const fileExtension = path.extname(safeName) || ".jpg";
 
   let uploadDir = path.join(__dirname, "..", "..", "public", "uploads");
   let relativePath;
@@ -33,12 +39,12 @@ async function uploadMainImage(req, res) {
 
     fileName =
       assetType === "gallery"
-        ? `gallery-${Date.now()}-${safeName}`
-        : `main-image${fileExtension}`;
+        ? `gallery-${Date.now()}-${buildWebpFileName(baseName)}`
+        : "main-image.webp";
     relativePath = path.posix.join("uploads", "products", productId, fileName);
     destinationPath = path.join(uploadDir, fileName);
   } else {
-    fileName = `${Date.now()}-${safeName}`;
+    fileName = `${Date.now()}-${buildWebpFileName(baseName)}`;
     relativePath = path.posix.join("uploads", fileName);
     destinationPath = path.join(uploadDir, fileName);
   }
@@ -58,19 +64,73 @@ async function uploadMainImage(req, res) {
     }
   }
 
-  uploadedFile.mv(destinationPath, (err) => {
-    if (err) {
-      return res.status(500).send(err);
-    }
-
+  try {
+    await writeWebpFromBuffer(uploadedFile.data, destinationPath);
     return res.status(200).json({
       message: "File uploaded successfully",
       fileName,
       path: relativePath,
     });
-  });
+  } catch (error) {
+    console.error("Failed to convert uploaded image to WebP:", error);
+    return res.status(500).json({ message: "Failed to convert and upload image" });
+  }
+}
+
+async function convertStoredImageToWebp(req, res) {
+  try {
+    const imagePath = typeof req.body?.path === "string" ? req.body.path.trim() : "";
+    const productId = typeof req.body?.productId === "string" ? req.body.productId.trim() : "";
+    const imageId = typeof req.body?.imageId === "string" ? req.body.imageId.trim() : "";
+    const assetType =
+      typeof req.body?.assetType === "string" && req.body.assetType.trim() === "gallery"
+        ? "gallery"
+        : "main";
+
+    if (!imagePath) {
+      return res.status(400).json({ message: "Image path is required" });
+    }
+
+    const conversionResult = await convertPublicImageToWebp(imagePath, {
+      preferredFileName: assetType === "main" ? "main-image.webp" : undefined,
+    });
+
+    if (conversionResult.changed) {
+      if (assetType === "main" && productId) {
+        await prisma.product.updateMany({
+          where: {
+            id: productId,
+            mainImage: conversionResult.oldRelativePath,
+          },
+          data: {
+            mainImage: conversionResult.relativePath,
+          },
+        });
+      }
+
+      if (assetType === "gallery" && imageId) {
+        await prisma.image.update({
+          where: { imageID: imageId },
+          data: {
+            image: conversionResult.relativePath,
+          },
+        });
+      }
+    }
+
+    return res.status(200).json({
+      message: conversionResult.changed ? "Image converted to WebP" : "Image already uses WebP",
+      fileName: conversionResult.fileName,
+      path: conversionResult.relativePath,
+      changed: conversionResult.changed,
+    });
+  } catch (error) {
+    console.error("Failed to convert stored image to WebP:", error);
+    return res.status(500).json({ message: "Failed to convert image to WebP" });
+  }
 }
 
 module.exports = {
   uploadMainImage,
+  convertStoredImageToWebp,
 };

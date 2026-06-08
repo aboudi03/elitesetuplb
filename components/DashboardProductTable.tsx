@@ -286,7 +286,7 @@ const DashboardProductTable = () => {
       className: "w-[72px]",
       cell: (product) => (
         <HoverImagePreview
-          src={product.mainImage ? `/${product.mainImage}` : "/product_placeholder.jpg"}
+          src={product.mainImage ? `/${product.mainImage}` : "/product_placeholder.webp"}
           alt={sanitize(product.title) || "Product image"}
           thumbnailClassName="mask mask-squircle h-12 w-12 overflow-hidden bg-[var(--site-panel-soft)]"
         />
@@ -744,7 +744,7 @@ const DashboardProductTable = () => {
                       </div>
                       <div className="overflow-hidden rounded-xl border border-[var(--site-border)] bg-[var(--site-panel)]">
                         <Image
-                          src={product.mainImage ? `/${product.mainImage}` : "/product_placeholder.jpg"}
+                          src={product.mainImage ? `/${product.mainImage}` : "/product_placeholder.webp"}
                           alt={sanitize(product.title || product.model || "Featured product")}
                           width={64}
                           height={64}

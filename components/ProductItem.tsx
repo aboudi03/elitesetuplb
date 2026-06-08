@@ -46,7 +46,7 @@ const ProductItem = ({
   const isListView = viewMode === "list";
   const productDescription = sanitize(product.description || "").trim();
   const displayTitle = product.title || product.model || "Product";
-  const displayImage = product.mainImage || "/product_placeholder.jpg";
+  const displayImage = product.mainImage || "/product_placeholder.webp";
   const cartItemId = `${product.id}::default`;
 
   const handleQuickAdd = async (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -121,7 +121,7 @@ const ProductItem = ({
           src={
             product.mainImage
               ? `/${product.mainImage}`
-              : "/product_placeholder.jpg"
+              : "/product_placeholder.webp"
           }
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"

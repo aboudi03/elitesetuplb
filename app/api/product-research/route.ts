@@ -1,8 +1,9 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
-import { mkdir, writeFile } from "fs/promises";
+import { mkdir } from "fs/promises";
 import path from "path";
+import sharp from "sharp";
 
 type SearchResult = {
   title: string;
@@ -266,22 +267,17 @@ async function importImage(request: Request) {
     return NextResponse.json({ error: "Image is too large. Choose another photo." }, { status: 400 });
   }
 
-  const extension = contentType.includes("png")
-    ? "png"
-    : contentType.includes("webp")
-      ? "webp"
-      : "jpg";
   const safeName = fileNameSeed
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 60);
-  const fileName = `${Date.now()}-${safeName || "product"}.${extension}`;
+  const fileName = `${Date.now()}-${safeName || "product"}.webp`;
   const uploadDir = path.join(process.cwd(), "public", "uploads");
   const destinationPath = path.join(uploadDir, fileName);
 
   await mkdir(uploadDir, { recursive: true });
-  await writeFile(destinationPath, bytes);
+  await sharp(bytes).rotate().webp({ quality: 82 }).toFile(destinationPath);
 
   return NextResponse.json({
     path: path.posix.join("uploads", fileName),

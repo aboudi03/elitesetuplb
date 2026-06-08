@@ -1,9 +1,9 @@
-/mouse icon.png
+/mouse icon.webp
 /keyboardcategory.svg
-/headphone icon.png
-/tablet icon.png
-/support icon.png
-/laptop icon.png
-/pc icon.png
-/ear buds icon.png
+/headphone icon.webp
+/tablet icon.webp
+/support icon.webp
+/laptop icon.webp
+/pc icon.webp
+/ear buds icon.webp
 /monitorcategory.svg

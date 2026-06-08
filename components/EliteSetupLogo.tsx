@@ -19,7 +19,7 @@ export function EliteSetupLogo({
   const content = (
     <div className={`flex items-center gap-4 max-md:gap-3 max-sm:gap-2 ${className}`}>
       <Image
-        src="/elitesetup_es_icon_transparent.png"
+        src="/elitesetup_es_icon_transparent.webp"
         alt="Elite Setup icon"
         width={64}
         height={64}
@@ -29,7 +29,7 @@ export function EliteSetupLogo({
 
       {showText && (
         <Image
-          src="/elitesetup_wordmark_transparent.png"
+          src="/elitesetup_wordmark_transparent.webp"
           alt="EliteSetup"
           width={340}
           height={64}

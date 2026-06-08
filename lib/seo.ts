@@ -32,7 +32,7 @@ export function toTitleCase(value: string) {
 }
 
 export function productImageUrl(image: string | null | undefined) {
-  return absoluteUrl(image ? `/${image.replace(/^\/+/, "")}` : "/product_placeholder.jpg");
+  return absoluteUrl(image ? `/${image.replace(/^\/+/, "")}` : "/product_placeholder.webp");
 }
 
 export function buildMetaDescription(

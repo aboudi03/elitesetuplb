@@ -18,7 +18,7 @@ type ProductImageGalleryProps = {
 const SLIDE_INTERVAL_MS = 3500;
 
 const normalizeImagePath = (imagePath?: string | null) =>
-  imagePath ? `/${imagePath.replace(/^\/+/, "")}` : "/product_placeholder.jpg";
+  imagePath ? `/${imagePath.replace(/^\/+/, "")}` : "/product_placeholder.webp";
 
 const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryProps) => {
   const slides = useMemo(

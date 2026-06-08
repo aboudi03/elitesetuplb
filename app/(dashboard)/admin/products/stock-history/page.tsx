@@ -70,7 +70,7 @@ const ProductStockHistoryPage = () => {
                   <td>
                     <div className="flex items-center gap-3">
                       <Image
-                        src={item.product?.mainImage ? `/${item.product.mainImage}` : "/product_placeholder.jpg"}
+                        src={item.product?.mainImage ? `/${item.product.mainImage}` : "/product_placeholder.webp"}
                         alt={item.product?.title || "Product"}
                         width={48}
                         height={48}

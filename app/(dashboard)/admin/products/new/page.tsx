@@ -512,6 +512,7 @@ const AddNewProduct = () => {
                 setMediaRows((currentRows) => moveMediaRow(currentRows, rowId, direction))
               }
               onRemoveRow={handleRemoveMediaRow}
+              convertingRowId={null}
             />
 
             <div className="flex flex-wrap gap-3">

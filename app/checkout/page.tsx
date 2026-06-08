@@ -495,7 +495,7 @@ const CheckoutPage = () => {
               {products.map((product) => (
                 <li key={product?.cartItemId} className="flex items-start space-x-4 py-6">
                   <Image
-                    src={product?.image ? `/${product?.image}` : "/product_placeholder.jpg"}
+                    src={product?.image ? `/${product?.image}` : "/product_placeholder.webp"}
                     alt={product?.title}
                     width={80}
                     height={80}

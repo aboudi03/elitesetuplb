@@ -62,7 +62,7 @@ export const CartModule = () => {
                 <Image
                   width={192}
                   height={192}
-                  src={product?.image ? `/${product.image}` : "/product_placeholder.jpg"}
+                  src={product?.image ? `/${product.image}` : "/product_placeholder.webp"}
                   alt="laptop image"
                   className="h-24 w-24 rounded-md object-cover object-center sm:h-48 sm:w-48"
                 />

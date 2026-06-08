@@ -2,7 +2,7 @@ export const categoryMenuList = [
   {
     id: 1,
     title: "Gaming Mice",
-    src: "/mouse icon.png",
+    src: "/mouse icon.webp",
     href: "/shop/mouses"
   },
   {
@@ -14,43 +14,43 @@ export const categoryMenuList = [
   {
     id: 3,
     title: "Headsets",
-    src: "/headphone icon.png",
+    src: "/headphone icon.webp",
     href: "/shop/headsets"
   },
   {
     id: 4,
     title: "Controllers",
-    src: "/tablet icon.png",
+    src: "/tablet icon.webp",
     href: "/shop/controllers"
   },
   {
     id: 5,
     title: "Microphones",
-    src: "/support icon.png",
+    src: "/support icon.webp",
     href: "/shop/microphones"
   },
   {
     id: 6,
     title: "Gaming Laptops",
-    src: "/laptop icon.png",
+    src: "/laptop icon.webp",
     href: "/shop/laptops"
   },
   {
     id: 7,
     title: "Gaming PCs",
-    src: "/pc icon.png",
+    src: "/pc icon.webp",
     href: "/shop/computers"
   },
   {
     id: 8,
     title: "Mousepads",
-    src: "/mouse icon.png",
+    src: "/mouse icon.webp",
     href: "/shop/mousepads"
   },
   {
     id: 9,
     title: "Earbuds",
-    src: "/ear buds icon.png",
+    src: "/ear buds icon.webp",
     href: "/shop/earbuds"
   },
   {
@@ -103,19 +103,19 @@ export const incentives = [
     name: "Free Shipping",
     description:
       "Our shipping is completely free and that is completely good for our customers.",
-    imageSrc: "/shipping icon.png",
+    imageSrc: "/shipping icon.webp",
   },
   {
     name: "24/7 Customer Support",
     description:
       "Our support is working all day and night to answer any question you have.",
-    imageSrc: "/support icon.png",
+    imageSrc: "/support icon.webp",
   },
   {
     name: "Fast Shopping Cart",
     description:
       "We have super fast shopping experience and you will enjoy it.",
-    imageSrc: "/fast shopping icon.png",
+    imageSrc: "/fast shopping icon.webp",
   },
 ];
 

@@ -35,7 +35,7 @@ const fallbackSlides: HeroSlide[] = [
     eyebrow: "Audio drop",
     title: "HyperX Cloud III",
     subtitle: "Comfortable wired headset with clear voice, deep game audio, and a clean black setup look.",
-    image: "/hyperxbackg.png",
+    image: "/hyperxbackg.webp",
     productImage: "https://hyperx.com/cdn/shop/files/hyperx_cloud_iii_black_66x0048_main_1_c352faf1-cd4b-4be0-b3cb-2d49d3581ae9_1024x1024.jpg?v=1775587372",
     href: "/shop/gaming-headsets",
     productWrapClassName:
@@ -47,7 +47,7 @@ const fallbackSlides: HeroSlide[] = [
     eyebrow: "Pro wireless mice",
     title: "Logitech G Pro Wireless",
     subtitle: "Lightweight wireless control for fast flicks, clean aim, and competitive desk setups.",
-    image: "/logitechbackg.png",
+    image: "/logitechbackg.webp",
     productImage: "https://s24.q4cdn.com/131595232/files/doc_multimedia/2018/08/1/Low_Resolution_JPG-PRO_Wireless_Top_BB.jpg",
     href: "/shop/gaming-mice",
     productWrapClassName:
@@ -59,7 +59,7 @@ const fallbackSlides: HeroSlide[] = [
     eyebrow: "RGB keyboards",
     title: "HyperX Alloy Origins",
     subtitle: "Mechanical switches, compact aluminum build, and bright RGB for your main setup.",
-    image: "/hyperxbackg2.png",
+    image: "/hyperxbackg2.webp",
     productImage: "https://row.hyperx.com/cdn/shop/products/hyperx_alloy_origins_pbt_hx_aqua_tw_angle_2_1024x1024.jpg?v=1666376510",
     href: "/shop/gaming-keyboards",
     productWrapClassName:
