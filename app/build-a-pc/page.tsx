@@ -30,7 +30,7 @@ export default function BuildAPcPage() {
         <PcBuilderExperience />
       </div>
 
-      <div className="absolute inset-0 z-10 flex items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
+      <div className="absolute inset-0 z-10 flex items-start justify-center px-4 pb-10 pt-5 sm:px-6 sm:pt-8 lg:items-center lg:px-8 lg:py-10">
         <div className="w-full max-w-3xl rounded-[2rem] border border-[var(--site-border)] bg-[color-mix(in_srgb,var(--site-panel)_88%,transparent)] p-6 shadow-[0_26px_70px_rgba(0,0,0,0.18)] backdrop-blur-xl sm:p-8">
           <div className="grid items-center gap-8 lg:grid-cols-[0.92fr_1.08fr]">
             <div className="relative mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-[1.5rem] border border-[var(--site-border)] bg-[radial-gradient(circle_at_top,color-mix(in_srgb,var(--site-panel)_90%,white_10%),color-mix(in_srgb,var(--site-panel-soft)_92%,transparent)_70%)] p-5">
