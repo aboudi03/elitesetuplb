@@ -19,34 +19,29 @@ const ProductsSection = async () => {
   let featuredBrands = [];
   
   try {
-    // sending API request for getting all products
-    const data = await apiClient.get("/api/products?featured=true");
+    const [productsResponse, featuredBrandsResponse] = await Promise.all([
+      apiClient.get("/api/products?featured=true"),
+      apiClient.get("/api/featured-brands"),
+    ]);
     
-    if (!data.ok) {
-      console.error('Failed to fetch products:', data.statusText);
+    if (!productsResponse.ok) {
+      console.error('Failed to fetch products:', productsResponse.statusText);
       products = [];
     } else {
-      const result = await data.json();
-      // Ensure products is an array
+      const result = await productsResponse.json();
       products = Array.isArray(result) ? result : [];
     }
-  } catch (error) {
-    console.error('Error fetching products:', error);
-    products = [];
-  }
 
-  try {
-    const response = await apiClient.get("/api/featured-brands");
-
-    if (!response.ok) {
-      console.error("Failed to fetch featured brands:", response.statusText);
+    if (!featuredBrandsResponse.ok) {
+      console.error("Failed to fetch featured brands:", featuredBrandsResponse.statusText);
       featuredBrands = [];
     } else {
-      const result = await response.json();
+      const result = await featuredBrandsResponse.json();
       featuredBrands = Array.isArray(result) ? result : [];
     }
   } catch (error) {
-    console.error("Error fetching featured brands:", error);
+    console.error('Error fetching homepage product sections:', error);
+    products = [];
     featuredBrands = [];
   }
 

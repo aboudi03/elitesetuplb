@@ -25,6 +25,11 @@ type HeroSlide = {
   productImageClassName?: string;
 };
 
+type MobileDropdownPosition = {
+  left: number;
+  top: number;
+};
+
 const fallbackSlides: HeroSlide[] = [
   {
     eyebrow: "Audio drop",
@@ -64,15 +69,27 @@ const fallbackSlides: HeroSlide[] = [
   },
 ];
 
-const Hero = () => {
+const Hero = ({
+  initialNavbarCategories,
+  initialSlides,
+}: {
+  initialNavbarCategories?: NavbarCategoryItem[];
+  initialSlides?: HeroSlide[];
+}) => {
   const router = useRouter();
   const [activeSlide, setActiveSlide] = useState(0);
   const [slideDirection, setSlideDirection] = useState<"next" | "previous">("next");
-  const [slides, setSlides] = useState<HeroSlide[]>(fallbackSlides);
+  const [slides, setSlides] = useState<HeroSlide[]>(
+    initialSlides && initialSlides.length > 0 ? initialSlides : fallbackSlides
+  );
   const [heroCategories, setHeroCategories] = useState<NavbarCategoryItem[]>(
-    fallbackNavbarCategories
+    initialNavbarCategories && initialNavbarCategories.length > 0
+      ? initialNavbarCategories
+      : fallbackNavbarCategories
   );
   const [expandedMobileCategoryId, setExpandedMobileCategoryId] = useState<string | null>(null);
+  const [mobileDropdownPosition, setMobileDropdownPosition] =
+    useState<MobileDropdownPosition | null>(null);
   const [previousRippleKey, setPreviousRippleKey] = useState(0);
   const [nextRippleKey, setNextRippleKey] = useState(0);
   const autoplayTimerRef = useRef<number | null>(null);
@@ -82,6 +99,10 @@ const Hero = () => {
   const touchDeltaXRef = useRef(0);
 
   useEffect(() => {
+    if (initialNavbarCategories && initialNavbarCategories.length > 0) {
+      return;
+    }
+
     const fetchNavbarCategories = async () => {
       try {
         const response = await fetch("/api/navbar-categories", {
@@ -103,9 +124,13 @@ const Hero = () => {
     };
 
     fetchNavbarCategories();
-  }, []);
+  }, [initialNavbarCategories]);
 
   useEffect(() => {
+    if (initialSlides && initialSlides.length > 0) {
+      return;
+    }
+
     const fetchHeroSlides = async () => {
       try {
         const response = await apiClient.get("/api/hero-slides", {
@@ -143,7 +168,7 @@ const Hero = () => {
     };
 
     fetchHeroSlides();
-  }, []);
+  }, [initialSlides]);
 
   useEffect(() => {
     if (activeSlide >= slides.length) {
@@ -157,8 +182,26 @@ const Hero = () => {
       !heroCategories.some((category) => category.id === expandedMobileCategoryId)
     ) {
       setExpandedMobileCategoryId(null);
+      setMobileDropdownPosition(null);
     }
   }, [expandedMobileCategoryId, heroCategories]);
+
+  useEffect(() => {
+    if (!expandedMobileCategoryId) {
+      return;
+    }
+
+    const closeMobileDropdown = () => {
+      setExpandedMobileCategoryId(null);
+      setMobileDropdownPosition(null);
+    };
+
+    window.addEventListener("resize", closeMobileDropdown);
+
+    return () => {
+      window.removeEventListener("resize", closeMobileDropdown);
+    };
+  }, [expandedMobileCategoryId]);
 
   useEffect(() => {
     if (autoplayTimerRef.current) {
@@ -253,22 +296,43 @@ const Hero = () => {
     touchDeltaXRef.current = 0;
   };
 
-  const handleMobileCategoryTap = (category: NavbarCategoryItem) => {
+  const handleMobileCategoryTap = (
+    category: NavbarCategoryItem,
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
     const hasChildren = Array.isArray(category.children) && category.children.length > 0;
 
     if (!hasChildren) {
+      setExpandedMobileCategoryId(null);
+      setMobileDropdownPosition(null);
       router.push(category.href);
       return;
     }
 
     if (expandedMobileCategoryId === category.id) {
       setExpandedMobileCategoryId(null);
+      setMobileDropdownPosition(null);
       router.push(category.href);
       return;
     }
 
+    const buttonRect = event.currentTarget.getBoundingClientRect();
+    const menuWidth = 240;
+    const viewportPadding = 12;
+
+    setMobileDropdownPosition({
+      left: Math.min(
+        Math.max(buttonRect.left, viewportPadding),
+        window.innerWidth - menuWidth - viewportPadding
+      ),
+      top: buttonRect.bottom + 10,
+    });
     setExpandedMobileCategoryId(category.id);
   };
+
+  const expandedMobileCategory = heroCategories.find(
+    (category) => category.id === expandedMobileCategoryId
+  );
 
   return (
     <section className="bg-[var(--site-bg)] pb-8">
@@ -303,7 +367,7 @@ const Hero = () => {
 
                     <button
                       type="button"
-                      onClick={() => handleMobileCategoryTap(category)}
+                      onClick={(event) => handleMobileCategoryTap(category, event)}
                       aria-expanded={isExpandedOnMobile}
                       className="inline-flex items-center gap-2 whitespace-nowrap transition hover:text-[var(--site-accent)] lg:hidden"
                     >
@@ -342,30 +406,39 @@ const Hero = () => {
                         ))}
                       </div>
                     </div>
-                    <div
-                      className={`absolute left-0 top-full z-30 min-w-[240px] pt-3 lg:hidden ${
-                        isExpandedOnMobile ? "block" : "hidden"
-                      }`}
-                    >
-                      <div className="max-h-[320px] overflow-y-auto rounded-lg border border-[var(--site-border)] bg-[var(--site-panel)] p-2 shadow-[0_18px_45px_rgba(0,0,0,0.16)]">
-                        {category.children!.map((childCategory) => (
-                          <Link
-                            key={childCategory.id}
-                            href={childCategory.href}
-                            onClick={() => setExpandedMobileCategoryId(null)}
-                            className="block rounded-lg px-3 py-2 text-sm font-semibold text-[var(--site-text)] transition hover:bg-[var(--site-panel-soft)] hover:text-[var(--site-accent)]"
-                          >
-                            {childCategory.label}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
                   </>
                 )}
               </div>
             );
           })}
         </div>
+        {expandedMobileCategory &&
+        Array.isArray(expandedMobileCategory.children) &&
+        mobileDropdownPosition ? (
+          <div
+            className="fixed z-[90] w-[240px] lg:hidden"
+            style={{
+              left: mobileDropdownPosition.left,
+              top: mobileDropdownPosition.top,
+            }}
+          >
+            <div className="max-h-[320px] overflow-y-auto rounded-lg border border-[var(--site-border)] bg-[var(--site-panel)] p-2 shadow-[0_18px_45px_rgba(0,0,0,0.16)]">
+              {expandedMobileCategory.children.map((childCategory) => (
+                <Link
+                  key={childCategory.id}
+                  href={childCategory.href}
+                  onClick={() => {
+                    setExpandedMobileCategoryId(null);
+                    setMobileDropdownPosition(null);
+                  }}
+                  className="block rounded-lg px-3 py-2 text-sm font-semibold text-[var(--site-text)] transition hover:bg-[var(--site-panel-soft)] hover:text-[var(--site-accent)]"
+                >
+                  {childCategory.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </nav>
 
       <div className="mx-auto max-w-screen-2xl px-4 pt-5 sm:px-6 lg:px-8">

@@ -1,8 +1,9 @@
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { fallbackNavbarCategories, type NavbarCategoryItem } from "@/lib/navbarCategories";
+import type { NavbarCategoryItem } from "@/lib/navbarCategories";
+import { readNavbarCategories } from "@/lib/navbarCategories.server";
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
-import { mkdir, readFile, writeFile } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 
 export const runtime = "nodejs";
@@ -13,16 +14,6 @@ const navbarCategoriesFilePath = path.join(dataDirectory, "navbar-categories.jso
 async function requireAdmin() {
   const session = await getServerSession(authOptions);
   return (session as any)?.user?.role === "admin";
-}
-
-async function readNavbarCategories(): Promise<NavbarCategoryItem[]> {
-  try {
-    const fileContents = await readFile(navbarCategoriesFilePath, "utf8");
-    const parsed = JSON.parse(fileContents);
-    return Array.isArray(parsed) ? parsed : fallbackNavbarCategories;
-  } catch {
-    return fallbackNavbarCategories;
-  }
 }
 
 function sanitizeCategoryItem(item: any): NavbarCategoryItem | null {
