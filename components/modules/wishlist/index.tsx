@@ -6,9 +6,15 @@ import { nanoid } from "nanoid";
 import { useSession } from "next-auth/react";
 import { useEffect } from "react";
 
+type SessionUserWithId = {
+  id?: string;
+  email?: string | null;
+};
+
 export const WishlistModule = () => {
   const { data: session, status } = useSession();
   const { wishlist, setWishlist } = useWishlistStore();
+  const sessionUser = session?.user as SessionUserWithId | undefined;
 
   const getWishlistByUserId = async (id: string) => {
     const response = await apiClient.get(`/api/wishlist/${id}`, {
@@ -30,21 +36,15 @@ export const WishlistModule = () => {
     setWishlist(productArray);
   };
 
-  const getUserByEmail = async () => {
-    if (session?.user?.email) {
-      apiClient.get(`/api/users/email/${session?.user?.email}`, {
-        cache: "no-store",
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          getWishlistByUserId(data?.id);
-        });
+  const getWishlistForCurrentUser = async () => {
+    if (sessionUser?.id) {
+      await getWishlistByUserId(sessionUser.id);
     }
   };
 
   useEffect(() => {
-    getUserByEmail();
-  }, [session?.user?.email, wishlist.length]);
+    getWishlistForCurrentUser();
+  }, [sessionUser?.id]);
   return (
     <>
 

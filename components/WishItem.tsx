@@ -15,6 +15,10 @@ interface WishItemProps {
   stockAvailabillity: number;
 }
 
+type SessionUserWithId = {
+  id?: string;
+};
+
 const WishItem = ({
   id,
   title,
@@ -25,18 +29,13 @@ const WishItem = ({
 }: WishItemProps) => {
   const { data: session } = useSession();
   const { wishlist, setWishlist } = useWishlistStore();
+  const sessionUser = session?.user as SessionUserWithId | undefined;
 
   const removeFromWishlist = async () => {
     try {
-      if (session?.user?.email) {
-        const userResponse = await apiClient.get(
-          `/api/users/email/${session.user.email}`,
-          { cache: "no-store" }
-        );
-        const userData = await userResponse.json();
-
+      if (sessionUser?.id) {
         await apiClient.delete(
-          `/api/wishlist/${userData?.id}/${id}`,
+          `/api/wishlist/${sessionUser.id}/${id}`,
           { cache: "no-store" }
         );
 

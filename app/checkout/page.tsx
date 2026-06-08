@@ -36,8 +36,14 @@ type CheckoutSuccessSummary = {
   total: number;
 };
 
+type SessionUserWithId = {
+  id?: string;
+  email?: string | null;
+};
+
 const CheckoutPage = () => {
   const { data: session } = useSession();
+  const sessionUser = session?.user as SessionUserWithId | undefined;
   const [isMounted, setIsMounted] = useState(false);
   const [checkoutForm, setCheckoutForm] = useState({
     name: "",
@@ -202,17 +208,17 @@ const CheckoutPage = () => {
       }
       
       // Get user ID if logged in
-      let userId = null;
-      if (session?.user?.email) {
+      let userId = sessionUser?.id || null;
+      if (!userId && sessionUser?.email) {
         try {
-          console.log("🔍 Getting user ID for logged-in user:", session.user.email);
-          const userResponse = await apiClient.get(`/api/users/email/${session.user.email}`);
+          console.log("Getting user ID for logged-in user:", sessionUser.email);
+          const userResponse = await apiClient.get(`/api/users/email/${encodeURIComponent(sessionUser.email)}`);
           if (userResponse.ok) {
             const userData = await userResponse.json();
             userId = userData.id;
             console.log("✅ Found user ID:", userId);
           } else {
-            console.log("❌ Could not find user with email:", session.user.email);
+            console.log("Could not find user with email:", sessionUser.email);
           }
         } catch (userError) {
           console.log("⚠️  Error getting user ID:", userError);

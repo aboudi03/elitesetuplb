@@ -2,6 +2,8 @@ import { BuildPcFloatingButton, CategoryMenu, Hero, ProductsSection } from "@/co
 import apiClient from "@/lib/api";
 import { readNavbarCategories } from "@/lib/navbarCategories.server";
 
+export const dynamic = "force-dynamic";
+
 async function getHeroSlides() {
   try {
     const response = await apiClient.get("/api/hero-slides", {
