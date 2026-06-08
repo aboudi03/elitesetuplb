@@ -6,7 +6,7 @@
     "dev": "node index.js",
     "dev:frontend": "prisma generate && next dev --turbo",
     "dev:backend": "npm --prefix server start",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && NODE_ENV=production next build",
     "start": "next start",
     "pm2:start": "pm2 start ecosystem.config.js",
     "pm2:restart": "pm2 restart ecosystem.config.js --update-env",
