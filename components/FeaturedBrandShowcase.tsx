@@ -53,9 +53,6 @@ export default function FeaturedBrandShowcase({
               </p>
               <Heading title="Shop by featured brand" />
             </div>
-            <p className="max-w-xl text-sm leading-6 text-[var(--site-muted)]">
-              Tap a supplier or brand below to jump into a hand-picked set of featured products.
-            </p>
           </div>
 
           <div className="mb-8 flex gap-3 overflow-x-auto pb-2">
@@ -73,7 +70,7 @@ export default function FeaturedBrandShowcase({
                       : "border-[var(--site-border)] bg-[var(--site-panel)]/80 hover:border-[var(--site-accent)] hover:bg-[var(--site-panel)]"
                   }`}
                 >
-                  <div className="flex h-14 items-center justify-center rounded-2xl bg-white/90 p-3">
+                  <div className="flex aspect-square w-16 items-center justify-center rounded-2xl bg-white/90 p-3">
                     <Image
                       src={`/${brand.logo}`}
                       alt={sanitize(brand.title) || "Brand logo"}
@@ -89,9 +86,6 @@ export default function FeaturedBrandShowcase({
                   >
                     {sanitize(brand.title)}
                   </p>
-                  <p className="mt-1 text-xs text-[var(--site-muted)]">
-                    {brand.products.length} featured products
-                  </p>
                 </button>
               );
             })}
@@ -99,15 +93,9 @@ export default function FeaturedBrandShowcase({
 
           <div className="mb-5 flex items-center justify-between gap-3 max-sm:flex-col max-sm:items-start">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--site-muted)]">
-                Active brand
-              </p>
-              <h3 className="mt-2 text-2xl font-semibold text-[var(--site-text)]">
+              <h3 className="text-2xl font-semibold text-[var(--site-text)]">
                 {sanitize(activeBrand.title)}
               </h3>
-            </div>
-            <div className="rounded-full border border-[var(--site-border)] bg-[var(--site-panel)] px-4 py-2 text-sm font-semibold text-[var(--site-muted)]">
-              Curated set of {activeBrand.products.length}
             </div>
           </div>
 

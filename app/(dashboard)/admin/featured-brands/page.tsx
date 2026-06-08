@@ -52,7 +52,7 @@ export default function FeaturedBrandsAdminPage() {
           cache: "no-store",
         }),
         fetch(
-          `${getRuntimeApiBaseUrl()}/api/products?mode=admin&featured=true&sortBy=featuredSortOrder&sortDirection=asc`,
+          `${getRuntimeApiBaseUrl()}/api/products?mode=admin&featured=true&isActive=true&sortBy=featuredSortOrder&sortDirection=asc`,
           {
             cache: "no-store",
           }
@@ -247,8 +247,8 @@ export default function FeaturedBrandsAdminPage() {
         </div>
 
         <div className="rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel)] p-4 text-sm text-[var(--site-muted)]">
-          Only products already marked as featured can be used here. Slot 1 shows first on the
-          storefront, slot 2 shows second, and so on up to five products.
+          Only products already marked as featured and enabled can be used here. Slot 1 shows
+          first on the storefront, slot 2 shows second, and so on up to five products.
         </div>
 
         {loading ? (

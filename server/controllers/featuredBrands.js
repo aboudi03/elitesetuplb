@@ -63,6 +63,7 @@ async function validateFeaturedProducts(productIds) {
         in: uniqueProductIds,
       },
       featured: true,
+      isActive: true,
     },
     select: {
       id: true,
@@ -70,7 +71,10 @@ async function validateFeaturedProducts(productIds) {
   });
 
   if (featuredProducts.length !== uniqueProductIds.length) {
-    throw new AppError("All assigned products must already be marked as featured", 400);
+    throw new AppError(
+      "All assigned products must be marked as featured and enabled on the storefront",
+      400
+    );
   }
 
   return uniqueProductIds;
