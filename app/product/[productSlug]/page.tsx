@@ -224,7 +224,7 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
       />
       <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-10 pb-8 pt-8 lg:grid-cols-[minmax(0,1.18fr)_minmax(380px,0.82fr)] lg:items-start lg:gap-14 xl:gap-20">
+        <div className="grid gap-7 pb-8 pt-5 sm:gap-10 sm:pt-8 lg:grid-cols-[minmax(0,1.18fr)_minmax(380px,0.82fr)] lg:items-start lg:gap-14 xl:gap-20">
           <div className="lg:sticky lg:top-28 lg:self-start">
             <ProductImageGallery
               mainImage={normalizedProduct.mainImage}
@@ -233,23 +233,23 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
             />
           </div>
 
-          <div className="flex w-full max-w-2xl flex-col gap-6 max-lg:max-w-none">
-            <div className="space-y-4 border-b border-[var(--site-border)] pb-6">
+          <div className="flex w-full max-w-2xl flex-col gap-5 max-lg:max-w-none sm:gap-6">
+            <div className="space-y-4 border-b border-[var(--site-border)] pb-5 sm:pb-6">
               {normalizedProduct.manufacturer ? (
-                <p className="text-sm font-black uppercase tracking-[0.22em] text-[var(--site-muted)]">
+                <p className="text-base font-black text-[var(--site-text)] sm:text-sm sm:uppercase sm:tracking-[0.22em] sm:text-[var(--site-muted)]">
                   {sanitize(normalizedProduct.manufacturer)}
                 </p>
               ) : null}
-              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                <h1 className="max-w-3xl break-words text-3xl font-black leading-[1.08] text-[var(--site-text)] sm:text-4xl xl:text-[2.7rem]">
+              <div className="flex flex-col gap-3 sm:gap-4 xl:flex-row xl:items-start xl:justify-between">
+                <h1 className="max-w-3xl break-words text-[1.9rem] font-black leading-[1.14] text-[var(--site-text)] sm:text-4xl xl:text-[2.7rem]">
                   {sanitize(productName)}
                 </h1>
-                <p className="shrink-0 text-3xl font-black text-[var(--site-accent)] sm:text-4xl">
+                <p className="shrink-0 text-[1.9rem] font-black text-[var(--site-accent)] sm:text-4xl">
                   ${normalizedProduct.price.toFixed(2)}
                 </p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-4 text-sm font-semibold text-[var(--site-muted)]">
+              <div className="flex flex-col gap-2 text-sm font-semibold text-[var(--site-muted)] sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1 text-[var(--site-accent)]">
                     {Array.from({ length: 5 }).map((_, index) => (
@@ -275,7 +275,7 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
               ) : null}
             </div>
 
-            <div className="grid gap-2 text-base leading-7 text-[var(--site-text)] sm:text-lg">
+            <div className="grid gap-3 text-base leading-7 text-[var(--site-text)] sm:text-lg">
               <p>
                 <span className="font-black">SKU:</span>{" "}
                 <span className="text-[var(--site-muted)]">
@@ -291,7 +291,7 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
             </div>
 
             <div className="border-t border-[var(--site-border)] pt-5">
-              <div className="flex flex-col gap-3 pb-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-3 pb-5">
                 <StockAvailabillity
                   stock={normalizedProduct.inStock}
                   inStock={normalizedProduct.inStock}

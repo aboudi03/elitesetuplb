@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FaAnglesLeft, FaAnglesRight, FaChevronLeft, FaChevronRight, FaXmark } from "react-icons/fa6";
 
 type ProductGalleryImage = {
@@ -76,6 +76,25 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
     };
   }, [activeIndex, isLightboxOpen, slides.length]);
 
+  const activeSlide = slides[activeIndex] || slides[0];
+  const hasMultipleSlides = slides.length > 1;
+
+  const goToPreviousSlide = useCallback(() => {
+    if (!hasMultipleSlides) return;
+
+    setIsLightboxZoomed(false);
+    setPreviousRippleKey((currentKey) => currentKey + 1);
+    setActiveIndex((currentIndex) => (currentIndex - 1 + slides.length) % slides.length);
+  }, [hasMultipleSlides, slides.length]);
+
+  const goToNextSlide = useCallback(() => {
+    if (!hasMultipleSlides) return;
+
+    setIsLightboxZoomed(false);
+    setNextRippleKey((currentKey) => currentKey + 1);
+    setActiveIndex((currentIndex) => (currentIndex + 1) % slides.length);
+  }, [hasMultipleSlides, slides.length]);
+
   useEffect(() => {
     if (!isLightboxOpen) return;
 
@@ -99,26 +118,7 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isLightboxOpen]);
-
-  const activeSlide = slides[activeIndex] || slides[0];
-  const hasMultipleSlides = slides.length > 1;
-
-  const goToPreviousSlide = () => {
-    if (!hasMultipleSlides) return;
-
-    setIsLightboxZoomed(false);
-    setPreviousRippleKey((currentKey) => currentKey + 1);
-    setActiveIndex((currentIndex) => (currentIndex - 1 + slides.length) % slides.length);
-  };
-
-  const goToNextSlide = () => {
-    if (!hasMultipleSlides) return;
-
-    setIsLightboxZoomed(false);
-    setNextRippleKey((currentKey) => currentKey + 1);
-    setActiveIndex((currentIndex) => (currentIndex + 1) % slides.length);
-  };
+  }, [isLightboxOpen, goToNextSlide, goToPreviousSlide]);
 
   const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
     touchStartXRef.current = event.touches[0]?.clientX ?? null;
@@ -183,13 +183,13 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
   };
 
   return (
-    <div className="flex w-full max-w-[980px] gap-5 max-sm:flex-col-reverse">
-      <div className="flex max-h-[720px] w-24 shrink-0 flex-col gap-3 overflow-y-auto pr-1 max-sm:w-full max-sm:flex-row max-sm:overflow-x-auto max-sm:overflow-y-hidden max-sm:pr-0">
+    <div className="flex w-full max-w-[980px] gap-4 max-sm:flex-col-reverse">
+      <div className="flex max-h-[720px] w-24 shrink-0 flex-col gap-3 overflow-y-auto pr-1 max-sm:w-full max-sm:flex-row max-sm:overflow-x-auto max-sm:overflow-y-hidden max-sm:pb-1 max-sm:pr-0">
         {slides.map((slide, index) => (
           <button
             key={slide.id}
             type="button"
-            className={`relative flex aspect-square h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-[var(--site-bg)] p-2 transition ${
+            className={`relative flex aspect-square h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-[var(--site-bg)] p-2 transition max-sm:h-16 max-sm:w-16 ${
               activeIndex === index
                 ? "border-[var(--site-accent)] ring-2 ring-[var(--site-accent-soft)]"
                 : "border-[var(--site-border)] hover:border-[var(--site-accent)]"
@@ -210,7 +210,7 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
 
       <div
         ref={galleryFrameRef}
-        className="relative flex aspect-square min-h-[360px] flex-1 items-center justify-center overflow-hidden rounded-[1.75rem] border border-[var(--site-border)] bg-[linear-gradient(180deg,#ffffff,var(--site-panel-soft))] p-6 shadow-[0_22px_60px_rgba(15,23,42,0.08)] sm:min-h-[460px] lg:min-h-[620px] lg:p-8"
+        className="relative flex aspect-square min-h-[280px] flex-1 items-center justify-center overflow-hidden rounded-[1.35rem] border border-[var(--site-border)] bg-[linear-gradient(180deg,#ffffff,var(--site-panel-soft))] p-4 shadow-[0_18px_46px_rgba(15,23,42,0.08)] sm:min-h-[460px] sm:rounded-[1.75rem] sm:p-6 lg:min-h-[620px] lg:p-8"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}

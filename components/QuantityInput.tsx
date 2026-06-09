@@ -32,8 +32,8 @@ const QuantityInput = ({quantityCount, setQuantityCount, maxQuantity} : Quantity
   };
 
   return (
-    <div className="flex items-center gap-x-4 max-[500px]:justify-center">
-      <p className="text-xl">Quantity: </p>
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-x-4">
+      <p className="text-lg font-semibold sm:text-xl">Quantity:</p>
 
       <div className="flex items-center gap-1">
         <button

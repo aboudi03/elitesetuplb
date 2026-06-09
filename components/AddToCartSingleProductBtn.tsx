@@ -92,7 +92,7 @@ const AddToCartSingleProductBtn = ({
   return (
     <button
       onClick={handleAddToCart}
-      className="btn h-10 min-h-10 w-40 border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 text-sm font-bold uppercase text-[var(--site-text)] transition-all ease-in hover:border-[var(--site-accent)] hover:text-[var(--site-accent)] max-[500px]:w-full"
+      className="btn h-11 min-h-11 w-full border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 text-sm font-bold uppercase text-[var(--site-text)] transition-all ease-in hover:border-[var(--site-accent)] hover:text-[var(--site-accent)] sm:w-40"
     >
       Add to cart
     </button>

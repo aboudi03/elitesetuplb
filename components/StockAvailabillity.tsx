@@ -18,7 +18,7 @@ const StockAvailabillity = ({ stock, inStock } : { stock: number, inStock: numbe
   const shouldShowExactStock = availableQuantity > 0 && availableQuantity <= 5;
 
   return (
-    <p className='flex gap-x-2 text-xl max-[500px]:justify-center'>Availability:
+    <p className='flex flex-col gap-1 text-lg sm:flex-row sm:items-center sm:gap-x-2 sm:text-xl'>Availability:
     { availableQuantity > 0 ? (
       <span className='flex items-center gap-x-1 text-success'>
         {shouldShowExactStock ? `In stock (${availableQuantity} available)` : "In stock"} <FaCheck />

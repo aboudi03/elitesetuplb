@@ -126,7 +126,7 @@ const SingleProductDynamicFields = ({ product }: { product: Product }) => {
         </p>
       ) : null}
       {product.inStock > 0 && (
-        <div className="flex gap-x-5 max-[500px]:flex-col max-[500px]:items-center max-[500px]:gap-y-1">
+        <div className="flex flex-col gap-3 sm:flex-row sm:gap-x-5">
           <AddToCartSingleProductBtn
             quantityCount={quantityCount}
             product={product}
