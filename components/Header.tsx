@@ -33,7 +33,7 @@ const Header = () => {
   };
 
   return (
-    <header className="z-40 border-b border-[var(--site-border)] bg-[var(--site-panel)]/95 backdrop-blur lg:sticky lg:top-0">
+    <header className="relative z-[100] border-b border-[var(--site-border)] bg-[var(--site-panel)]/95 backdrop-blur lg:sticky lg:top-0">
       <HeaderTop />
       {pathname.startsWith("/admin") === false && (
         <div className="mx-auto flex min-h-24 max-w-screen-2xl items-center justify-between gap-8 px-16 py-5 max-[1320px]:px-16 max-lg:flex-col max-lg:justify-center max-lg:gap-y-5 max-md:min-h-0 max-md:gap-3 max-md:px-4 max-md:py-3">

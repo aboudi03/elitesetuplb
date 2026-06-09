@@ -97,6 +97,8 @@ const Hero = ({
   const transitionUnlockTimerRef = useRef<number | null>(null);
   const touchStartXRef = useRef<number | null>(null);
   const touchDeltaXRef = useRef(0);
+  const categoryNavRef = useRef<HTMLElement | null>(null);
+  const mobileDropdownRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (initialNavbarCategories && initialNavbarCategories.length > 0) {
@@ -200,6 +202,41 @@ const Hero = ({
 
     return () => {
       window.removeEventListener("resize", closeMobileDropdown);
+    };
+  }, [expandedMobileCategoryId]);
+
+  useEffect(() => {
+    if (!expandedMobileCategoryId) {
+      return;
+    }
+
+    const closeMobileDropdownOnOutsideTap = (event: PointerEvent) => {
+      const target = event.target as Node;
+
+      if (
+        categoryNavRef.current?.contains(target) ||
+        mobileDropdownRef.current?.contains(target)
+      ) {
+        return;
+      }
+
+      setExpandedMobileCategoryId(null);
+      setMobileDropdownPosition(null);
+    };
+
+    const closeMobileDropdownOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setExpandedMobileCategoryId(null);
+        setMobileDropdownPosition(null);
+      }
+    };
+
+    document.addEventListener("pointerdown", closeMobileDropdownOnOutsideTap);
+    document.addEventListener("keydown", closeMobileDropdownOnEscape);
+
+    return () => {
+      document.removeEventListener("pointerdown", closeMobileDropdownOnOutsideTap);
+      document.removeEventListener("keydown", closeMobileDropdownOnEscape);
     };
   }, [expandedMobileCategoryId]);
 
@@ -312,7 +349,6 @@ const Hero = ({
     if (expandedMobileCategoryId === category.id) {
       setExpandedMobileCategoryId(null);
       setMobileDropdownPosition(null);
-      router.push(category.href);
       return;
     }
 
@@ -335,8 +371,11 @@ const Hero = ({
   );
 
   return (
-    <section className="bg-[var(--site-bg)] pb-8">
-      <nav className="border-b border-[var(--site-border)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--site-panel)_92%,white_8%),var(--site-panel))]">
+    <section className="relative z-0 bg-[var(--site-bg)] pb-8">
+      <nav
+        ref={categoryNavRef}
+        className="relative z-20 border-b border-[var(--site-border)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--site-panel)_92%,white_8%),var(--site-panel))]"
+      >
         <div
           className="mx-auto flex max-w-screen-2xl items-center justify-center gap-3 overflow-x-auto px-4 py-3 text-sm font-semibold text-[var(--site-text)] max-lg:justify-start lg:overflow-visible"
           style={{
@@ -425,6 +464,7 @@ const Hero = ({
         Array.isArray(expandedMobileCategory.children) &&
         mobileDropdownPosition ? (
           <div
+            ref={mobileDropdownRef}
             className="fixed z-[90] w-[240px] lg:hidden"
             style={{
               left: mobileDropdownPosition.left,

@@ -122,7 +122,7 @@ const SearchInput = () => {
   const showDrawer = trimmedSearchInput.length >= 2 && isDrawerOpen;
 
   return (
-    <div ref={searchWrapperRef} className="relative w-full max-w-3xl">
+    <div ref={searchWrapperRef} className="relative z-[110] w-full max-w-3xl">
       <form
         className="relative z-20 flex w-full justify-center max-md:rounded-md max-md:border max-md:border-[var(--site-border)] max-md:bg-[var(--site-panel-soft)] max-md:p-1"
         onSubmit={searchProducts}
