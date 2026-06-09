@@ -153,11 +153,11 @@ const SearchInput = () => {
         }`}
       >
         <div className="border-b border-[var(--site-border)] px-5 py-4">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <p className="text-sm font-black uppercase tracking-[0.12em] text-[var(--site-text)]">
-              Search results
+              Search results for:
             </p>
-            <p className="text-xs font-semibold uppercase tracking-[0.1em] text-[var(--site-muted)]">
+            <p className="text-sm font-semibold uppercase tracking-[0.1em] text-[var(--site-muted)]">
               {trimmedSearchInput.length >= 2 ? sanitize(trimmedSearchInput) : ""}
             </p>
           </div>
