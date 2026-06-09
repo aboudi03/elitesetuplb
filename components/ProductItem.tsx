@@ -151,7 +151,7 @@ const ProductItem = ({
           alt={sanitize(product?.title || product.model) || "Product image"}
         />
       </Link>
-      <div className={`flex min-w-0 flex-1 transition duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${isListView ? "flex-col justify-between self-stretch" : "relative mt-4 flex-col rounded-[1.4rem] border border-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--site-panel)_94%,white_6%)_0%,color-mix(in_srgb,var(--site-panel-soft)_92%,white_8%)_100%)] px-6 pb-[5.75rem] pt-6 shadow-[0_12px_32px_rgba(15,23,42,0.05)] group-hover/card:border-[rgba(225,29,46,0.34)] group-hover/card:shadow-[0_0_0_1px_rgba(225,29,46,0.22),0_18px_44px_rgba(225,29,46,0.16)]"}`}>
+      <div className={`flex min-w-0 flex-1 transition duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${isListView ? "flex-col justify-between self-stretch" : "relative mt-4 flex-col rounded-[1.4rem] border border-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--site-panel)_94%,white_6%)_0%,color-mix(in_srgb,var(--site-panel-soft)_92%,white_8%)_100%)] px-6 pb-[5.75rem] pt-6 shadow-[0_12px_32px_rgba(15,23,42,0.05)] group-hover/card:border-[rgba(225,29,46,0.52)] group-hover/card:shadow-[inset_0_0_0_1px_rgba(225,29,46,0.52),0_18px_44px_rgba(225,29,46,0.16)]"}`}>
         <div>
           <p className="text-[11px] uppercase tracking-[0.24em] text-[color-mix(in_srgb,var(--site-muted)_88%,var(--site-text)_12%)]">
             {sanitize(product.manufacturer || product.category?.name || "Elite Setup")}
