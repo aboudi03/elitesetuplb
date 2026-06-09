@@ -9,9 +9,9 @@
 // *********************
 
 import React from "react";
-import ProductItem from "./ProductItem";
 import Heading from "./Heading";
 import FeaturedBrandShowcase from "./FeaturedBrandShowcase";
+import LazyProductShelf from "./LazyProductShelf";
 
 const ProductsSection = async ({
   products = [],
@@ -30,22 +30,16 @@ const ProductsSection = async ({
             <Heading title="Trusted gear for your setup" />
           </div>
         </div>
-        <div className="grid grid-cols-4 gap-4 max-xl:grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1">
-          {products.length > 0 ? (
-            products.map((product: any) => (
-              <ProductItem
-                key={product.id}
-                product={product}
-                color="theme"
-                quickAddEnabled
-              />
-            ))
-          ) : (
-            <div className="col-span-full rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] py-12 text-center text-[var(--site-muted)]">
-              <p>No products available at the moment.</p>
-            </div>
-          )}
-        </div>
+        <LazyProductShelf
+          products={products}
+          gridClassName="grid snap-x snap-mandatory grid-flow-col auto-cols-[78vw] gap-4 overflow-x-auto px-1 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid-flow-row sm:auto-cols-auto sm:overflow-visible sm:px-0 sm:pb-0 sm:snap-none sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+          itemClassName="shrink-0 snap-start"
+        />
+        {products.length === 0 ? (
+          <div className="col-span-full rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] py-12 text-center text-[var(--site-muted)]">
+            <p>No products available at the moment.</p>
+          </div>
+        ) : null}
       </div>
       </section>
       <FeaturedBrandShowcase brands={featuredBrands} />

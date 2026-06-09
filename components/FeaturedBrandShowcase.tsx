@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Heading from "./Heading";
-import ProductItem from "./ProductItem";
+import LazyProductShelf from "./LazyProductShelf";
 import { sanitize } from "@/lib/sanitize";
 
 type FeaturedBrandShowcaseItem = {
@@ -99,16 +99,11 @@ export default function FeaturedBrandShowcase({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            {activeBrand.products.map((item) => (
-              <ProductItem
-                key={item.product.id}
-                product={item.product}
-                color="theme"
-                quickAddEnabled
-              />
-            ))}
-          </div>
+          <LazyProductShelf
+            products={activeBrand.products.map((item) => item.product)}
+            gridClassName="grid snap-x snap-mandatory grid-flow-col auto-cols-[78vw] gap-4 overflow-x-auto px-1 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid-flow-row sm:auto-cols-auto sm:overflow-visible sm:px-0 sm:pb-0 sm:snap-none sm:grid-cols-2 xl:grid-cols-5"
+            itemClassName="shrink-0 snap-start"
+          />
         </div>
       </div>
     </section>
