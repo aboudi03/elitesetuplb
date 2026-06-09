@@ -10,6 +10,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Providers from "@/Providers";
 import SessionTimeoutWrapper from "@/components/SessionTimeoutWrapper";
+import GoogleTag from "@/components/GoogleTag";
 import { absoluteUrl, STORE_NAME } from "@/lib/seo";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -65,6 +66,7 @@ export default async function RootLayout({
   return (
     <html lang="en" data-theme="light">
       <body className={`${inter.className} bg-[var(--site-bg)] text-[var(--site-text)]`}>
+        <GoogleTag />
         <SessionProvider session={session}>
           <SessionTimeoutWrapper />
           <Header />

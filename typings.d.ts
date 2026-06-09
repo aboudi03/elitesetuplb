@@ -156,3 +156,8 @@ declare module "next-auth/jwt" {
     role: string;
   }
 }
+
+interface Window {
+  dataLayer?: unknown[];
+  gtag?: (...args: unknown[]) => void;
+}

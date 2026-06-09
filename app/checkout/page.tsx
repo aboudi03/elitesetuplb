@@ -3,11 +3,12 @@ export const dynamic = "force-dynamic";
 import { SectionTitle } from "@/components";
 import { useProductStore } from "../_zustand/store";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import apiClient from "@/lib/api";
+import { buildCartAnalyticsItems, trackBeginCheckoutEvent, trackPurchaseEvent } from "@/lib/analytics";
 import { calculateCartGrandTotal, calculateCartTax } from "@/lib/cartPricing";
 import { pcBuilderWhatsAppNumber } from "@/lib/pc-builder";
 
@@ -59,6 +60,7 @@ const CheckoutPage = () => {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successSummary, setSuccessSummary] = useState<CheckoutSuccessSummary | null>(null);
+  const hasTrackedCheckoutStart = useRef(false);
   const cartState = useProductStore();
   const products = Array.isArray(cartState?.products) ? cartState.products : [];
   const total = typeof cartState?.total === "number" ? cartState.total : 0;
@@ -72,6 +74,18 @@ const CheckoutPage = () => {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!isMounted || hasTrackedCheckoutStart.current || products.length === 0 || total <= 0) {
+      return;
+    }
+
+    trackBeginCheckoutEvent({
+      value: total,
+      items: buildCartAnalyticsItems(products),
+    });
+    hasTrackedCheckoutStart.current = true;
+  }, [isMounted, products, total]);
 
   const normalizeLebanesePhone = (value: string) => {
     let digits = value.replace(/\D/g, "");
@@ -337,6 +351,14 @@ const CheckoutPage = () => {
         taxes: orderTaxTotal,
         total: orderGrandTotal,
       };
+
+      trackPurchaseEvent({
+        transactionId: orderId,
+        value: total,
+        tax: orderTaxTotal,
+        shipping: deliveryFee,
+        items: buildCartAnalyticsItems(products),
+      });
 
       // Clear form and cart
       setCheckoutForm({

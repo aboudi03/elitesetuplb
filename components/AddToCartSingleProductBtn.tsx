@@ -14,6 +14,7 @@
 import React from "react";
 import { useProductStore } from "@/app/_zustand/store";
 import toast from "react-hot-toast";
+import { buildAnalyticsItem, trackAddToCartEvent } from "@/lib/analytics";
 import { trackCartAdd } from "@/lib/cartTracking";
 import { useSession } from "next-auth/react";
 
@@ -66,6 +67,20 @@ const AddToCartSingleProductBtn = ({
       stock: product?.inStock,
     });
     calculateTotals();
+    trackAddToCartEvent({
+      value: product.price * quantityCount,
+      item: buildAnalyticsItem({
+        id: product.id,
+        title: displayTitle,
+        model: product.model,
+        price: product.price,
+        manufacturer: product.manufacturer,
+        quantity: quantityCount,
+        selectedColor,
+        selectedSize,
+        categoryName: product.category?.name,
+      }),
+    });
     await trackCartAdd({
       productId: product.id,
       productTitle: displayTitle,
