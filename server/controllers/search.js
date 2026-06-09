@@ -8,22 +8,42 @@ async function searchProducts(request, response) {
             return response.status(400).json({ error: "Query parameter is required" });
         }
 
+        const normalizedQuery = String(query).trim();
+        if (normalizedQuery.length < 2) {
+            return response.json([]);
+        }
+
         const products = await prisma.product.findMany({
             where: {
                 isActive: true,
                 OR: [
                     {
                         title: {
-                            contains: query
+                            contains: normalizedQuery
+                        }
+                    },
+                    {
+                        model: {
+                            contains: normalizedQuery
                         }
                     },
                     {
                         description: {
-                            contains: query
+                            contains: normalizedQuery
+                        }
+                    },
+                    {
+                        manufacturer: {
+                            contains: normalizedQuery
                         }
                     }
                 ]
-            }
+            },
+            take: 8,
+            orderBy: [
+                { featuredSortOrder: "asc" },
+                { createdAt: "desc" }
+            ]
         });
 
         return response.json(products);

@@ -95,14 +95,14 @@ const ProductItem = ({
   return (
     <div
       className={`flex h-full w-full min-w-0 rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] p-3 transition hover:-translate-y-1 hover:border-[var(--site-accent)] ${
-        isListView ? "flex-col gap-4 sm:flex-row sm:items-stretch" : "flex-col"
+        isListView ? "flex-row items-start gap-3 sm:items-stretch sm:gap-4" : "flex-col"
       }`}
     >
       <Link
         href={`/product/${product.slug || product.id}`}
         className={`group relative flex items-center justify-center overflow-hidden rounded-md border border-[var(--site-border)] bg-[radial-gradient(circle_at_top,color-mix(in_srgb,var(--site-panel)_92%,white_8%),color-mix(in_srgb,var(--site-panel-soft)_94%,transparent)_58%,color-mix(in_srgb,var(--site-panel-soft)_86%,var(--site-text)_14%)_100%)] p-2 shadow-[inset_0_1px_0_color-mix(in_srgb,white_35%,transparent)] sm:p-3 ${
           isListView
-            ? "aspect-[5/4] sm:min-h-[220px] sm:w-[260px] sm:shrink-0"
+            ? "h-24 w-24 shrink-0 self-start sm:min-h-[220px] sm:w-[260px]"
             : "aspect-[5/4]"
         }`}
       >
@@ -124,26 +124,28 @@ const ProductItem = ({
               : "/product_placeholder.webp"
           }
           fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
-          className="relative z-10 scale-[1.06] object-contain p-3 transition duration-300 group-hover:scale-[1.1] sm:p-4"
+          sizes={isListView ? "(max-width: 640px) 96px, 260px" : "(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"}
+          className={`relative z-10 scale-[1.06] object-contain transition duration-300 group-hover:scale-[1.1] ${
+            isListView ? "p-2 sm:p-4" : "p-3 sm:p-4"
+          }`}
           alt={sanitize(product?.title || product.model) || "Product image"}
         />
       </Link>
-      <div className={`flex min-w-0 flex-1 ${isListView ? "flex-col justify-between" : "flex-col"}`}>
+      <div className={`flex min-w-0 flex-1 ${isListView ? "flex-col justify-between self-stretch" : "flex-col"}`}>
         <div>
           <Link
             href={`/product/${product.slug || product.id}`}
             className={`line-clamp-2 text-sm font-black uppercase text-[var(--site-text)] hover:text-[var(--site-accent)] ${
-              isListView ? "sm:text-base" : "mt-3 min-h-10"
+              isListView ? "text-sm sm:text-base" : "mt-3 min-h-10"
             }`}
           >
             {sanitize(product.title || product.model)}
           </Link>
-          <p className={`font-black text-[var(--site-accent)] ${isListView ? "mt-3 text-lg" : "mt-2 text-base"}`}>
+          <p className={`font-black text-[var(--site-accent)] ${isListView ? "mt-2 text-base sm:mt-3 sm:text-lg" : "mt-2 text-base"}`}>
             ${product.price.toFixed(2)}
           </p>
           {isListView ? (
-            <p className="mt-3 line-clamp-3 text-sm leading-6 text-[var(--site-muted)]">
+            <p className="mt-2 line-clamp-2 text-xs leading-5 text-[var(--site-muted)] sm:mt-3 sm:line-clamp-3 sm:text-sm sm:leading-6">
               {productDescription || "No description available for this product yet."}
             </p>
           ) : null}
@@ -152,7 +154,7 @@ const ProductItem = ({
         <Link
           href={`/product/${product?.slug || product.id}`}
           className={`theme-button flex h-10 items-center justify-center rounded-md px-3 text-xs font-black uppercase shadow-sm focus:outline-none focus:ring-2 ${
-            isListView ? "mt-4 w-full sm:mt-6 sm:w-fit sm:min-w-[180px]" : "mt-3 w-full"
+            isListView ? "mt-3 w-full sm:mt-6 sm:w-fit sm:min-w-[180px]" : "mt-3 w-full"
           }`}
         >
           <p>View product</p>

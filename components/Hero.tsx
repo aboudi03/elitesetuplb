@@ -251,9 +251,9 @@ const Hero = ({
 
     transitionUnlockTimerRef.current = window.setTimeout(() => {
       transitionLockRef.current = false;
-    }, 900);
+    }, 320);
   };
-  const canChangeSlide = () => slides.length > 1;
+  const canChangeSlide = () => slides.length > 1 && !transitionLockRef.current;
 
   const goToPreviousSlide = () => {
     if (!canChangeSlide()) return;

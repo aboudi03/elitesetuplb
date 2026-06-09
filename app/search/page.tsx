@@ -40,10 +40,10 @@ const SearchPage = async ({ searchParams }: Props) => {
 
   return (
     <div>
-      <SectionTitle title="Search Page" path="Home | Search" />
+      <SectionTitle title="Search" path="Home | Search" />
       <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
         {sp?.search && (
-          <h3 className="break-words py-10 text-center text-4xl max-sm:text-2xl">
+          <h3 className="break-words py-8 text-center text-2xl font-semibold max-sm:py-6 max-sm:text-xl">
             Showing results for {sanitize(sp?.search)}
           </h3>
         )}
@@ -53,7 +53,7 @@ const SearchPage = async ({ searchParams }: Props) => {
               <ProductItem key={product.id} product={product} color="black" />
             ))
           ) : (
-            <h3 className="text-3xl mt-5 text-center w-full col-span-full max-[1000px]:text-2xl max-[500px]:text-lg">
+            <h3 className="mt-4 w-full col-span-full text-center text-xl font-medium max-[1000px]:text-lg max-[500px]:text-base">
               No products found for specified query
             </h3>
           )}
