@@ -61,6 +61,7 @@ const CheckoutPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successSummary, setSuccessSummary] = useState<CheckoutSuccessSummary | null>(null);
   const hasTrackedCheckoutStart = useRef(false);
+  const hasCompletedCheckout = useRef(false);
   const cartState = useProductStore();
   const products = Array.isArray(cartState?.products) ? cartState.products : [];
   const total = typeof cartState?.total === "number" ? cartState.total : 0;
@@ -360,6 +361,9 @@ const CheckoutPage = () => {
         items: buildCartAnalyticsItems(products),
       });
 
+      hasCompletedCheckout.current = true;
+      setSuccessSummary(completedOrderSummary);
+
       // Clear form and cart
       setCheckoutForm({
         name: "",
@@ -382,7 +386,6 @@ const CheckoutPage = () => {
         console.log('Note: Could not trigger notification refresh');
       }
 
-      setSuccessSummary(completedOrderSummary);
     } catch (error: any) {
       console.error("💥 Error in makePurchase:", error);
       
@@ -466,13 +469,18 @@ const CheckoutPage = () => {
       return;
     }
 
+    if (successSummary || hasCompletedCheckout.current || isSubmitting) {
+      return;
+    }
+
     if (products.length === 0) {
       toast.error("You don't have items in your cart");
       router.push("/cart");
     }
-  }, [isMounted, products.length, router]);
+  }, [isMounted, isSubmitting, products.length, router, successSummary]);
 
   const closeSuccessDialog = () => {
+    hasCompletedCheckout.current = false;
     setSuccessSummary(null);
     router.push("/");
   };
