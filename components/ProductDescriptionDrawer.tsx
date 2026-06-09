@@ -6,11 +6,13 @@ import { FaChevronDown } from "react-icons/fa6";
 type ProductDescriptionDrawerProps = {
   html: string;
   collapsedHeight?: number;
+  expandedMaxHeight?: number;
 };
 
 const ProductDescriptionDrawer = ({
   html,
   collapsedHeight = 168,
+  expandedMaxHeight = 420,
 }: ProductDescriptionDrawerProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -41,12 +43,21 @@ const ProductDescriptionDrawer = ({
     return null;
   }
 
-  const visibleHeight = isExpanded || !isOverflowing ? contentHeight : collapsedHeight;
+  const shouldScrollExpandedContent = isExpanded && contentHeight > expandedMaxHeight;
+  const visibleHeight = isExpanded
+    ? Math.min(contentHeight, expandedMaxHeight)
+    : isOverflowing
+      ? collapsedHeight
+      : contentHeight;
 
   return (
     <div className="max-w-3xl">
       <div
-        className="relative overflow-hidden transition-[max-height] duration-500 ease-out"
+        className={`relative transition-[max-height] duration-500 ease-out ${
+          shouldScrollExpandedContent
+            ? "overflow-y-auto overflow-x-hidden pr-3"
+            : "overflow-hidden"
+        }`}
         style={{ maxHeight: `${visibleHeight}px` }}
       >
         <div

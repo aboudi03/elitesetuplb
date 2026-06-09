@@ -13,6 +13,7 @@
 import Image from "next/image";
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { HiOutlineShoppingBag } from "react-icons/hi2";
 import { useSession } from "next-auth/react";
@@ -28,12 +29,15 @@ const ProductItem = ({
   product,
   viewMode = "grid",
   quickAddEnabled = false,
+  mobileCardLinkEnabled = false,
 }: {
   product: Product;
   color?: string;
   viewMode?: CatalogViewMode;
   quickAddEnabled?: boolean;
+  mobileCardLinkEnabled?: boolean;
 }) => {
+  const router = useRouter();
   const { data: session } = useSession();
   const cartState = useProductStore();
   const addToCart =
@@ -48,6 +52,22 @@ const ProductItem = ({
   const displayTitle = product.title || product.model || "Product";
   const displayImage = product.mainImage || "/product_placeholder.webp";
   const cartItemId = `${product.id}::default`;
+  const productHref = `/product/${product.slug || product.id}`;
+
+  const handleCardClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!mobileCardLinkEnabled || isListView) {
+      return;
+    }
+
+    const target = event.target as HTMLElement;
+    if (target.closest("a, button, input, select, textarea")) {
+      return;
+    }
+
+    if (window.matchMedia("(max-width: 639px)").matches) {
+      router.push(productHref);
+    }
+  };
 
   const handleQuickAdd = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -94,12 +114,13 @@ const ProductItem = ({
 
   return (
     <div
+      onClick={handleCardClick}
       className={`group/card flex h-full w-full min-w-0 overflow-hidden rounded-[1.6rem] text-left transition duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:scale-[1.02] ${
         isListView ? "flex-row items-start gap-3 p-3 sm:items-stretch sm:gap-4 sm:p-4" : "flex-col"
-      }`}
+      } ${mobileCardLinkEnabled && !isListView ? "cursor-pointer sm:cursor-default" : ""}`}
     >
       <Link
-        href={`/product/${product.slug || product.id}`}
+        href={productHref}
         className={`group/media relative flex items-center justify-center overflow-hidden ${
           isListView
             ? "h-24 w-24 shrink-0 self-start sm:min-h-[220px] sm:w-[260px]"
@@ -136,7 +157,7 @@ const ProductItem = ({
             {sanitize(product.manufacturer || product.category?.name || "Elite Setup")}
           </p>
           <Link
-            href={`/product/${product.slug || product.id}`}
+            href={productHref}
             className={`line-clamp-3 text-[var(--site-text)] transition hover:text-[var(--site-accent)] ${
               isListView ? "mt-2 text-sm font-semibold leading-5 sm:text-base sm:leading-6" : "mt-3 text-[1.06rem] font-medium leading-6 sm:text-[1.18rem]"
             }`}
@@ -157,11 +178,13 @@ const ProductItem = ({
         </div>
 
         <Link
-          href={`/product/${product?.slug || product.id}`}
+          href={productHref}
           className={`inline-flex items-center justify-center rounded-full border border-[color:rgba(15,23,42,0.12)] bg-transparent px-5 text-xs font-black uppercase tracking-[0.14em] text-[var(--site-text)] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-[var(--site-accent)] hover:bg-[var(--site-accent)] hover:text-white focus:outline-none focus:ring-2 ${
             isListView
               ? "mt-4 h-10 w-full sm:mt-6 sm:w-fit sm:min-w-[180px]"
-              : "pointer-events-none absolute inset-x-6 bottom-6 h-11 translate-y-3 opacity-0 group-hover/card:pointer-events-auto group-hover/card:translate-y-0 group-hover/card:opacity-100"
+              : mobileCardLinkEnabled
+                ? "absolute inset-x-6 bottom-6 h-11 translate-y-0 opacity-100 sm:pointer-events-none sm:translate-y-3 sm:opacity-0 sm:group-hover/card:pointer-events-auto sm:group-hover/card:translate-y-0 sm:group-hover/card:opacity-100"
+                : "pointer-events-none absolute inset-x-6 bottom-6 h-11 translate-y-3 opacity-0 group-hover/card:pointer-events-auto group-hover/card:translate-y-0 group-hover/card:opacity-100"
           }`}
         >
           <p>View product</p>

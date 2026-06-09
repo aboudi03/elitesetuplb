@@ -55,7 +55,7 @@ const LazyProductShelf = ({
       {isVisible
         ? products.map((product) => (
             <div key={product.id} className={itemClassName}>
-              <ProductItem product={product} quickAddEnabled />
+              <ProductItem product={product} quickAddEnabled mobileCardLinkEnabled />
             </div>
           ))
         : Array.from({ length: visiblePlaceholderCount }).map((_, index) => (
