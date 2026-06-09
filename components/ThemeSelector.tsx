@@ -12,6 +12,25 @@ const ThemeSelector = () => {
   const [theme, setTheme] = useState("light");
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+
+  const updateMenuPosition = () => {
+    if (!buttonRef.current) return;
+
+    const rect = buttonRef.current.getBoundingClientRect();
+    const menuWidth = 160;
+    const viewportPadding = 12;
+    const calculatedLeft = Math.min(
+      rect.right - menuWidth,
+      window.innerWidth - menuWidth - viewportPadding
+    );
+
+    setMenuPosition({
+      top: rect.bottom + 8,
+      left: Math.max(viewportPadding, calculatedLeft),
+    });
+  };
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem("store-theme") || "light";
@@ -30,6 +49,22 @@ const ThemeSelector = () => {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    updateMenuPosition();
+
+    const syncPosition = () => updateMenuPosition();
+
+    window.addEventListener("resize", syncPosition);
+    window.addEventListener("scroll", syncPosition, true);
+
+    return () => {
+      window.removeEventListener("resize", syncPosition);
+      window.removeEventListener("scroll", syncPosition, true);
+    };
+  }, [isOpen]);
+
   const handleThemeChange = (value: string) => {
     setTheme(value);
     window.localStorage.setItem("store-theme", value);
@@ -43,8 +78,12 @@ const ThemeSelector = () => {
   return (
     <div className="relative" ref={menuRef}>
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setIsOpen((current) => !current)}
+        onClick={() => {
+          updateMenuPosition();
+          setIsOpen((current) => !current);
+        }}
         className="flex h-9 w-9 items-center justify-center rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
         aria-label="Select theme"
         aria-expanded={isOpen}
@@ -53,7 +92,13 @@ const ThemeSelector = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-11 z-50 w-40 overflow-hidden rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] p-1 shadow-xl">
+        <div
+          className="fixed z-[120] w-40 overflow-hidden rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] p-1 shadow-xl"
+          style={{
+            top: `${menuPosition.top}px`,
+            left: `${menuPosition.left}px`,
+          }}
+        >
           {themes.map((item) => {
             const Icon = item.icon;
             const isActive = item.value === theme;

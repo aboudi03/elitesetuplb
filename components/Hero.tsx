@@ -354,7 +354,7 @@ const Hero = ({
                   <>
                     <Link
                       href={category.href}
-                      className="relative hidden min-h-11 items-center gap-2 overflow-hidden rounded-full px-4 whitespace-nowrap text-[var(--site-text)] transition duration-300 hover:text-[var(--site-accent)] lg:inline-flex"
+                      className="relative hidden min-h-11 items-center gap-2 overflow-hidden rounded-full px-4 whitespace-nowrap text-[var(--site-text)] shadow-[0_0_0_rgba(15,23,42,0)] transition duration-300 hover:text-[var(--site-accent)] hover:shadow-[0_16px_36px_rgba(15,23,42,0.16)] lg:inline-flex"
                     >
                       <span className="absolute inset-0 rounded-full bg-[linear-gradient(135deg,rgba(225,29,46,0.18),rgba(225,29,46,0.06))] opacity-0 transition duration-300 group-hover:opacity-100 group-focus-within:opacity-100" />
                       <span className="absolute inset-x-4 bottom-1 h-[2px] origin-left scale-x-0 rounded-full bg-[var(--site-accent)] transition-transform duration-300 group-hover:scale-x-100 group-focus-within:scale-x-100" />
@@ -371,7 +371,7 @@ const Hero = ({
                       type="button"
                       onClick={(event) => handleMobileCategoryTap(category, event)}
                       aria-expanded={isExpandedOnMobile}
-                      className="relative inline-flex min-h-11 items-center gap-2 overflow-hidden rounded-full px-4 whitespace-nowrap text-[var(--site-text)] transition duration-300 hover:text-[var(--site-accent)] lg:hidden"
+                      className="relative inline-flex min-h-11 items-center gap-2 overflow-hidden rounded-full px-4 whitespace-nowrap text-[var(--site-text)] shadow-[0_0_0_rgba(15,23,42,0)] transition duration-300 hover:text-[var(--site-accent)] hover:shadow-[0_16px_36px_rgba(15,23,42,0.16)] lg:hidden"
                     >
                       <span className="absolute inset-0 rounded-full bg-[linear-gradient(135deg,rgba(225,29,46,0.18),rgba(225,29,46,0.06))] opacity-0 transition duration-300 group-hover:opacity-100" />
                       <span className="absolute inset-x-4 bottom-1 h-[2px] origin-left scale-x-0 rounded-full bg-[var(--site-accent)] transition-transform duration-300 group-hover:scale-x-100" />
@@ -389,7 +389,7 @@ const Hero = ({
                 ) : (
                   <Link
                     href={category.href}
-                    className="relative inline-flex min-h-11 items-center gap-2 overflow-hidden rounded-full px-4 whitespace-nowrap text-[var(--site-text)] transition duration-300 hover:text-[var(--site-accent)]"
+                    className="relative inline-flex min-h-11 items-center gap-2 overflow-hidden rounded-full px-4 whitespace-nowrap text-[var(--site-text)] shadow-[0_0_0_rgba(15,23,42,0)] transition duration-300 hover:text-[var(--site-accent)] hover:shadow-[0_16px_36px_rgba(15,23,42,0.16)]"
                   >
                     <span className="absolute inset-0 rounded-full bg-[linear-gradient(135deg,rgba(225,29,46,0.18),rgba(225,29,46,0.06))] opacity-0 transition duration-300 group-hover:opacity-100" />
                     <span className="absolute inset-x-4 bottom-1 h-[2px] origin-left scale-x-0 rounded-full bg-[var(--site-accent)] transition-transform duration-300 group-hover:scale-x-100" />

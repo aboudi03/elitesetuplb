@@ -26,8 +26,8 @@ const ProductsSection = async ({
       <div className="max-w-screen-2xl mx-auto">
         <div className="mb-6 flex items-end justify-between">
           <div>
-            <p className="text-sm font-bold uppercase text-[var(--site-accent)]">Featured drops</p>
-            <Heading title="Featured gear" />
+            <p className="text-sm font-bold uppercase text-[var(--site-accent)]">Our picks</p>
+            <Heading title="Trusted gear for your setup" />
           </div>
         </div>
         <div className="grid grid-cols-4 gap-4 max-xl:grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1">

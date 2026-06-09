@@ -94,29 +94,28 @@ const ProductItem = ({
 
   return (
     <div
-      className={`flex h-full w-full min-w-0 rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] p-3 transition hover:-translate-y-1 hover:border-[var(--site-accent)] ${
-        isListView ? "flex-row items-start gap-3 sm:items-stretch sm:gap-4" : "flex-col"
+      className={`group/card flex h-full w-full min-w-0 overflow-hidden rounded-[1.6rem] text-left transition duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:scale-[1.02] ${
+        isListView ? "flex-row items-start gap-3 p-3 sm:items-stretch sm:gap-4 sm:p-4" : "flex-col"
       }`}
     >
       <Link
         href={`/product/${product.slug || product.id}`}
-        className={`group relative flex items-center justify-center overflow-hidden rounded-md border border-[var(--site-border)] bg-[radial-gradient(circle_at_top,color-mix(in_srgb,var(--site-panel)_92%,white_8%),color-mix(in_srgb,var(--site-panel-soft)_94%,transparent)_58%,color-mix(in_srgb,var(--site-panel-soft)_86%,var(--site-text)_14%)_100%)] p-2 shadow-[inset_0_1px_0_color-mix(in_srgb,white_35%,transparent)] sm:p-3 ${
+        className={`group/media relative flex items-center justify-center overflow-hidden ${
           isListView
             ? "h-24 w-24 shrink-0 self-start sm:min-h-[220px] sm:w-[260px]"
-            : "aspect-[5/4]"
+            : "aspect-[4/3] min-h-[300px]"
         }`}
       >
         {quickAddEnabled ? (
           <button
             type="button"
             onClick={handleQuickAdd}
-            className="absolute right-3 top-3 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-[var(--site-border)] bg-[var(--site-panel)]/95 text-[var(--site-text)] shadow-sm backdrop-blur transition hover:scale-105 hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
+            className="absolute right-3 top-3 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-[var(--site-border)] bg-[color-mix(in_srgb,var(--site-panel)_92%,white_8%)] text-[var(--site-text)] shadow-[0_10px_24px_rgba(15,23,42,0.10)] backdrop-blur transition duration-300 hover:scale-110 hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
             aria-label={`Add ${sanitize(displayTitle)} to cart`}
           >
             <HiOutlineShoppingBag className="h-5 w-5" />
           </button>
         ) : null}
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_srgb,white_12%,transparent),transparent_42%,color-mix(in_srgb,var(--site-accent-soft)_18%,transparent))]" />
         <Image
           src={
             product.mainImage
@@ -125,25 +124,31 @@ const ProductItem = ({
           }
           fill
           sizes={isListView ? "(max-width: 640px) 96px, 260px" : "(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"}
-          className={`relative z-10 scale-[1.06] object-contain transition duration-300 group-hover:scale-[1.1] ${
-            isListView ? "p-2 sm:p-4" : "p-3 sm:p-4"
+          className={`relative z-10 scale-[1.03] object-contain transition duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/card:scale-[1.08] group-hover/media:scale-[1.14] ${
+            isListView ? "p-2 sm:p-4" : "p-0 sm:p-1"
           }`}
           alt={sanitize(product?.title || product.model) || "Product image"}
         />
       </Link>
-      <div className={`flex min-w-0 flex-1 ${isListView ? "flex-col justify-between self-stretch" : "flex-col"}`}>
+      <div className={`flex min-w-0 flex-1 transition duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${isListView ? "flex-col justify-between self-stretch" : "mt-4 flex-col rounded-[1.4rem] border border-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--site-panel)_94%,white_6%)_0%,color-mix(in_srgb,var(--site-panel-soft)_92%,white_8%)_100%)] px-6 py-6 shadow-[0_12px_32px_rgba(15,23,42,0.05)] group-hover/card:border-[rgba(225,29,46,0.34)] group-hover/card:shadow-[0_0_0_1px_rgba(225,29,46,0.22),0_18px_44px_rgba(225,29,46,0.16)]"}`}>
         <div>
+          <p className="text-[11px] uppercase tracking-[0.24em] text-[color-mix(in_srgb,var(--site-muted)_88%,var(--site-text)_12%)]">
+            {sanitize(product.manufacturer || product.category?.name || "Elite Setup")}
+          </p>
           <Link
             href={`/product/${product.slug || product.id}`}
-            className={`line-clamp-2 text-sm font-black uppercase text-[var(--site-text)] hover:text-[var(--site-accent)] ${
-              isListView ? "text-sm sm:text-base" : "mt-3 min-h-10"
+            className={`line-clamp-3 text-[var(--site-text)] transition hover:text-[var(--site-accent)] ${
+              isListView ? "mt-2 text-sm font-semibold leading-5 sm:text-base sm:leading-6" : "mt-3 text-[1.06rem] font-medium leading-6 sm:text-[1.18rem]"
             }`}
           >
             {sanitize(product.title || product.model)}
           </Link>
-          <p className={`font-black text-[var(--site-accent)] ${isListView ? "mt-2 text-base sm:mt-3 sm:text-lg" : "mt-2 text-base"}`}>
+          <p className={`font-black text-[var(--site-accent)] ${isListView ? "mt-3 text-base sm:text-lg" : "mt-4 text-[1.45rem]"}`}>
             ${product.price.toFixed(2)}
           </p>
+          {!isListView ? (
+            <p className="mt-1 text-sm text-[color-mix(in_srgb,var(--site-muted)_88%,var(--site-text)_12%)]">Including VAT</p>
+          ) : null}
           {isListView ? (
             <p className="mt-2 line-clamp-2 text-xs leading-5 text-[var(--site-muted)] sm:mt-3 sm:line-clamp-3 sm:text-sm sm:leading-6">
               {productDescription || "No description available for this product yet."}
@@ -153,8 +158,10 @@ const ProductItem = ({
 
         <Link
           href={`/product/${product?.slug || product.id}`}
-          className={`theme-button flex h-10 items-center justify-center rounded-md px-3 text-xs font-black uppercase shadow-sm focus:outline-none focus:ring-2 ${
-            isListView ? "mt-3 w-full sm:mt-6 sm:w-fit sm:min-w-[180px]" : "mt-3 w-full"
+          className={`inline-flex items-center justify-center rounded-full border border-[color:rgba(15,23,42,0.12)] bg-transparent px-5 text-xs font-black uppercase tracking-[0.14em] text-[var(--site-text)] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-[var(--site-accent)] hover:bg-[var(--site-accent)] hover:text-white focus:outline-none focus:ring-2 ${
+            isListView
+              ? "mt-4 h-10 w-full sm:mt-6 sm:w-fit sm:min-w-[180px]"
+              : "pointer-events-none mt-5 h-11 w-full translate-y-3 opacity-0 group-hover/card:pointer-events-auto group-hover/card:translate-y-0 group-hover/card:opacity-100"
           }`}
         >
           <p>View product</p>
