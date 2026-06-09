@@ -10,7 +10,7 @@
 
 "use client";
 import { usePathname } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import HeaderTop from "./HeaderTop";
 import SearchInput from "./SearchInput";
 import Link from "next/link";
@@ -26,32 +26,14 @@ import EliteSetupLogo from "./EliteSetupLogo";
 const Header = () => {
   const { data: session, status } = useSession();
   const pathname = usePathname();
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
 
   const handleLogout = () => {
     setTimeout(() => signOut(), 1000);
     toast.success("Logout successful!");
   };
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsHeaderVisible(window.scrollY <= 8);
-    };
-
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
-
   return (
-    <header
-      className={`sticky top-0 z-40 border-b border-[var(--site-border)] bg-[var(--site-panel)]/95 backdrop-blur transition-transform duration-300 ${
-        isHeaderVisible ? "translate-y-0" : "-translate-y-full"
-      }`}
-    >
+    <header className="z-40 border-b border-[var(--site-border)] bg-[var(--site-panel)]/95 backdrop-blur lg:sticky lg:top-0">
       <HeaderTop />
       {pathname.startsWith("/admin") === false && (
         <div className="mx-auto flex min-h-24 max-w-screen-2xl items-center justify-between gap-8 px-16 py-5 max-[1320px]:px-16 max-lg:flex-col max-lg:justify-center max-lg:gap-y-5 max-md:min-h-0 max-md:gap-3 max-md:px-4 max-md:py-3">

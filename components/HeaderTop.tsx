@@ -11,7 +11,7 @@
 "use client";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { FaRegUser, FaWhatsapp } from "react-icons/fa6";
 import { contactEmails } from "@/lib/utils";
@@ -27,13 +27,62 @@ const whatsappHref = "https://wa.me/96171089840";
 
 const HeaderTop = () => {
   const { data: session }: any = useSession();
+  const [isTopBarVisible, setIsTopBarVisible] = useState(true);
+  const showTopBarTimerRef = useRef<number | null>(null);
 
   const handleLogout = () => {
     setTimeout(() => signOut(), 1000);
     toast.success("Logout successful!");
   }
+
+  useEffect(() => {
+    const showAtTopThreshold = 1;
+    const hideAfterScrollThreshold = 12;
+
+    const clearShowTimer = () => {
+      if (showTopBarTimerRef.current) {
+        window.clearTimeout(showTopBarTimerRef.current);
+        showTopBarTimerRef.current = null;
+      }
+    };
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY <= showAtTopThreshold) {
+        if (!showTopBarTimerRef.current) {
+          showTopBarTimerRef.current = window.setTimeout(() => {
+            setIsTopBarVisible(true);
+            showTopBarTimerRef.current = null;
+          }, 140);
+        }
+        return;
+      }
+
+      clearShowTimer();
+
+      if (currentScrollY >= hideAfterScrollThreshold) {
+        setIsTopBarVisible(false);
+      }
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      clearShowTimer();
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
   return (
-    <div className="hidden min-h-10 border-b border-[var(--site-border)] bg-[var(--site-panel)] text-[var(--site-muted)] md:block max-lg:px-5">
+    <div
+      className={`hidden overflow-hidden border-b border-[var(--site-border)] bg-[var(--site-panel)] text-[var(--site-muted)] transition-all duration-300 md:block max-lg:px-5 ${
+        isTopBarVisible
+          ? "max-h-20 opacity-100"
+          : "max-h-0 border-b-0 opacity-0"
+      }`}
+    >
       <div className="mx-auto flex min-h-10 max-w-screen-2xl justify-between gap-3 px-12 py-2 max-lg:flex-col max-lg:items-center max-lg:justify-center max-sm:px-0">
         <div className="flex h-full flex-col items-center justify-center gap-y-0.5 text-sm max-sm:text-sm md:items-start">
           <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 font-semibold">
