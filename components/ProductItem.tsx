@@ -183,7 +183,7 @@ const ProductItem = ({
             isListView
               ? "mt-4 h-10 w-full sm:mt-6 sm:w-fit sm:min-w-[180px]"
               : mobileCardLinkEnabled
-                ? "absolute inset-x-6 bottom-6 h-11 translate-y-0 border-[var(--site-accent)] bg-[var(--site-accent)] text-white opacity-100 sm:pointer-events-none sm:translate-y-3 sm:border-[color:rgba(15,23,42,0.12)] sm:bg-transparent sm:text-[var(--site-text)] sm:opacity-0 sm:group-hover/card:pointer-events-auto sm:group-hover/card:translate-y-0 sm:group-hover/card:opacity-100"
+                ? "absolute inset-x-6 bottom-6 h-11 translate-y-0 border-[var(--site-accent)] bg-[var(--site-accent-soft)] text-[var(--site-accent)] opacity-100 sm:pointer-events-none sm:translate-y-3 sm:border-[color:rgba(15,23,42,0.12)] sm:bg-transparent sm:text-[var(--site-text)] sm:opacity-0 sm:group-hover/card:pointer-events-auto sm:group-hover/card:translate-y-0 sm:group-hover/card:opacity-100"
                 : "pointer-events-none absolute inset-x-6 bottom-6 h-11 translate-y-3 opacity-0 group-hover/card:pointer-events-auto group-hover/card:translate-y-0 group-hover/card:opacity-100"
           }`}
         >
