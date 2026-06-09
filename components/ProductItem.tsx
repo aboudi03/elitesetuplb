@@ -124,13 +124,13 @@ const ProductItem = ({
           }
           fill
           sizes={isListView ? "(max-width: 640px) 96px, 260px" : "(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"}
-          className={`relative z-10 scale-[1.03] object-contain transition duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/card:scale-[1.08] group-hover/media:scale-[1.14] ${
+          className={`relative z-10 scale-[1.03] object-contain transition duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/card:scale-[1.08] group-hover/media:scale-[1.2] ${
             isListView ? "p-2 sm:p-4" : "p-0 sm:p-1"
           }`}
           alt={sanitize(product?.title || product.model) || "Product image"}
         />
       </Link>
-      <div className={`flex min-w-0 flex-1 transition duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${isListView ? "flex-col justify-between self-stretch" : "mt-4 flex-col rounded-[1.4rem] border border-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--site-panel)_94%,white_6%)_0%,color-mix(in_srgb,var(--site-panel-soft)_92%,white_8%)_100%)] px-6 py-6 shadow-[0_12px_32px_rgba(15,23,42,0.05)] group-hover/card:border-[rgba(225,29,46,0.34)] group-hover/card:shadow-[0_0_0_1px_rgba(225,29,46,0.22),0_18px_44px_rgba(225,29,46,0.16)]"}`}>
+      <div className={`flex min-w-0 flex-1 transition duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${isListView ? "flex-col justify-between self-stretch" : "relative mt-4 flex-col rounded-[1.4rem] border border-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--site-panel)_94%,white_6%)_0%,color-mix(in_srgb,var(--site-panel-soft)_92%,white_8%)_100%)] px-6 pb-[5.75rem] pt-6 shadow-[0_12px_32px_rgba(15,23,42,0.05)] group-hover/card:border-[rgba(225,29,46,0.34)] group-hover/card:shadow-[0_0_0_1px_rgba(225,29,46,0.22),0_18px_44px_rgba(225,29,46,0.16)]"}`}>
         <div>
           <p className="text-[11px] uppercase tracking-[0.24em] text-[color-mix(in_srgb,var(--site-muted)_88%,var(--site-text)_12%)]">
             {sanitize(product.manufacturer || product.category?.name || "Elite Setup")}
@@ -161,7 +161,7 @@ const ProductItem = ({
           className={`inline-flex items-center justify-center rounded-full border border-[color:rgba(15,23,42,0.12)] bg-transparent px-5 text-xs font-black uppercase tracking-[0.14em] text-[var(--site-text)] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-[var(--site-accent)] hover:bg-[var(--site-accent)] hover:text-white focus:outline-none focus:ring-2 ${
             isListView
               ? "mt-4 h-10 w-full sm:mt-6 sm:w-fit sm:min-w-[180px]"
-              : "pointer-events-none mt-5 h-11 w-full translate-y-3 opacity-0 group-hover/card:pointer-events-auto group-hover/card:translate-y-0 group-hover/card:opacity-100"
+              : "pointer-events-none absolute inset-x-6 bottom-6 h-11 translate-y-3 opacity-0 group-hover/card:pointer-events-auto group-hover/card:translate-y-0 group-hover/card:opacity-100"
           }`}
         >
           <p>View product</p>

@@ -163,15 +163,15 @@ const SearchInput = () => {
           </div>
         </div>
 
-        <div className="max-h-[420px] overflow-y-auto px-3 py-3">
+        <div className="max-h-[420px] overflow-y-auto px-5 py-2">
           {isSearching ? (
-            <div className="space-y-2">
+            <div>
               {Array.from({ length: 4 }).map((_, index) => (
                 <div
                   key={index}
-                  className="flex items-center gap-3 rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel)] px-3 py-3 animate-pulse"
+                  className="flex items-center gap-3 border-b border-[var(--site-border)] px-0 py-4 last:border-b-0 animate-pulse"
                 >
-                  <div className="h-16 w-16 rounded-xl bg-[var(--site-panel-soft)]" />
+                  <div className="h-14 w-14 rounded-lg bg-[var(--site-panel-soft)]" />
                   <div className="flex-1 space-y-2">
                     <div className="h-4 w-2/3 rounded bg-[var(--site-panel-soft)]" />
                     <div className="h-3 w-1/3 rounded bg-[var(--site-panel-soft)]" />
@@ -181,7 +181,7 @@ const SearchInput = () => {
               ))}
             </div>
           ) : results.length > 0 ? (
-            <div className="space-y-2">
+            <div>
               {results.map((product) => {
                 const href = `/product/${product.slug || product.id}`;
                 const displayTitle = sanitize(product.title || product.model || "Product");
@@ -190,19 +190,19 @@ const SearchInput = () => {
                     key={product.id}
                     href={href}
                     onClick={handleResultClick}
-                    className="group flex items-center gap-3 rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel)] px-3 py-3 transition duration-300 hover:border-[var(--site-accent)] hover:bg-[var(--site-accent-soft)]"
+                    className="group flex items-center gap-3 border-b border-[var(--site-border)] px-0 py-4 transition duration-300 last:border-b-0 hover:bg-transparent"
                   >
-                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)]">
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-[var(--site-panel-soft)]">
                       <Image
                         src={product.mainImage ? `/${product.mainImage}` : "/product_placeholder.webp"}
                         alt={displayTitle}
                         fill
-                        sizes="64px"
+                        sizes="56px"
                         className="object-contain p-2 transition duration-300 group-hover:scale-105"
                       />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="line-clamp-2 text-sm font-black uppercase text-[var(--site-text)]">
+                      <p className="line-clamp-2 text-sm font-black uppercase text-[var(--site-text)] transition group-hover:text-[var(--site-accent)]">
                         {displayTitle}
                       </p>
                       <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold text-[var(--site-muted)]">
@@ -215,7 +215,7 @@ const SearchInput = () => {
               })}
             </div>
           ) : (
-            <div className="rounded-2xl border border-dashed border-[var(--site-border)] px-4 py-10 text-center">
+            <div className="px-0 py-10 text-center">
               <p className="text-sm font-semibold text-[var(--site-muted)]">
                 No products found for this search yet.
               </p>
