@@ -22,23 +22,29 @@ const hiddenFooterLinks = new Set([
 
 const Footer = () => {
   return (
-    <footer className="border-t border-[var(--site-border)] bg-[var(--site-panel)]" aria-labelledby="footer-heading">
+    <footer
+      className="border-t border-[var(--site-border)] bg-[var(--site-panel)]"
+      aria-labelledby="footer-heading"
+    >
       <div>
         <h2 id="footer-heading" className="sr-only">
           Footer
         </h2>
         <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="grid gap-8 sm:grid-cols-3">
+          <div className="grid gap-6 max-sm:gap-5 sm:grid-cols-3">
             <div>
-              <Link href="/about-us" className="text-sm font-bold leading-6 text-[var(--site-accent)] hover:underline">
+              <Link
+                href="/about-us"
+                className="text-sm font-bold leading-6 text-[var(--site-accent)] hover:underline"
+              >
                 About Us
               </Link>
-              <ul role="list" className="mt-3 space-y-2.5">
+              <ul role="list" className="mt-2.5 space-y-2">
                 {navigation.about.map((item) => (
                   <li key={item.name}>
                     <a
                       href={item.href}
-                      className="text-sm leading-6 text-[var(--site-muted)] hover:text-[var(--site-accent)]"
+                      className="text-sm leading-6 text-[var(--site-muted)] transition hover:text-[var(--site-accent)]"
                     >
                       {item.name}
                     </a>
@@ -47,42 +53,52 @@ const Footer = () => {
               </ul>
             </div>
             <div>
-              <Link href="/buying" className="text-sm font-bold leading-6 text-[var(--site-accent)] hover:underline">
+              <Link
+                href="/buying"
+                className="text-sm font-bold leading-6 text-[var(--site-accent)] hover:underline"
+              >
                 Buying
               </Link>
-              <ul role="list" className="mt-3 space-y-2.5">
-                {navigation.buy.filter((item) => !hiddenFooterLinks.has(item.name)).map((item) => (
-                  <li key={item.name}>
-                    <a
-                      href={item.href}
-                      className="text-sm leading-6 text-[var(--site-muted)] hover:text-[var(--site-accent)]"
-                    >
-                      {item.name}
-                    </a>
-                  </li>
-                ))}
+              <ul role="list" className="mt-2.5 space-y-2">
+                {navigation.buy
+                  .filter((item) => !hiddenFooterLinks.has(item.name))
+                  .map((item) => (
+                    <li key={item.name}>
+                      <a
+                        href={item.href}
+                        className="text-sm leading-6 text-[var(--site-muted)] transition hover:text-[var(--site-accent)]"
+                      >
+                        {item.name}
+                      </a>
+                    </li>
+                  ))}
               </ul>
             </div>
             <div>
-              <Link href="/support" className="text-sm font-bold leading-6 text-[var(--site-accent)] hover:underline">
+              <Link
+                href="/support"
+                className="text-sm font-bold leading-6 text-[var(--site-accent)] hover:underline"
+              >
                 Support
               </Link>
-              <ul role="list" className="mt-3 space-y-2.5">
-                {navigation.help.filter((item) => !hiddenFooterLinks.has(item.name)).map((item) => (
-                  <li key={item.name}>
-                    <a
-                      href={item.href}
-                      className="text-sm leading-6 text-[var(--site-muted)] hover:text-[var(--site-accent)]"
-                    >
-                      {item.name}
-                    </a>
-                  </li>
-                ))}
+              <ul role="list" className="mt-2.5 space-y-2">
+                {navigation.help
+                  .filter((item) => !hiddenFooterLinks.has(item.name))
+                  .map((item) => (
+                    <li key={item.name}>
+                      <a
+                        href={item.href}
+                        className="text-sm leading-6 text-[var(--site-muted)] transition hover:text-[var(--site-accent)]"
+                      >
+                        {item.name}
+                      </a>
+                    </li>
+                  ))}
               </ul>
             </div>
           </div>
-          <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-[var(--site-border)] pt-6 text-center sm:flex-row sm:text-left">
-            <div className="flex items-center gap-3">
+          <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-[var(--site-border)] pt-6 text-center max-sm:items-start max-sm:text-left sm:flex-row sm:text-left">
+            <div className="flex items-center gap-3 max-sm:w-full">
               <EliteSetupLogo
                 href="/"
                 showText={false}
@@ -91,8 +107,8 @@ const Footer = () => {
               />
               <span className="text-base font-bold text-[var(--site-text)]">{STORE_NAME}</span>
             </div>
-            <p className="text-sm text-[var(--site-muted)]">
-              © {new Date().getFullYear()} {STORE_NAME}. All rights reserved.
+            <p className="text-sm text-[var(--site-muted)] max-sm:text-xs">
+              &copy; {new Date().getFullYear()} {STORE_NAME}. All rights reserved.
             </p>
           </div>
         </div>
