@@ -336,9 +336,9 @@ const Hero = ({
 
   return (
     <section className="bg-[var(--site-bg)] pb-8">
-      <nav className="border-b border-[var(--site-border)] bg-[var(--site-panel)]">
+      <nav className="border-b border-[var(--site-border)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--site-panel)_92%,white_8%),var(--site-panel))]">
         <div
-          className="mx-auto flex max-w-screen-2xl items-center justify-center gap-9 overflow-x-auto px-4 py-3 text-sm font-semibold text-[var(--site-text)] max-lg:justify-start lg:overflow-visible"
+          className="mx-auto flex max-w-screen-2xl items-center justify-center gap-3 overflow-x-auto px-4 py-3 text-sm font-semibold text-[var(--site-text)] max-lg:justify-start lg:overflow-visible"
           style={{
             touchAction: "pan-x",
             WebkitOverflowScrolling: "touch",
@@ -354,12 +354,14 @@ const Hero = ({
                   <>
                     <Link
                       href={category.href}
-                      className="hidden items-center gap-2 whitespace-nowrap transition hover:text-[var(--site-accent)] lg:inline-flex"
+                      className="relative hidden min-h-11 items-center gap-2 overflow-hidden rounded-full px-4 whitespace-nowrap text-[var(--site-text)] transition duration-300 hover:text-[var(--site-accent)] lg:inline-flex"
                     >
-                      {category.label}
+                      <span className="absolute inset-0 rounded-full bg-[linear-gradient(135deg,rgba(225,29,46,0.18),rgba(225,29,46,0.06))] opacity-0 transition duration-300 group-hover:opacity-100 group-focus-within:opacity-100" />
+                      <span className="absolute inset-x-4 bottom-1 h-[2px] origin-left scale-x-0 rounded-full bg-[var(--site-accent)] transition-transform duration-300 group-hover:scale-x-100 group-focus-within:scale-x-100" />
+                      <span className="relative z-10">{category.label}</span>
                       <span
                         aria-hidden="true"
-                        className="text-xs leading-none transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180"
+                        className="relative z-10 text-[10px] leading-none transition-transform duration-300 group-hover:rotate-180 group-focus-within:rotate-180"
                       >
                         <FaChevronDown />
                       </span>
@@ -369,12 +371,14 @@ const Hero = ({
                       type="button"
                       onClick={(event) => handleMobileCategoryTap(category, event)}
                       aria-expanded={isExpandedOnMobile}
-                      className="inline-flex items-center gap-2 whitespace-nowrap transition hover:text-[var(--site-accent)] lg:hidden"
+                      className="relative inline-flex min-h-11 items-center gap-2 overflow-hidden rounded-full px-4 whitespace-nowrap text-[var(--site-text)] transition duration-300 hover:text-[var(--site-accent)] lg:hidden"
                     >
-                      {category.label}
+                      <span className="absolute inset-0 rounded-full bg-[linear-gradient(135deg,rgba(225,29,46,0.18),rgba(225,29,46,0.06))] opacity-0 transition duration-300 group-hover:opacity-100" />
+                      <span className="absolute inset-x-4 bottom-1 h-[2px] origin-left scale-x-0 rounded-full bg-[var(--site-accent)] transition-transform duration-300 group-hover:scale-x-100" />
+                      <span className="relative z-10">{category.label}</span>
                       <span
                         aria-hidden="true"
-                        className={`text-xs leading-none transition-transform duration-200 ${
+                        className={`relative z-10 text-[10px] leading-none transition-transform duration-300 ${
                           isExpandedOnMobile ? "rotate-180" : ""
                         }`}
                       >
@@ -385,23 +389,28 @@ const Hero = ({
                 ) : (
                   <Link
                     href={category.href}
-                    className="inline-flex items-center gap-2 whitespace-nowrap transition hover:text-[var(--site-accent)]"
+                    className="relative inline-flex min-h-11 items-center gap-2 overflow-hidden rounded-full px-4 whitespace-nowrap text-[var(--site-text)] transition duration-300 hover:text-[var(--site-accent)]"
                   >
-                    {category.label}
+                    <span className="absolute inset-0 rounded-full bg-[linear-gradient(135deg,rgba(225,29,46,0.18),rgba(225,29,46,0.06))] opacity-0 transition duration-300 group-hover:opacity-100" />
+                    <span className="absolute inset-x-4 bottom-1 h-[2px] origin-left scale-x-0 rounded-full bg-[var(--site-accent)] transition-transform duration-300 group-hover:scale-x-100" />
+                    <span className="relative z-10">{category.label}</span>
                   </Link>
                 )}
 
                 {hasChildren && (
                   <>
-                    <div className="absolute left-0 top-full z-30 hidden min-w-[240px] pt-3 group-hover:block group-focus-within:block max-lg:hidden">
-                      <div className="rounded-lg border border-[var(--site-border)] bg-[var(--site-panel)] p-2 shadow-[0_18px_45px_rgba(0,0,0,0.16)]">
+                    <div className="pointer-events-none absolute left-0 top-full z-30 min-w-[260px] pt-3 opacity-0 transition duration-300 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 max-lg:hidden">
+                      <div className="translate-y-3 rounded-[1.25rem] border border-[var(--site-border)] bg-[color-mix(in_srgb,var(--site-panel)_92%,white_8%)] p-2.5 shadow-[0_24px_60px_rgba(0,0,0,0.18)] backdrop-blur transition duration-300 group-hover:translate-y-0 group-focus-within:translate-y-0">
                         {category.children!.map((childCategory) => (
                           <Link
                             key={childCategory.id}
                             href={childCategory.href}
-                            className="block rounded-lg px-3 py-2 text-sm font-semibold text-[var(--site-text)] transition hover:bg-[var(--site-panel-soft)] hover:text-[var(--site-accent)]"
+                            className="group/item block rounded-xl px-4 py-3 text-sm font-semibold text-[var(--site-text)] transition duration-300 hover:bg-[linear-gradient(135deg,rgba(225,29,46,0.14),rgba(225,29,46,0.04))] hover:text-[var(--site-accent)]"
                           >
-                            {childCategory.label}
+                            <span className="inline-flex items-center gap-2">
+                              <span className="h-1.5 w-1.5 rounded-full bg-[var(--site-accent)] opacity-0 transition duration-300 group-hover/item:opacity-100" />
+                              {childCategory.label}
+                            </span>
                           </Link>
                         ))}
                       </div>
@@ -422,7 +431,7 @@ const Hero = ({
               top: mobileDropdownPosition.top,
             }}
           >
-            <div className="max-h-[320px] overflow-y-auto rounded-lg border border-[var(--site-border)] bg-[var(--site-panel)] p-2 shadow-[0_18px_45px_rgba(0,0,0,0.16)]">
+            <div className="max-h-[320px] overflow-y-auto rounded-[1.25rem] border border-[var(--site-border)] bg-[color-mix(in_srgb,var(--site-panel)_94%,white_6%)] p-2.5 shadow-[0_24px_60px_rgba(0,0,0,0.18)] backdrop-blur">
               {expandedMobileCategory.children.map((childCategory) => (
                 <Link
                   key={childCategory.id}
@@ -431,7 +440,7 @@ const Hero = ({
                     setExpandedMobileCategoryId(null);
                     setMobileDropdownPosition(null);
                   }}
-                  className="block rounded-lg px-3 py-2 text-sm font-semibold text-[var(--site-text)] transition hover:bg-[var(--site-panel-soft)] hover:text-[var(--site-accent)]"
+                  className="block rounded-xl px-4 py-3 text-sm font-semibold text-[var(--site-text)] transition duration-300 hover:bg-[linear-gradient(135deg,rgba(225,29,46,0.14),rgba(225,29,46,0.04))] hover:text-[var(--site-accent)]"
                 >
                   {childCategory.label}
                 </Link>
