@@ -43,9 +43,11 @@ const ProductDescriptionDrawer = ({
     return null;
   }
 
-  const shouldScrollExpandedContent = isExpanded && contentHeight > expandedMaxHeight;
+  const shouldScrollExpandedContent = isExpanded && isOverflowing;
   const visibleHeight = isExpanded
-    ? Math.min(contentHeight, expandedMaxHeight)
+    ? shouldScrollExpandedContent
+      ? expandedMaxHeight
+      : contentHeight
     : isOverflowing
       ? collapsedHeight
       : contentHeight;
@@ -55,10 +57,13 @@ const ProductDescriptionDrawer = ({
       <div
         className={`relative transition-[max-height] duration-500 ease-out ${
           shouldScrollExpandedContent
-            ? "overflow-y-auto overflow-x-hidden pr-3"
+            ? "overflow-y-scroll overflow-x-hidden pr-3"
             : "overflow-hidden"
         }`}
-        style={{ maxHeight: `${visibleHeight}px` }}
+        style={{
+          maxHeight: `${visibleHeight}px`,
+          height: shouldScrollExpandedContent ? `${visibleHeight}px` : undefined,
+        }}
       >
         <div
           ref={contentRef}

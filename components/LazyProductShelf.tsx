@@ -8,6 +8,7 @@ type LazyProductShelfProps = {
   gridClassName: string;
   itemClassName?: string;
   placeholderCount?: number;
+  scrollKey?: string;
 };
 
 const LazyProductShelf = ({
@@ -15,8 +16,10 @@ const LazyProductShelf = ({
   gridClassName,
   itemClassName = "",
   placeholderCount = 4,
+  scrollKey,
 }: LazyProductShelfProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const scrollPositionsRef = useRef<Record<string, number>>({});
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -41,6 +44,32 @@ const LazyProductShelf = ({
     return () => observer.disconnect();
   }, [isVisible]);
 
+  useEffect(() => {
+    if (!scrollKey || !containerRef.current) {
+      return;
+    }
+
+    const restoreFrame = window.requestAnimationFrame(() => {
+      if (!containerRef.current) {
+        return;
+      }
+
+      containerRef.current.scrollLeft = scrollPositionsRef.current[scrollKey] || 0;
+    });
+
+    return () => {
+      window.cancelAnimationFrame(restoreFrame);
+    };
+  }, [isVisible, products.length, scrollKey]);
+
+  const handleScroll = () => {
+    if (!scrollKey || !containerRef.current) {
+      return;
+    }
+
+    scrollPositionsRef.current[scrollKey] = containerRef.current.scrollLeft;
+  };
+
   const visiblePlaceholderCount = Math.min(
     Math.max(placeholderCount, 1),
     Math.max(products.length, 1)
@@ -51,7 +80,7 @@ const LazyProductShelf = ({
   }
 
   return (
-    <div ref={containerRef} className={gridClassName}>
+    <div ref={containerRef} className={gridClassName} onScroll={handleScroll}>
       {isVisible
         ? products.map((product) => (
             <div key={product.id} className={itemClassName}>
