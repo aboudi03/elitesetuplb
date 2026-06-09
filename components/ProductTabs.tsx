@@ -12,7 +12,7 @@
 
 import React, { useEffect, useState } from "react";
 import { formatCategoryName } from "@/utils/categoryFormating";
-import { sanitize } from "@/lib/sanitize";
+import { sanitize, sanitizeHtml } from "@/lib/sanitize";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { FaStar } from "react-icons/fa6";
@@ -45,6 +45,7 @@ function stripHtmlDescription(value: string | null | undefined) {
 const ProductTabs = ({ product }: { product: Product }) => {
   const { data: session, status: sessionStatus } = useSession();
   const [currentProductTab, setCurrentProductTab] = useState<number>(0);
+  const [safeDescriptionHtml, setSafeDescriptionHtml] = useState("");
   const [reviewData, setReviewData] = useState<ReviewResponse>({
     averageRating: Number(product?.rating || 0),
     count: 0,
@@ -71,11 +72,11 @@ const ProductTabs = ({ product }: { product: Product }) => {
       label: "Color",
       value: "Check available options above",
     },
-    {
-      label: "Description",
-      value: stripHtmlDescription(product?.description),
-    },
   ];
+
+  useEffect(() => {
+    setSafeDescriptionHtml(sanitizeHtml(product?.description));
+  }, [product?.description]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -221,6 +222,21 @@ const ProductTabs = ({ product }: { product: Product }) => {
                 </p>
               </div>
             ))}
+            <div className="rounded-2xl border border-[var(--site-border)] bg-[linear-gradient(180deg,var(--site-panel),var(--site-panel-soft))] px-4 py-4 shadow-sm">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--site-muted)]">
+                Description
+              </p>
+              {safeDescriptionHtml ? (
+                <div
+                  className="rich-text-content mt-2 text-base font-semibold text-[var(--site-text)] sm:text-lg"
+                  dangerouslySetInnerHTML={{ __html: safeDescriptionHtml }}
+                />
+              ) : (
+                <p className="mt-2 break-words text-base font-semibold text-[var(--site-text)] sm:text-lg">
+                  {stripHtmlDescription(product?.description)}
+                </p>
+              )}
+            </div>
           </div>
         )}
 
