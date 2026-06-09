@@ -183,8 +183,8 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
   };
 
   return (
-    <div className="flex w-full max-w-2xl gap-4 max-sm:flex-col-reverse">
-      <div className="flex max-h-[520px] w-24 shrink-0 flex-col gap-3 overflow-y-auto pr-1 max-sm:w-full max-sm:flex-row max-sm:overflow-x-auto max-sm:overflow-y-hidden max-sm:pr-0">
+    <div className="flex w-full max-w-[980px] gap-5 max-sm:flex-col-reverse">
+      <div className="flex max-h-[720px] w-24 shrink-0 flex-col gap-3 overflow-y-auto pr-1 max-sm:w-full max-sm:flex-row max-sm:overflow-x-auto max-sm:overflow-y-hidden max-sm:pr-0">
         {slides.map((slide, index) => (
           <button
             key={slide.id}
@@ -210,7 +210,7 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
 
       <div
         ref={galleryFrameRef}
-        className="relative flex aspect-square min-h-[320px] flex-1 items-center justify-center overflow-hidden rounded-md border border-[var(--site-bg)] bg-[var(--site-bg)] p-4"
+        className="relative flex aspect-square min-h-[360px] flex-1 items-center justify-center overflow-hidden rounded-[1.75rem] border border-[var(--site-border)] bg-[linear-gradient(180deg,#ffffff,var(--site-panel-soft))] p-6 shadow-[0_22px_60px_rgba(15,23,42,0.08)] sm:min-h-[460px] lg:min-h-[620px] lg:p-8"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -235,7 +235,7 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
           height={560}
           alt={activeSlide.alt}
           priority
-          className="relative z-0 h-full max-h-[520px] w-full animate-[productImageFade_450ms_ease-out] object-contain"
+          className="relative z-0 h-full max-h-[680px] w-full animate-[productImageFade_450ms_ease-out] object-contain"
         />
         <div
           className={`pointer-events-none absolute inset-0 hidden rounded-md border border-white/20 bg-no-repeat shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] transition-opacity duration-150 lg:block ${

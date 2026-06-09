@@ -10,9 +10,9 @@
 
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { formatCategoryName } from "@/utils/categoryFormating";
-import { sanitize, sanitizeHtml } from "@/lib/sanitize";
+import { sanitize } from "@/lib/sanitize";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { FaStar } from "react-icons/fa6";
@@ -33,89 +33,18 @@ type ReviewResponse = {
   reviews: ProductReview[];
 };
 
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;");
-}
+function stripHtmlDescription(value: string | null | undefined) {
+  const plainText = String(value || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
-function formatPlainDescription(value: string) {
-  const sectionLabels = [
-    "Summary",
-    "Package Content",
-    "Features",
-    "Description",
-  ];
-  const specLabels = [
-    "DPI",
-    "Switch Lifetime",
-    "Lighting Effects",
-    "Size",
-    "Weight",
-    "Cable",
-  ];
-  const allLabels = [...sectionLabels, ...specLabels];
-  const labelPattern = allLabels
-    .map((label) => label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
-    .join("|");
-
-  const lines = value
-    .replace(/\r\n/g, "\n")
-    .replace(new RegExp(`(${labelPattern}):`, "g"), "\n$1:\n")
-    .replace(/([a-z0-9])([A-Z][a-z])/g, "$1\n$2")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
-
-  let html = "";
-  let listOpen = false;
-
-  const closeList = () => {
-    if (!listOpen) return;
-    html += "</ol>";
-    listOpen = false;
-  };
-
-  lines.forEach((line) => {
-    if (sectionLabels.some((label) => line === `${label}:`)) {
-      closeList();
-      html += `<h2>${escapeHtml(line)}</h2>`;
-      return;
-    }
-
-    if (!listOpen) {
-      html += "<ol>";
-      listOpen = true;
-    }
-
-    html += `<li>${escapeHtml(line.replace(/^\d+\.\s*/, ""))}</li>`;
-  });
-
-  closeList();
-
-  return html || escapeHtml(value);
-}
-
-function formatDescription(value: string | null | undefined) {
-  if (!value || value.trim().length === 0) {
-    return "<p>This product has no description yet.</p>";
-  }
-
-  if (/<[a-z][\s\S]*>/i.test(value)) {
-    return sanitizeHtml(value);
-  }
-
-  return formatPlainDescription(value);
+  return plainText || "This product has no description yet.";
 }
 
 const ProductTabs = ({ product }: { product: Product }) => {
   const { data: session, status: sessionStatus } = useSession();
   const [currentProductTab, setCurrentProductTab] = useState<number>(0);
-  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
-  const [canExpandDescription, setCanExpandDescription] = useState(false);
   const [reviewData, setReviewData] = useState<ReviewResponse>({
     averageRating: Number(product?.rating || 0),
     count: 0,
@@ -127,8 +56,6 @@ const ProductTabs = ({ product }: { product: Product }) => {
   });
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
-  const descriptionRef = useRef<HTMLDivElement>(null);
-  const sanitizedDescription = formatDescription(product?.description);
   const additionalInfoItems = [
     {
       label: "Manufacturer",
@@ -144,23 +71,11 @@ const ProductTabs = ({ product }: { product: Product }) => {
       label: "Color",
       value: "Check available options above",
     },
+    {
+      label: "Description",
+      value: stripHtmlDescription(product?.description),
+    },
   ];
-
-  useEffect(() => {
-    if (currentProductTab !== 0) return;
-
-    const checkOverflow = () => {
-      const descriptionElement = descriptionRef.current;
-      if (!descriptionElement) return;
-
-      setCanExpandDescription(descriptionElement.scrollHeight > descriptionElement.clientHeight + 8);
-    };
-
-    checkOverflow();
-    window.addEventListener("resize", checkOverflow);
-
-    return () => window.removeEventListener("resize", checkOverflow);
-  }, [currentProductTab, sanitizedDescription, isDescriptionExpanded]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -278,7 +193,7 @@ const ProductTabs = ({ product }: { product: Product }) => {
           }`}
           onClick={() => setCurrentProductTab(0)}
         >
-          Description
+          Additional info
         </a>
         <a
           role="tab"
@@ -287,46 +202,11 @@ const ProductTabs = ({ product }: { product: Product }) => {
           }`}
           onClick={() => setCurrentProductTab(1)}
         >
-          Additional info
-        </a>
-        <a
-          role="tab"
-          className={`tab flex-1 text-center text-lg text-[var(--site-text)] pb-8 max-[500px]:text-sm max-[400px]:px-2 max-[400px]:text-xs ${
-            currentProductTab === 2 && "tab-active"
-          }`}
-          onClick={() => setCurrentProductTab(2)}
-        >
           Reviews
         </a>
       </div>
       <div className="pt-5">
         {currentProductTab === 0 && (
-          <div className="border-y border-[var(--site-border)] py-5">
-            <div
-              ref={descriptionRef}
-              className={`rich-text-content text-lg text-[var(--site-text)] transition-[max-height] duration-300 max-sm:text-base ${
-                isDescriptionExpanded ? "max-h-none" : "max-h-[170px] overflow-hidden"
-              }`}
-              dangerouslySetInnerHTML={{
-                __html: sanitizedDescription
-              }}
-            />
-            {canExpandDescription || isDescriptionExpanded ? (
-              <div className="mt-4 flex justify-center">
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--site-accent)] transition hover:text-[var(--site-accent-strong)]"
-                  onClick={() => setIsDescriptionExpanded((current) => !current)}
-                >
-                  {isDescriptionExpanded ? "Show Less" : "Show More"}
-                  <span aria-hidden="true">{isDescriptionExpanded ? "^" : "v"}</span>
-                </button>
-              </div>
-            ) : null}
-          </div>
-        )}
-
-        {currentProductTab === 1 && (
           <div className="grid gap-3 pt-1 sm:gap-4">
             {additionalInfoItems.map((item) => (
               <div
@@ -344,7 +224,7 @@ const ProductTabs = ({ product }: { product: Product }) => {
           </div>
         )}
 
-        {currentProductTab === 2 && (
+        {currentProductTab === 1 && (
           <div className="grid gap-6">
             <div className="rounded-2xl border border-[var(--site-border)] bg-[linear-gradient(180deg,var(--site-panel),var(--site-panel-soft))] px-5 py-5 shadow-sm">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
