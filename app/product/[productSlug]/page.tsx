@@ -5,12 +5,13 @@ import {
   ProductTabs,
   ProductImageGallery,
   SingleProductDynamicFields,
+  ProductDescriptionDrawer,
 } from "@/components";
 import apiClient from "@/lib/api";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import React from "react";
-import { sanitize } from "@/lib/sanitize";
+import { sanitize, sanitizeHtml } from "@/lib/sanitize";
 import {
   absoluteUrl,
   buildMetaDescription,
@@ -173,10 +174,7 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
       product.category && typeof product.category === "object" ? product.category : null,
   };
   const productName = normalizedProduct.title || normalizedProduct.model || "Product";
-  const plainDescription = stripHtml(normalizedProduct.description || "");
-  const shortDescription = plainDescription.length > 260
-    ? `${plainDescription.slice(0, 257).trimEnd()}...`
-    : plainDescription;
+  const productDescriptionHtml = sanitizeHtml(normalizedProduct.description || "");
 
   // sending API request for more than 1 product image if it exists
   const imagesData = await apiClient.get(`/api/images/${normalizedProduct.id}`, {
@@ -268,10 +266,8 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
                 <span>Including VAT</span>
               </div>
 
-              {shortDescription ? (
-                <p className="max-w-3xl text-base leading-7 text-[var(--site-muted)] sm:text-lg">
-                  {sanitize(shortDescription)}
-                </p>
+              {productDescriptionHtml ? (
+                <ProductDescriptionDrawer html={productDescriptionHtml} />
               ) : null}
             </div>
 

@@ -24,6 +24,7 @@ export { default as ColorInput } from "./ColorInput";
 
 export { default as ProductTabs } from "./ProductTabs";
 export { default as ProductImageGallery } from "./ProductImageGallery";
+export { default as ProductDescriptionDrawer } from "./ProductDescriptionDrawer";
 
 
 export { default as CustomButton } from "./CustomButton";

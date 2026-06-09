@@ -24,6 +24,71 @@ function stripBackgroundStyles(html: string): string {
   return template.innerHTML;
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+function escapeAttribute(value: string): string {
+  return escapeHtml(value).replace(/`/g, '&#x60;');
+}
+
+function sanitizeHtmlWithoutDom(
+  html: string,
+  allowedTags: string[],
+  allowedAttributes: string[]
+): string {
+  const allowedTagSet = new Set(allowedTags);
+  const allowedAttributeSet = new Set(allowedAttributes);
+  let sanitized = '';
+  let lastIndex = 0;
+  const tagPattern = /<\/?([a-z0-9]+)([^>]*)>/gi;
+  const attributePattern = /([a-z0-9:-]+)\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/gi;
+
+  html.replace(tagPattern, (match, rawTagName, rawAttributes, offset) => {
+    sanitized += escapeHtml(html.slice(lastIndex, offset));
+    lastIndex = offset + match.length;
+
+    const tagName = String(rawTagName).toLowerCase();
+    if (!allowedTagSet.has(tagName)) {
+      return '';
+    }
+
+    const isClosingTag = match.startsWith('</');
+    if (isClosingTag) {
+      sanitized += `</${tagName}>`;
+      return '';
+    }
+
+    const attributes: string[] = [];
+    String(rawAttributes || '').replace(
+      attributePattern,
+      (_attributeMatch, rawName, _rawValue, doubleQuotedValue, singleQuotedValue, unquotedValue) => {
+        const attributeName = String(rawName).toLowerCase();
+        if (!allowedAttributeSet.has(attributeName) || attributeName === 'style') {
+          return '';
+        }
+
+        const attributeValue = String(
+          doubleQuotedValue ?? singleQuotedValue ?? unquotedValue ?? ''
+        );
+        attributes.push(`${attributeName}="${escapeAttribute(attributeValue)}"`);
+        return '';
+      }
+    );
+
+    sanitized += `<${tagName}${attributes.length > 0 ? ` ${attributes.join(' ')}` : ''}>`;
+    return '';
+  });
+
+  sanitized += escapeHtml(html.slice(lastIndex));
+  return sanitized;
+}
+
 /**
  * Enhanced function to sanitize text and prevent XSS
  * @param text - The text to sanitize
@@ -93,6 +158,5 @@ export function sanitizeHtml(text: string | null | undefined): string {
     }));
   }
   
-  // For server-side, strip all HTML tags
-  return text.replace(/<[^>]*>/g, '');
+  return sanitizeHtmlWithoutDom(text, allowedTags, allowedAttributes);
 }
