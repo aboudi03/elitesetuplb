@@ -9,7 +9,6 @@ import SessionProvider from "@/utils/SessionProvider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Providers from "@/Providers";
-import SessionTimeoutWrapper from "@/components/SessionTimeoutWrapper";
 import GoogleTag from "@/components/GoogleTag";
 import { absoluteUrl, STORE_NAME } from "@/lib/seo";
 
@@ -68,7 +67,6 @@ export default async function RootLayout({
       <body className={`${inter.className} bg-[var(--site-bg)] text-[var(--site-text)]`}>
         <GoogleTag />
         <SessionProvider session={session}>
-          <SessionTimeoutWrapper />
           <Header />
           <Providers>
             {children}

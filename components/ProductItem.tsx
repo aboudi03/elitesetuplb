@@ -145,7 +145,7 @@ const ProductItem = ({
           }
           fill
           sizes={isListView ? "(max-width: 640px) 96px, 260px" : "(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"}
-          className={`relative z-10 scale-[1.03] object-contain transition duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/card:scale-[1.08] group-hover/media:scale-[1.2] ${
+          className={`relative z-10 object-contain object-center transition duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] max-sm:scale-100 sm:scale-[1.03] group-hover/card:sm:scale-[1.08] group-hover/media:sm:scale-[1.2] ${
             isListView ? "p-2 sm:p-4" : "p-0 sm:p-1"
           }`}
           alt={sanitize(product?.title || product.model) || "Product image"}
