@@ -211,7 +211,11 @@ const Hero = ({
     }
 
     const closeMobileDropdownOnOutsideTap = (event: PointerEvent) => {
-      const target = event.target as Node;
+      const target = event.target;
+
+      if (!(target instanceof Node)) {
+        return;
+      }
 
       if (
         categoryNavRef.current?.contains(target) ||

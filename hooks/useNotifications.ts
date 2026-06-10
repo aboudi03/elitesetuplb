@@ -30,19 +30,15 @@ export const useNotifications = () => {
     setUnreadCount
   } = useNotificationStore();
 
+  const sessionUserId =
+    typeof (session?.user as { id?: string } | undefined)?.id === "string"
+      ? (session?.user as { id?: string }).id!
+      : null;
+
   // Get current user ID
   const getCurrentUserId = useCallback(async () => {
-    if (!session?.user?.email) return null;
-    
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/email/${session.user.email}`);
-      const userData = await response.json();
-      return userData?.id || null;
-    } catch (error) {
-      console.error('Error fetching user ID:', error);
-      return null;
-    }
-  }, [session?.user?.email]);
+    return sessionUserId;
+  }, [sessionUserId]);
 
   // Fetch notifications
   const fetchNotifications = useCallback(async (customFilters?: NotificationFilters) => {
@@ -207,23 +203,21 @@ export const useNotifications = () => {
 export const useUnreadCount = () => {
   const { unreadCount, setUnreadCount } = useNotificationStore();
   const { data: session } = useSession();
+  const sessionUserId =
+    typeof (session?.user as { id?: string } | undefined)?.id === "string"
+      ? (session?.user as { id?: string }).id!
+      : null;
 
   const fetchUnreadCount = useCallback(async () => {
-    if (!session?.user?.email) return;
+    if (!sessionUserId) return;
 
     try {
-      // Get user ID first
-      const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/email/${session.user.email}`);
-      const userData = await userResponse.json();
-      
-      if (userData?.id) {
-        const { unreadCount } = await notificationApi.getUnreadCount(userData.id);
-        setUnreadCount(unreadCount);
-      }
+      const { unreadCount } = await notificationApi.getUnreadCount(sessionUserId);
+      setUnreadCount(unreadCount);
     } catch (error) {
       console.error('Error fetching unread count:', error);
     }
-  }, [session?.user?.email, setUnreadCount]);
+  }, [sessionUserId, setUnreadCount]);
 
   // Auto-refresh unread count every 30 seconds
   useEffect(() => {
