@@ -101,7 +101,7 @@ export default function FeaturedBrandShowcase({
 
           <LazyProductShelf
             products={activeBrand.products.map((item) => item.product)}
-            gridClassName="grid snap-x snap-mandatory grid-flow-col auto-cols-[minmax(0,86%)] gap-4 overflow-x-auto px-1 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid-flow-row sm:auto-cols-auto sm:overflow-visible sm:px-0 sm:pb-0 sm:snap-none sm:grid-cols-2 xl:grid-cols-5"
+            gridClassName="grid snap-x snap-mandatory grid-flow-col auto-cols-[86%] gap-4 overflow-x-auto px-1 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid-flow-row sm:auto-cols-auto sm:overflow-visible sm:px-0 sm:pb-0 sm:snap-none sm:grid-cols-2 xl:grid-cols-5"
             itemClassName="shrink-0 snap-start"
             scrollKey={`featured-brand-${activeBrand.id}`}
           />
