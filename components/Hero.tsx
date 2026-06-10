@@ -530,7 +530,7 @@ const Hero = ({
 
           <div
             key={`copy-${activeSlide}`}
-            className={`absolute left-0 top-0 z-10 flex h-full w-[46%] min-w-[470px] flex-col justify-center rounded-r-[120px] border-r border-[var(--site-border)] bg-[var(--site-panel)] pl-16 pr-8 py-10 shadow-[18px_0_45px_rgba(0,0,0,0.12)] max-md:left-4 max-md:top-4 max-md:h-auto max-md:w-[calc(100%-2rem)] max-md:min-w-0 max-md:rounded-md max-md:border max-md:px-5 max-md:py-6 max-md:pl-16 max-md:shadow-xl max-sm:px-4 max-sm:py-5 max-sm:pl-14 ${
+            className={`absolute left-0 top-0 z-10 flex h-full w-[46%] min-w-[470px] flex-col justify-center rounded-r-[120px] border-r border-[var(--site-border)] bg-[var(--site-panel)] pl-16 pr-8 py-10 shadow-[18px_0_45px_rgba(0,0,0,0.12)] max-md:left-3 max-md:right-3 max-md:top-4 max-md:h-auto max-md:w-auto max-md:min-w-0 max-md:rounded-md max-md:border max-md:px-5 max-md:py-6 max-md:shadow-xl max-sm:left-2 max-sm:right-2 max-sm:px-4 max-sm:py-5 ${
               slideDirection === "next"
                 ? "animate-[heroCopyNext_700ms_ease-out_both]"
                 : "animate-[heroCopyPrevious_700ms_ease-out_both]"

@@ -124,7 +124,7 @@ const ProductItem = ({
         className={`group/media relative flex items-center justify-center overflow-hidden ${
           isListView
             ? "h-24 w-24 shrink-0 self-start sm:min-h-[220px] sm:w-[260px]"
-            : "aspect-[4/3] min-h-[300px]"
+            : "aspect-[4/3] min-h-[220px] sm:min-h-[300px]"
         }`}
       >
         {quickAddEnabled ? (
@@ -151,7 +151,7 @@ const ProductItem = ({
           alt={sanitize(product?.title || product.model) || "Product image"}
         />
       </Link>
-      <div className={`flex min-w-0 flex-1 transition duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${isListView ? "flex-col justify-between self-stretch" : "relative mt-4 flex-col rounded-[1.4rem] border border-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--site-panel)_94%,white_6%)_0%,color-mix(in_srgb,var(--site-panel-soft)_92%,white_8%)_100%)] px-6 pb-[5.75rem] pt-6 shadow-[0_12px_32px_rgba(15,23,42,0.05)] group-hover/card:border-[rgba(225,29,46,0.52)] group-hover/card:shadow-[inset_0_0_0_1px_rgba(225,29,46,0.52),0_18px_44px_rgba(225,29,46,0.16)]"}`}>
+      <div className={`flex min-w-0 flex-1 transition duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${isListView ? "flex-col justify-between self-stretch" : "relative mt-3 flex-col rounded-[1.4rem] border border-transparent bg-[linear-gradient(180deg,color-mix(in_srgb,var(--site-panel)_94%,white_6%)_0%,color-mix(in_srgb,var(--site-panel-soft)_92%,white_8%)_100%)] px-5 pb-[4.75rem] pt-5 shadow-[0_12px_32px_rgba(15,23,42,0.05)] group-hover/card:border-[rgba(225,29,46,0.52)] group-hover/card:shadow-[inset_0_0_0_1px_rgba(225,29,46,0.52),0_18px_44px_rgba(225,29,46,0.16)] sm:mt-4 sm:px-6 sm:pb-[5.75rem] sm:pt-6"}`}>
         <div>
           <p className="text-[11px] uppercase tracking-[0.24em] text-[color-mix(in_srgb,var(--site-muted)_88%,var(--site-text)_12%)]">
             {sanitize(product.manufacturer || product.category?.name || "Elite Setup")}
@@ -164,7 +164,7 @@ const ProductItem = ({
           >
             {sanitize(product.title || product.model)}
           </Link>
-          <p className={`font-black text-[var(--site-accent)] ${isListView ? "mt-3 text-base sm:text-lg" : "mt-4 text-[1.45rem]"}`}>
+          <p className={`font-black text-[var(--site-accent)] ${isListView ? "mt-3 text-base sm:text-lg" : "mt-3 text-[1.32rem] sm:mt-4 sm:text-[1.45rem]"}`}>
             ${product.price.toFixed(2)}
           </p>
           {!isListView ? (
@@ -183,7 +183,7 @@ const ProductItem = ({
             isListView
               ? "mt-4 h-10 w-full sm:mt-6 sm:w-fit sm:min-w-[180px]"
               : mobileCardLinkEnabled
-                ? "absolute inset-x-6 bottom-6 h-11 translate-y-0 border-[var(--site-accent)] bg-[var(--site-accent-soft)] text-[var(--site-accent)] opacity-100 sm:pointer-events-none sm:translate-y-3 sm:border-[color:rgba(15,23,42,0.12)] sm:bg-transparent sm:text-[var(--site-text)] sm:opacity-0 sm:group-hover/card:pointer-events-auto sm:group-hover/card:translate-y-0 sm:group-hover/card:opacity-100"
+                ? "absolute inset-x-5 bottom-5 h-10 translate-y-0 border-[var(--site-accent)] bg-[var(--site-accent-soft)] text-[var(--site-accent)] opacity-100 sm:pointer-events-none sm:inset-x-6 sm:bottom-6 sm:h-11 sm:translate-y-3 sm:border-[color:rgba(15,23,42,0.12)] sm:bg-transparent sm:text-[var(--site-text)] sm:opacity-0 sm:group-hover/card:pointer-events-auto sm:group-hover/card:translate-y-0 sm:group-hover/card:opacity-100"
                 : "pointer-events-none absolute inset-x-6 bottom-6 h-11 translate-y-3 opacity-0 group-hover/card:pointer-events-auto group-hover/card:translate-y-0 group-hover/card:opacity-100"
           }`}
         >

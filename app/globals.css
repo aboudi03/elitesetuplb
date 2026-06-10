@@ -51,6 +51,12 @@ body {
     background: var(--site-bg);
 }
 
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 .theme-surface {
     background: var(--site-panel);
     color: var(--site-text);
