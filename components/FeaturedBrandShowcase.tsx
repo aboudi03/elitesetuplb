@@ -37,6 +37,7 @@ export default function FeaturedBrandShowcase({
 
   const activeBrand =
     availableBrands.find((brand) => brand.id === activeBrandId) || availableBrands[0];
+  const brandColumnCount = Math.min(Math.max(availableBrands.length, 2), 6);
 
   if (!activeBrand) {
     return null;
@@ -55,7 +56,12 @@ export default function FeaturedBrandShowcase({
             </div>
           </div>
 
-          <div className="mb-8 flex gap-3 overflow-x-auto pb-2">
+          <div
+            className="mb-8 grid gap-2.5 sm:gap-3"
+            style={{
+              gridTemplateColumns: `repeat(${brandColumnCount}, minmax(0, 1fr))`,
+            }}
+          >
             {availableBrands.map((brand) => {
               const isActive = brand.id === activeBrand.id;
 
@@ -64,23 +70,23 @@ export default function FeaturedBrandShowcase({
                   key={brand.id}
                   type="button"
                   onClick={() => setActiveBrandId(brand.id)}
-                  className={`group min-w-[146px] rounded-[1.5rem] border px-4 py-4 text-left transition ${
+                  className={`group flex min-w-0 flex-col items-center justify-center rounded-xl border px-2 py-3 text-center transition sm:rounded-[1rem] sm:px-3 sm:py-4 ${
                     isActive
                       ? "border-[var(--site-accent)] bg-[var(--site-panel)] shadow-lg"
                       : "border-[var(--site-border)] bg-[var(--site-panel)]/80 hover:border-[var(--site-accent)] hover:bg-[var(--site-panel)]"
                   }`}
                 >
-                  <div className="flex aspect-square w-16 items-center justify-center rounded-2xl bg-white/90 p-3">
+                  <div className="flex aspect-square w-full max-w-12 items-center justify-center rounded-lg bg-white/90 p-2 sm:max-w-14 sm:rounded-xl sm:p-2.5 lg:max-w-16">
                     <Image
                       src={`/${brand.logo}`}
                       alt={sanitize(brand.title) || "Brand logo"}
                       width={120}
                       height={56}
-                      className="h-10 w-auto object-contain"
+                      className="max-h-8 w-auto max-w-full object-contain sm:max-h-9"
                     />
                   </div>
                   <p
-                    className={`mt-3 text-sm font-black uppercase tracking-[0.14em] ${
+                    className={`mt-2 line-clamp-2 max-w-full break-words text-[10px] font-black uppercase leading-3 tracking-[0.08em] sm:text-xs sm:leading-4 ${
                       isActive ? "text-[var(--site-accent)]" : "text-[var(--site-text)]"
                     }`}
                   >
