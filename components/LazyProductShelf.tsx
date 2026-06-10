@@ -71,17 +71,15 @@ const LazyProductShelf = ({
     }
 
     const updateMobileScrollStep = () => {
-      const maxScrollLeft = node.scrollWidth - node.clientWidth;
-      const indicatorCount = Math.min(products.length, 4);
+      const firstItem = node.firstElementChild as HTMLElement | null;
 
-      if (maxScrollLeft <= 0 || indicatorCount <= 1) {
+      if (!firstItem || products.length <= 1) {
         setMobileScrollStep(0);
         return;
       }
 
-      setMobileScrollStep(
-        Math.round((node.scrollLeft / maxScrollLeft) * (indicatorCount - 1))
-      );
+      const itemStep = firstItem.offsetWidth + parseFloat(getComputedStyle(node).columnGap || "0");
+      setMobileScrollStep(Math.min(products.length - 1, Math.round(node.scrollLeft / itemStep)));
     };
 
     updateMobileScrollStep();
@@ -97,16 +95,18 @@ const LazyProductShelf = ({
       return;
     }
 
-    const maxScrollLeft = containerRef.current.scrollWidth - containerRef.current.clientWidth;
-    const indicatorCount = Math.min(products.length, 4);
+    const firstItem = containerRef.current.firstElementChild as HTMLElement | null;
 
     if (scrollKey) {
       scrollPositionsRef.current[scrollKey] = containerRef.current.scrollLeft;
     }
 
-    if (maxScrollLeft > 0 && indicatorCount > 1) {
+    if (firstItem && products.length > 1) {
+      const itemStep =
+        firstItem.offsetWidth + parseFloat(getComputedStyle(containerRef.current).columnGap || "0");
+
       setMobileScrollStep(
-        Math.round((containerRef.current.scrollLeft / maxScrollLeft) * (indicatorCount - 1))
+        Math.min(products.length - 1, Math.round(containerRef.current.scrollLeft / itemStep))
       );
     }
   };
@@ -119,8 +119,6 @@ const LazyProductShelf = ({
   if (products.length === 0) {
     return null;
   }
-
-  const indicatorCount = Math.min(products.length, 4);
 
   return (
     <>
@@ -146,14 +144,14 @@ const LazyProductShelf = ({
               </div>
             ))}
       </div>
-      {indicatorCount > 1 ? (
+      {products.length > 1 ? (
         <div
           className="mt-4 flex items-center justify-center gap-2 sm:hidden"
           aria-hidden="true"
         >
-          {Array.from({ length: indicatorCount }).map((_, index) => (
+          {products.map((product, index) => (
             <span
-              key={`product-scroll-indicator-${index}`}
+              key={`product-scroll-indicator-${product.id}`}
               className={`h-2 rounded-full transition-all duration-300 ${
                 index === mobileScrollStep
                   ? "w-10 bg-[var(--site-accent)]"
