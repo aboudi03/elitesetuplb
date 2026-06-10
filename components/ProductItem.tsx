@@ -123,7 +123,7 @@ const ProductItem = ({
         href={productHref}
         className={`group/media relative flex items-center justify-center overflow-hidden ${
           isListView
-            ? "h-24 w-24 shrink-0 self-start sm:min-h-[220px] sm:w-[260px]"
+            ? "h-32 w-32 shrink-0 self-start sm:min-h-[280px] sm:w-[340px]"
             : "aspect-[4/3] min-h-[220px] sm:min-h-[300px]"
         }`}
       >
@@ -144,7 +144,7 @@ const ProductItem = ({
               : "/product_placeholder.webp"
           }
           fill
-          sizes={isListView ? "(max-width: 640px) 96px, 260px" : "(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"}
+          sizes={isListView ? "(max-width: 640px) 128px, 340px" : "(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"}
           className={`relative z-10 object-contain object-center transition duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] max-sm:scale-100 sm:scale-[1.03] group-hover/card:sm:scale-[1.08] group-hover/media:sm:scale-[1.2] ${
             isListView ? "p-2 sm:p-4" : "p-0 sm:p-1"
           }`}

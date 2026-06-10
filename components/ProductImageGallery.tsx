@@ -45,13 +45,14 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
   const [previousRippleKey, setPreviousRippleKey] = useState(0);
   const [nextRippleKey, setNextRippleKey] = useState(0);
   const autoplayTimerRef = useRef<number | null>(null);
+  const hasManualSelectionRef = useRef(false);
   const touchStartXRef = useRef<number | null>(null);
   const touchDeltaXRef = useRef(0);
   const galleryFrameRef = useRef<HTMLDivElement | null>(null);
   const lightboxImageRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
-    if (isLightboxOpen) {
+    if (isLightboxOpen || hasManualSelectionRef.current) {
       if (autoplayTimerRef.current) {
         window.clearTimeout(autoplayTimerRef.current);
       }
@@ -79,21 +80,26 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
   const activeSlide = slides[activeIndex] || slides[0];
   const hasMultipleSlides = slides.length > 1;
 
+  const selectSlideManually = useCallback((nextIndex: number | ((currentIndex: number) => number)) => {
+    hasManualSelectionRef.current = true;
+    setActiveIndex(nextIndex);
+  }, []);
+
   const goToPreviousSlide = useCallback(() => {
     if (!hasMultipleSlides) return;
 
     setIsLightboxZoomed(false);
     setPreviousRippleKey((currentKey) => currentKey + 1);
-    setActiveIndex((currentIndex) => (currentIndex - 1 + slides.length) % slides.length);
-  }, [hasMultipleSlides, slides.length]);
+    selectSlideManually((currentIndex) => (currentIndex - 1 + slides.length) % slides.length);
+  }, [hasMultipleSlides, selectSlideManually, slides.length]);
 
   const goToNextSlide = useCallback(() => {
     if (!hasMultipleSlides) return;
 
     setIsLightboxZoomed(false);
     setNextRippleKey((currentKey) => currentKey + 1);
-    setActiveIndex((currentIndex) => (currentIndex + 1) % slides.length);
-  }, [hasMultipleSlides, slides.length]);
+    selectSlideManually((currentIndex) => (currentIndex + 1) % slides.length);
+  }, [hasMultipleSlides, selectSlideManually, slides.length]);
 
   useEffect(() => {
     if (!isLightboxOpen) return;
@@ -194,7 +200,7 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
                 ? "border-[var(--site-accent)] ring-2 ring-[var(--site-accent-soft)]"
                 : "border-[var(--site-border)] hover:border-[var(--site-accent)]"
             }`}
-            onClick={() => setActiveIndex(index)}
+            onClick={() => selectSlideManually(index)}
             aria-label={`Show ${slide.alt}`}
           >
             <Image
@@ -318,7 +324,7 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
                 <button
                   key={`dot-${slide.id}`}
                   type="button"
-                  onClick={() => setActiveIndex(index)}
+                  onClick={() => selectSlideManually(index)}
                   className={`h-2.5 rounded-full transition-all ${
                     activeIndex === index
                       ? "w-10 bg-[var(--site-accent)]"

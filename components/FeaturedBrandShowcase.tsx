@@ -37,7 +37,6 @@ export default function FeaturedBrandShowcase({
 
   const activeBrand =
     availableBrands.find((brand) => brand.id === activeBrandId) || availableBrands[0];
-  const brandColumnCount = Math.min(Math.max(availableBrands.length, 2), 6);
 
   if (!activeBrand) {
     return null;
@@ -56,12 +55,7 @@ export default function FeaturedBrandShowcase({
             </div>
           </div>
 
-          <div
-            className="mb-8 grid gap-2.5 sm:gap-3"
-            style={{
-              gridTemplateColumns: `repeat(${brandColumnCount}, minmax(0, 1fr))`,
-            }}
-          >
+          <div className="mb-8 grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 lg:grid-cols-6">
             {availableBrands.map((brand) => {
               const isActive = brand.id === activeBrand.id;
 
@@ -108,7 +102,7 @@ export default function FeaturedBrandShowcase({
           <LazyProductShelf
             key={`featured-brand-shelf-${activeBrand.id}`}
             products={activeBrand.products.map((item) => item.product)}
-            gridClassName="grid snap-x snap-mandatory grid-flow-col auto-cols-[86%] gap-4 overflow-x-auto px-1 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid-flow-row sm:auto-cols-auto sm:overflow-visible sm:px-0 sm:pb-0 sm:snap-none sm:grid-cols-2 xl:grid-cols-5"
+            gridClassName="grid snap-x snap-mandatory grid-flow-col auto-cols-[86%] gap-4 overflow-x-auto px-1 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid-flow-row sm:auto-cols-auto sm:overflow-visible sm:px-0 sm:pb-0 sm:snap-none sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
             itemClassName="shrink-0 snap-start"
           />
         </div>

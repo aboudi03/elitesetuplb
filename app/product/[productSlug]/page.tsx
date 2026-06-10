@@ -99,6 +99,26 @@ async function getRelatedProducts(product: Product) {
   return Array.from(collected.values()).slice(0, desiredCount);
 }
 
+async function getProductReviewSummary(productId: string) {
+  const response = await apiClient.get(`/api/reviews/${productId}`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    return {
+      averageRating: 0,
+      count: 0,
+    };
+  }
+
+  const data = await response.json();
+
+  return {
+    averageRating: Number(data?.averageRating || 0),
+    count: Number(data?.count || 0),
+  };
+}
+
 export async function generateMetadata({
   params,
 }: SingleProductPageProps): Promise<Metadata> {
@@ -182,6 +202,7 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
   });
   const rawImages = imagesData.ok ? await imagesData.json() : [];
   const images: ImageItem[] = Array.isArray(rawImages) ? rawImages : [];
+  const reviewSummary = await getProductReviewSummary(normalizedProduct.id);
   const relatedProducts = await getRelatedProducts(normalizedProduct);
 
   const productSchema = {
@@ -248,21 +269,25 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
               </div>
 
               <div className="flex flex-col gap-2 text-sm font-semibold text-[var(--site-muted)] sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 text-[var(--site-accent)]">
-                    {Array.from({ length: 5 }).map((_, index) => (
-                      <FaStar
-                        key={index}
-                        className={`h-4 w-4 ${
-                          index < Math.round(Number(normalizedProduct.rating || 0))
-                            ? "opacity-100"
-                            : "opacity-25"
-                        }`}
-                      />
-                    ))}
+                {reviewSummary.count > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 text-[var(--site-accent)]">
+                      {Array.from({ length: 5 }).map((_, index) => (
+                        <FaStar
+                          key={index}
+                          className={`h-4 w-4 ${
+                            index < Math.round(reviewSummary.averageRating)
+                              ? "opacity-100"
+                              : "opacity-25"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span>{reviewSummary.averageRating.toFixed(1)} / 5</span>
                   </div>
-                  <span>{Number(normalizedProduct.rating || 0).toFixed(1)} / 5</span>
-                </div>
+                ) : (
+                  <span>No reviews yet</span>
+                )}
                 <span>Including VAT</span>
               </div>
 

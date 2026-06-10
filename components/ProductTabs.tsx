@@ -37,7 +37,7 @@ const ProductTabs = ({ product }: { product: Product }) => {
   const { data: session, status: sessionStatus } = useSession();
   const [currentProductTab, setCurrentProductTab] = useState<number>(0);
   const [reviewData, setReviewData] = useState<ReviewResponse>({
-    averageRating: Number(product?.rating || 0),
+    averageRating: 0,
     count: 0,
     reviews: [],
   });
@@ -219,14 +219,18 @@ const ProductTabs = ({ product }: { product: Product }) => {
                   <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--site-muted)]">
                     Customer rating
                   </p>
-                  <div className="mt-2 flex items-center gap-3">
-                    <span className="text-3xl font-black text-[var(--site-text)]">
-                      {reviewData.averageRating.toFixed(1)}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      {renderStars(Math.round(reviewData.averageRating), "h-5 w-5")}
+                  {reviewData.count > 0 ? (
+                    <div className="mt-2 flex items-center gap-3">
+                      <span className="text-3xl font-black text-[var(--site-text)]">
+                        {reviewData.averageRating.toFixed(1)}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        {renderStars(Math.round(reviewData.averageRating), "h-5 w-5")}
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <p className="mt-2 text-lg font-bold text-[var(--site-text)]">No reviews yet</p>
+                  )}
                 </div>
                 <p className="text-sm font-semibold text-[var(--site-muted)]">
                   {reviewData.count} {reviewData.count === 1 ? "review" : "reviews"}
