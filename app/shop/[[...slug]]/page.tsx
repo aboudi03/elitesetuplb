@@ -11,6 +11,7 @@ import {
 } from "@/components";
 import { getProductsPageData } from "@/components/Products";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import React from "react";
 import { sanitize } from "@/lib/sanitize";
 import { absoluteUrl, STORE_NAME, toTitleCase } from "@/lib/seo";
@@ -24,6 +25,14 @@ const improveCategoryText = (text: string): string => {
   } else {
     return text;
   }
+};
+
+const getNestedProductSlug = (slug?: string[]) => {
+  if (!slug || slug.length <= 1) {
+    return null;
+  }
+
+  return slug[slug.length - 1] || null;
 };
 
 export async function generateMetadata({
@@ -68,6 +77,12 @@ const ShopPage = async ({ params, searchParams }: { params: Promise<{ slug?: str
   // Await both params and searchParams
   const awaitedParams = await params;
   const awaitedSearchParams = await searchParams;
+  const nestedProductSlug = getNestedProductSlug(awaitedParams?.slug);
+
+  if (nestedProductSlug) {
+    redirect(`/product/${nestedProductSlug}`);
+  }
+
   const productPageData = await getProductsPageData({
     params: awaitedParams,
     searchParams: awaitedSearchParams,
