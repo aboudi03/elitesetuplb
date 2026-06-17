@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import toast from "react-hot-toast";
 import {
@@ -75,7 +76,11 @@ function ProductMultiSelect({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [menuPosition, setMenuPosition] = useState({ left: 0, top: 0, width: 0 });
+  const [hoveredProduct, setHoveredProduct] = useState<ProductOption | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const selectedProductIds = selectedIds.filter(Boolean);
   const selectedProducts = selectedProductIds
     .map((productId) => products.find((product) => product.id === productId))
@@ -94,7 +99,12 @@ function ProductMultiSelect({
 
   useEffect(() => {
     const handlePointerDown = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+
+      if (
+        !containerRef.current?.contains(target) &&
+        !menuRef.current?.contains(target)
+      ) {
         setIsOpen(false);
       }
     };
@@ -102,6 +112,37 @@ function ProductMultiSelect({
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
   }, []);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const updateMenuPosition = () => {
+      const buttonRect = buttonRef.current?.getBoundingClientRect();
+
+      if (!buttonRect) {
+        return;
+      }
+
+      const menuWidth = Math.min(Math.max(buttonRect.width, 320), 520);
+
+      setMenuPosition({
+        left: Math.max(16, Math.min(buttonRect.left, window.innerWidth - menuWidth - 16)),
+        top: buttonRect.bottom + 8,
+        width: menuWidth,
+      });
+    };
+
+    updateMenuPosition();
+    window.addEventListener("resize", updateMenuPosition);
+    window.addEventListener("scroll", updateMenuPosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updateMenuPosition);
+      window.removeEventListener("scroll", updateMenuPosition, true);
+    };
+  }, [isOpen]);
 
   const toggleProduct = (productId: string) => {
     if (selectedProductIds.includes(productId)) {
@@ -134,6 +175,7 @@ function ProductMultiSelect({
   return (
     <div ref={containerRef} className="relative w-full min-w-0">
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setIsOpen((currentValue) => !currentValue)}
         className="flex min-h-10 w-full items-center justify-between gap-3 rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 py-2 text-left text-sm text-[var(--site-text)] transition hover:border-[var(--site-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--site-accent-soft)]"
@@ -150,8 +192,16 @@ function ProductMultiSelect({
         />
       </button>
 
-      {isOpen ? (
-        <div className="absolute left-0 top-[calc(100%+0.5rem)] z-40 w-full max-w-[26rem] overflow-hidden rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] shadow-xl">
+      {isOpen && typeof document !== "undefined" ? createPortal(
+        <div
+          ref={menuRef}
+          className="fixed z-[9999] overflow-visible rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] shadow-2xl"
+          style={{
+            left: menuPosition.left,
+            top: menuPosition.top,
+            width: menuPosition.width,
+          }}
+        >
           <div className="border-b border-[var(--site-border)] p-2">
             <input
               type="search"
@@ -171,7 +221,9 @@ function ProductMultiSelect({
                     key={product.id}
                     type="button"
                     onClick={() => toggleProduct(product.id)}
-                    className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition ${
+                    onMouseEnter={() => setHoveredProduct(product)}
+                    onMouseLeave={() => setHoveredProduct(null)}
+                    className={`group/product-option relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition ${
                       isSelected
                         ? "bg-[var(--site-accent-soft)]"
                         : "hover:bg-[var(--site-panel-soft)]"
@@ -184,13 +236,15 @@ function ProductMultiSelect({
                       className="checkbox checkbox-sm"
                       tabIndex={-1}
                     />
-                    <Image
-                      src={getProductImageSrc(product)}
-                      alt={product.title || product.model || "Product"}
-                      width={48}
-                      height={48}
-                      className="h-12 w-12 shrink-0 rounded-md border border-[var(--site-border)] bg-white object-contain p-1"
-                    />
+                    <span className="relative h-12 w-12 shrink-0">
+                      <Image
+                        src={getProductImageSrc(product)}
+                        alt={product.title || product.model || "Product"}
+                        width={48}
+                        height={48}
+                        className="h-12 w-12 rounded-md border border-[var(--site-border)] bg-white object-contain p-1"
+                      />
+                    </span>
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold text-[var(--site-text)]">
                         {product.title || product.model}
@@ -210,7 +264,31 @@ function ProductMultiSelect({
               </div>
             )}
           </div>
-        </div>
+          {hoveredProduct ? (
+            <div
+              className="pointer-events-none absolute top-14 hidden w-44 rounded-md border border-[var(--site-border)] bg-white p-3 shadow-2xl lg:block"
+              style={{
+                left:
+                  menuPosition.left + menuPosition.width + 190 < window.innerWidth
+                    ? "calc(100% + 0.75rem)"
+                    : undefined,
+                right:
+                  menuPosition.left + menuPosition.width + 190 >= window.innerWidth
+                    ? "calc(100% + 0.75rem)"
+                    : undefined,
+              }}
+            >
+              <Image
+                src={getProductImageSrc(hoveredProduct)}
+                alt={hoveredProduct.title || hoveredProduct.model || "Product"}
+                width={176}
+                height={176}
+                className="h-40 w-full object-contain"
+              />
+            </div>
+          ) : null}
+        </div>,
+        document.body
       ) : null}
 
       <div className="mt-3 grid gap-2">
