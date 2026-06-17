@@ -1,9 +1,18 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import toast from "react-hot-toast";
-import { FaArrowDown, FaArrowUp, FaFloppyDisk, FaPen, FaPlus, FaTrash } from "react-icons/fa6";
+import {
+  FaArrowDown,
+  FaArrowUp,
+  FaChevronDown,
+  FaFloppyDisk,
+  FaPen,
+  FaPlus,
+  FaTrash,
+  FaXmark,
+} from "react-icons/fa6";
 import { DashboardSidebar } from "@/components";
 import DataTable, { DataTableColumn } from "@/components/ui/DataTable";
 import { getRuntimeApiBaseUrl } from "@/lib/api";
@@ -13,6 +22,7 @@ type ProductOption = {
   title?: string | null;
   model: string;
   sku?: string | null;
+  mainImage?: string | null;
   category?: {
     name?: string | null;
   } | null;
@@ -50,6 +60,230 @@ const getProductLabel = (product: ProductOption) =>
 
 const getBrandRowId = (brand: FeaturedBrandForm) =>
   brand.id || brand.clientId;
+
+const getProductImageSrc = (product?: ProductOption) =>
+  product?.mainImage ? `/${product.mainImage.replace(/^\/+/, "")}` : "/product_placeholder.webp";
+
+function ProductMultiSelect({
+  products,
+  selectedIds,
+  onChange,
+}: {
+  products: ProductOption[];
+  selectedIds: string[];
+  onChange: (productIds: string[]) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const selectedProductIds = selectedIds.filter(Boolean);
+  const selectedProducts = selectedProductIds
+    .map((productId) => products.find((product) => product.id === productId))
+    .filter(Boolean) as ProductOption[];
+  const filteredProducts = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    if (!query) {
+      return products;
+    }
+
+    return products.filter((product) =>
+      getProductLabel(product).toLowerCase().includes(query)
+    );
+  }, [products, search]);
+
+  useEffect(() => {
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, []);
+
+  const toggleProduct = (productId: string) => {
+    if (selectedProductIds.includes(productId)) {
+      onChange(selectedProductIds.filter((currentId) => currentId !== productId));
+      return;
+    }
+
+    if (selectedProductIds.length >= MAX_PRODUCTS_PER_BRAND) {
+      toast.error(`A featured brand can show up to ${MAX_PRODUCTS_PER_BRAND} products.`);
+      return;
+    }
+
+    onChange([...selectedProductIds, productId]);
+  };
+
+  const moveProduct = (productId: string, direction: "up" | "down") => {
+    const currentIndex = selectedProductIds.indexOf(productId);
+    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+
+    if (currentIndex < 0 || targetIndex < 0 || targetIndex >= selectedProductIds.length) {
+      return;
+    }
+
+    const nextIds = [...selectedProductIds];
+    const [movedId] = nextIds.splice(currentIndex, 1);
+    nextIds.splice(targetIndex, 0, movedId);
+    onChange(nextIds);
+  };
+
+  return (
+    <div ref={containerRef} className="relative w-full min-w-0">
+      <button
+        type="button"
+        onClick={() => setIsOpen((currentValue) => !currentValue)}
+        className="flex min-h-10 w-full items-center justify-between gap-3 rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 py-2 text-left text-sm text-[var(--site-text)] transition hover:border-[var(--site-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--site-accent-soft)]"
+      >
+        <span className="truncate">
+          {selectedProductIds.length > 0
+            ? `${selectedProductIds.length} product${selectedProductIds.length === 1 ? "" : "s"} selected`
+            : "Select products"}
+        </span>
+        <FaChevronDown
+          className={`h-3.5 w-3.5 shrink-0 text-[var(--site-muted)] transition ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      {isOpen ? (
+        <div className="absolute left-0 top-[calc(100%+0.5rem)] z-40 w-full max-w-[26rem] overflow-hidden rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] shadow-xl">
+          <div className="border-b border-[var(--site-border)] p-2">
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              className="input input-bordered input-sm w-full"
+              placeholder="Search products..."
+            />
+          </div>
+          <div className="max-h-80 overflow-y-auto p-2">
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map((product) => {
+                const isSelected = selectedProductIds.includes(product.id);
+
+                return (
+                  <button
+                    key={product.id}
+                    type="button"
+                    onClick={() => toggleProduct(product.id)}
+                    className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition ${
+                      isSelected
+                        ? "bg-[var(--site-accent-soft)]"
+                        : "hover:bg-[var(--site-panel-soft)]"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      readOnly
+                      className="checkbox checkbox-sm"
+                      tabIndex={-1}
+                    />
+                    <Image
+                      src={getProductImageSrc(product)}
+                      alt={product.title || product.model || "Product"}
+                      width={48}
+                      height={48}
+                      className="h-12 w-12 shrink-0 rounded-md border border-[var(--site-border)] bg-white object-contain p-1"
+                    />
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-[var(--site-text)]">
+                        {product.title || product.model}
+                      </span>
+                      <span className="block truncate text-xs text-[var(--site-muted)]">
+                        {[product.category?.name, product.sku ? `SKU: ${product.sku}` : null]
+                          .filter(Boolean)
+                          .join(" | ") || "No category"}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })
+            ) : (
+              <div className="px-3 py-8 text-center text-sm text-[var(--site-muted)]">
+                No products found.
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="mt-3 grid gap-2">
+        {selectedProducts.length > 0 ? (
+          <p className="text-xs font-bold uppercase tracking-[0.08em] text-[var(--site-muted)]">
+            Selected product order
+          </p>
+        ) : null}
+        {selectedProducts.length > 0 ? (
+          selectedProducts.map((product, index) => (
+            <div
+              key={product.id}
+              className="flex min-w-0 items-center gap-3 rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-2"
+            >
+              <Image
+                src={getProductImageSrc(product)}
+                alt={product.title || product.model || "Product"}
+                width={48}
+                height={48}
+                className="h-12 w-12 shrink-0 rounded-md border border-[var(--site-border)] bg-white object-contain p-1"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-[var(--site-text)]">
+                  Position {index + 1}: {product.title || product.model}
+                </p>
+                <p className="truncate text-xs text-[var(--site-muted)]">
+                  {[product.category?.name, product.sku ? `SKU: ${product.sku}` : null]
+                    .filter(Boolean)
+                    .join(" | ") || "No category"}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => moveProduct(product.id, "up")}
+                  disabled={index === 0}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] text-xs text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)] disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Move product up"
+                  title="Move up"
+                >
+                  <FaArrowUp />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveProduct(product.id, "down")}
+                  disabled={index === selectedProducts.length - 1}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] text-xs text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)] disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Move product down"
+                  title="Move down"
+                >
+                  <FaArrowDown />
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    onChange(selectedProductIds.filter((currentId) => currentId !== product.id))
+                  }
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-red-500 text-xs text-red-500 transition hover:bg-red-500 hover:text-white"
+                  aria-label="Remove product"
+                  title="Remove"
+                >
+                  <FaXmark />
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <span className="text-sm text-[var(--site-muted)]">No products selected.</span>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function FeaturedBrandsAdminPage() {
   const [brands, setBrands] = useState<FeaturedBrandForm[]>([]);
@@ -128,26 +362,13 @@ export default function FeaturedBrandsAdminPage() {
     );
   };
 
-  const updateBrandProductSlot = (rowId: string, slotIndex: number, value: string) => {
+  const updateBrandProducts = (rowId: string, productIds: string[]) => {
     setBrands((currentBrands) =>
-      currentBrands.map((brand) => {
-        if (getBrandRowId(brand) !== rowId) {
-          return brand;
-        }
-
-        const nextProductIds = [...brand.productIds];
-
-        while (nextProductIds.length < MAX_PRODUCTS_PER_BRAND) {
-          nextProductIds.push("");
-        }
-
-        nextProductIds[slotIndex] = value;
-
-        return {
-          ...brand,
-          productIds: nextProductIds,
-        };
-      })
+      currentBrands.map((brand) =>
+        getBrandRowId(brand) === rowId
+          ? { ...brand, productIds: productIds.slice(0, MAX_PRODUCTS_PER_BRAND) }
+          : brand
+      )
     );
   };
 
@@ -313,7 +534,7 @@ export default function FeaturedBrandsAdminPage() {
     {
       key: "sort",
       header: "Sort",
-      className: "w-24",
+      className: "w-20",
       cell: (brand) => {
         const index = brands.findIndex((item) => getBrandRowId(item) === getBrandRowId(brand));
 
@@ -346,7 +567,7 @@ export default function FeaturedBrandsAdminPage() {
     {
       key: "logo",
       header: "Logo",
-      className: "min-w-[12rem]",
+      className: "w-40",
       cell: (brand) => {
         const rowId = getBrandRowId(brand);
         const isEditing = editingIds.includes(rowId);
@@ -370,7 +591,7 @@ export default function FeaturedBrandsAdminPage() {
               <>
                 <input
                   type="file"
-                  className="file-input file-input-bordered file-input-sm w-full max-w-xs"
+                  className="file-input file-input-bordered file-input-sm w-full max-w-[9rem]"
                   accept="image/*"
                   onChange={async (event) => {
                     const file = event.target.files?.[0];
@@ -391,7 +612,7 @@ export default function FeaturedBrandsAdminPage() {
                 />
                 <input
                   type="text"
-                  className="input input-bordered input-sm w-full max-w-xs"
+                  className="input input-bordered input-sm w-full max-w-[9rem]"
                   value={brand.logo}
                   onChange={(event) => updateBrand(rowId, { logo: event.target.value })}
                   placeholder="uploads/logo.webp"
@@ -406,7 +627,7 @@ export default function FeaturedBrandsAdminPage() {
       key: "title",
       header: "Brand",
       searchableText: (brand) => brand.title,
-      className: "min-w-[14rem]",
+      className: "w-48",
       cell: (brand) => {
         const rowId = getBrandRowId(brand);
 
@@ -435,7 +656,7 @@ export default function FeaturedBrandsAdminPage() {
           .filter(Boolean)
           .map((product) => getProductLabel(product as ProductOption))
           .join(" "),
-      className: "min-w-[24rem]",
+      className: "w-[26rem]",
       cell: (brand) => {
         const rowId = getBrandRowId(brand);
         const isEditing = editingIds.includes(rowId);
@@ -459,30 +680,18 @@ export default function FeaturedBrandsAdminPage() {
         }
 
         return (
-          <div className="grid w-full gap-2">
-            {Array.from({ length: MAX_PRODUCTS_PER_BRAND }).map((_, slotIndex) => (
-              <select
-                key={`${rowId}-slot-${slotIndex}`}
-                className="select select-bordered select-sm w-full"
-                value={brand.productIds[slotIndex] || ""}
-                onChange={(event) => updateBrandProductSlot(rowId, slotIndex, event.target.value)}
-              >
-                <option value="">Slot {slotIndex + 1}: No product selected</option>
-                {products.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {getProductLabel(product)}
-                  </option>
-                ))}
-              </select>
-            ))}
-          </div>
+          <ProductMultiSelect
+            products={products}
+            selectedIds={brand.productIds}
+            onChange={(productIds) => updateBrandProducts(rowId, productIds)}
+          />
         );
       },
     },
     {
       key: "status",
       header: "Status",
-      className: "w-40",
+      className: "w-32",
       cell: (brand) => {
         const rowId = getBrandRowId(brand);
 
@@ -511,7 +720,7 @@ export default function FeaturedBrandsAdminPage() {
     {
       key: "actions",
       header: "Actions",
-      className: "w-36",
+      className: "w-28",
       cell: (brand) => {
         const rowId = getBrandRowId(brand);
         const isEditing = editingIds.includes(rowId);
@@ -568,7 +777,8 @@ export default function FeaturedBrandsAdminPage() {
           emptyMessage="No featured brand sets yet."
           enableSearch
           searchPlaceholder="Search brands or selected products..."
-          tableClassName="min-w-[1180px]"
+          className="max-w-full"
+          tableClassName="min-w-[980px]"
           actions={
             <>
               <button

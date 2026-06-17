@@ -203,7 +203,7 @@ export default function DataTable<T>({
         </div>
       )}
 
-      <div className="relative overflow-visible rounded-md border border-[var(--site-border)] bg-[var(--site-panel)]">
+      <div className="relative max-w-full overflow-x-auto overflow-y-visible rounded-md border border-[var(--site-border)] bg-[var(--site-panel)]">
           <table className={`admin-data-table w-full text-base ${tableClassName}`}>
           <thead>
             <tr>
