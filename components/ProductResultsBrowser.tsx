@@ -18,7 +18,7 @@ const ProductResultsBrowser = ({ products }: { products: Product[] }) => {
       className={
         resolvedViewMode === "list"
           ? "flex flex-col gap-4"
-          : "grid grid-cols-3 gap-4 max-[1300px]:grid-cols-3 max-lg:grid-cols-2 max-[500px]:grid-cols-1"
+          : "grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3"
       }
     >
       {products.length > 0 ? (
@@ -28,6 +28,8 @@ const ProductResultsBrowser = ({ products }: { products: Product[] }) => {
             product={product}
             color="black"
             viewMode={resolvedViewMode}
+            quickAddEnabled
+            mobileCardLinkEnabled
           />
         ))
       ) : (

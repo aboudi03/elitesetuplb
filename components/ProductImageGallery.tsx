@@ -189,13 +189,13 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
   };
 
   return (
-    <div className="flex w-full max-w-[980px] gap-4 max-sm:flex-col-reverse">
-      <div className="flex max-h-[720px] w-24 shrink-0 flex-col gap-3 overflow-y-auto pr-1 max-sm:w-full max-sm:flex-row max-sm:overflow-x-auto max-sm:overflow-y-hidden max-sm:pb-1 max-sm:pr-0">
+    <div className="flex w-full max-w-[980px] min-w-0 gap-4 max-md:flex-col-reverse">
+      <div className="flex max-h-[720px] w-24 shrink-0 flex-col gap-3 overflow-y-auto pr-1 max-md:w-full max-md:flex-row max-md:overflow-x-auto max-md:overflow-y-hidden max-md:pb-1 max-md:pr-0">
         {slides.map((slide, index) => (
           <button
             key={slide.id}
             type="button"
-            className={`relative flex aspect-square h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-[var(--site-bg)] p-2 transition max-sm:h-16 max-sm:w-16 ${
+            className={`relative flex aspect-square h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-[var(--site-bg)] p-2 transition max-md:h-16 max-md:w-16 ${
               activeIndex === index
                 ? "border-[var(--site-accent)] ring-2 ring-[var(--site-accent-soft)]"
                 : "border-[var(--site-border)] hover:border-[var(--site-accent)]"
@@ -216,7 +216,7 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
 
       <div
         ref={galleryFrameRef}
-        className="relative flex aspect-square min-h-[280px] flex-1 items-center justify-center overflow-hidden rounded-[1.35rem] border border-[var(--site-border)] bg-[linear-gradient(180deg,#ffffff,var(--site-panel-soft))] p-4 shadow-[0_18px_46px_rgba(15,23,42,0.08)] sm:min-h-[460px] sm:rounded-[1.75rem] sm:p-6 lg:min-h-[620px] lg:p-8"
+        className="relative flex aspect-square min-h-[280px] min-w-0 flex-1 items-center justify-center overflow-hidden rounded-[1.35rem] border border-[var(--site-border)] bg-[linear-gradient(180deg,#ffffff,var(--site-panel-soft))] p-4 shadow-[0_18px_46px_rgba(15,23,42,0.08)] sm:min-h-[420px] sm:rounded-[1.75rem] sm:p-6 lg:min-h-[620px] lg:p-8"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}

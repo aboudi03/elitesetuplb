@@ -52,7 +52,8 @@ const ProductItem = ({
   const displayTitle = product.title || product.model || "Product";
   const displayImage = product.mainImage || "/product_placeholder.webp";
   const cartItemId = `${product.id}::default`;
-  const productHref = `/product/${product.slug || product.id}`;
+  const productPathSegment = encodeURIComponent(product.slug || product.id);
+  const productHref = `/product/${productPathSegment}`;
 
   const handleCardClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (!mobileCardLinkEnabled || isListView) {
