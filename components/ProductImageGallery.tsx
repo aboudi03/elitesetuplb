@@ -190,12 +190,12 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
 
   return (
     <div className="flex w-full max-w-[980px] min-w-0 gap-4 max-md:flex-col-reverse">
-      <div className="flex max-h-[720px] w-24 shrink-0 flex-col gap-3 overflow-y-auto pr-1 max-md:w-full max-md:flex-row max-md:overflow-x-auto max-md:overflow-y-hidden max-md:pb-1 max-md:pr-0">
+      <div className="flex max-h-[720px] w-24 shrink-0 flex-col gap-3 overflow-x-hidden overflow-y-auto pr-1 max-md:grid max-md:max-h-none max-md:w-full max-md:grid-cols-4 max-md:overflow-visible max-md:pb-1 max-md:pr-0 max-sm:grid-cols-3">
         {slides.map((slide, index) => (
           <button
             key={slide.id}
             type="button"
-            className={`relative flex aspect-square h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-[var(--site-bg)] p-2 transition max-md:h-16 max-md:w-16 ${
+            className={`relative flex aspect-square h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-[var(--site-bg)] p-2 transition max-md:h-auto max-md:w-full ${
               activeIndex === index
                 ? "border-[var(--site-accent)] ring-2 ring-[var(--site-accent-soft)]"
                 : "border-[var(--site-border)] hover:border-[var(--site-accent)]"

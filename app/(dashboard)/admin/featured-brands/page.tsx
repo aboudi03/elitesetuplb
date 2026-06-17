@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import toast from "react-hot-toast";
+import { FaArrowDown, FaArrowUp, FaFloppyDisk, FaPen, FaPlus, FaTrash } from "react-icons/fa6";
 import { DashboardSidebar } from "@/components";
+import DataTable, { DataTableColumn } from "@/components/ui/DataTable";
 import { getRuntimeApiBaseUrl } from "@/lib/api";
 
 type ProductOption = {
@@ -11,10 +13,13 @@ type ProductOption = {
   title?: string | null;
   model: string;
   sku?: string | null;
-  featuredSortOrder?: number | null;
+  category?: {
+    name?: string | null;
+  } | null;
 };
 
 type FeaturedBrandForm = {
+  clientId: string;
   id?: string;
   title: string;
   logo: string;
@@ -26,6 +31,7 @@ type FeaturedBrandForm = {
 const MAX_PRODUCTS_PER_BRAND = 5;
 
 const createEmptyBrand = (sortOrder = 0): FeaturedBrandForm => ({
+  clientId: `new-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   title: "",
   logo: "",
   isActive: true,
@@ -34,14 +40,28 @@ const createEmptyBrand = (sortOrder = 0): FeaturedBrandForm => ({
 });
 
 const getProductLabel = (product: ProductOption) =>
-  [product.title || product.model, product.sku ? `SKU: ${product.sku}` : null]
+  [
+    product.title || product.model,
+    product.category?.name ? `Category: ${product.category.name}` : null,
+    product.sku ? `SKU: ${product.sku}` : null,
+  ]
     .filter(Boolean)
     .join(" | ");
 
+const getBrandRowId = (brand: FeaturedBrandForm) =>
+  brand.id || brand.clientId;
+
 export default function FeaturedBrandsAdminPage() {
   const [brands, setBrands] = useState<FeaturedBrandForm[]>([]);
-  const [featuredProducts, setFeaturedProducts] = useState<ProductOption[]>([]);
+  const [products, setProducts] = useState<ProductOption[]>([]);
+  const [editingIds, setEditingIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [savingOrder, setSavingOrder] = useState(false);
+
+  const productById = useMemo(
+    () => new Map(products.map((product) => [product.id, product])),
+    [products]
+  );
 
   const fetchData = async () => {
     try {
@@ -52,7 +72,7 @@ export default function FeaturedBrandsAdminPage() {
           cache: "no-store",
         }),
         fetch(
-          `${getRuntimeApiBaseUrl()}/api/products?mode=admin&featured=true&isActive=true&sortBy=featuredSortOrder&sortDirection=asc`,
+          `${getRuntimeApiBaseUrl()}/api/products?mode=admin&isActive=true&sortBy=title&sortDirection=asc`,
           {
             cache: "no-store",
           }
@@ -69,17 +89,18 @@ export default function FeaturedBrandsAdminPage() {
       }
 
       if (!productsResponse.ok) {
-        throw new Error(productsData?.error || "Failed to load featured products");
+        throw new Error(productsData?.error || "Failed to load products");
       }
 
-      setFeaturedProducts(Array.isArray(productsData) ? productsData : []);
+      setProducts(Array.isArray(productsData) ? productsData : []);
       setBrands(
-        (Array.isArray(brandsData) ? brandsData : []).map((brand: any) => ({
+        (Array.isArray(brandsData) ? brandsData : []).map((brand: any, index: number) => ({
+          clientId: brand.id || `existing-${index}`,
           id: brand.id,
           title: brand.title || "",
           logo: brand.logo || "",
           isActive: Boolean(brand.isActive),
-          sortOrder: Number(brand.sortOrder) || 0,
+          sortOrder: Number(brand.sortOrder) || index,
           productIds: Array.isArray(brand.products)
             ? brand.products
                 .sort((first: any, second: any) => first.sortOrder - second.sortOrder)
@@ -99,22 +120,18 @@ export default function FeaturedBrandsAdminPage() {
     fetchData();
   }, []);
 
-  const updateBrandField = (
-    index: number,
-    field: keyof FeaturedBrandForm,
-    value: string | number | boolean | string[]
-  ) => {
+  const updateBrand = (rowId: string, updates: Partial<FeaturedBrandForm>) => {
     setBrands((currentBrands) =>
-      currentBrands.map((brand, currentIndex) =>
-        currentIndex === index ? { ...brand, [field]: value } : brand
+      currentBrands.map((brand) =>
+        getBrandRowId(brand) === rowId ? { ...brand, ...updates } : brand
       )
     );
   };
 
-  const updateBrandProductSlot = (brandIndex: number, slotIndex: number, value: string) => {
+  const updateBrandProductSlot = (rowId: string, slotIndex: number, value: string) => {
     setBrands((currentBrands) =>
-      currentBrands.map((brand, currentIndex) => {
-        if (currentIndex !== brandIndex) {
+      currentBrands.map((brand) => {
+        if (getBrandRowId(brand) !== rowId) {
           return brand;
         }
 
@@ -150,7 +167,7 @@ export default function FeaturedBrandsAdminPage() {
     return response.json();
   };
 
-  const saveBrand = async (brand: FeaturedBrandForm, index: number) => {
+  const saveBrand = async (brand: FeaturedBrandForm) => {
     if (!brand.title.trim()) {
       toast.error("Brand title is required");
       return;
@@ -162,6 +179,11 @@ export default function FeaturedBrandsAdminPage() {
     }
 
     const productIds = brand.productIds.map((productId) => productId.trim()).filter(Boolean);
+
+    if (new Set(productIds).size !== productIds.length) {
+      toast.error("Each selected product must be unique within the brand set");
+      return;
+    }
 
     try {
       const endpoint = brand.id
@@ -189,7 +211,7 @@ export default function FeaturedBrandsAdminPage() {
         throw new Error(responseData?.error || "Failed to save featured brand");
       }
 
-      updateBrandField(index, "id", responseData.id);
+      setEditingIds((currentIds) => currentIds.filter((id) => id !== getBrandRowId(brand)));
       toast.success(brand.id ? "Featured brand updated" : "Featured brand created");
       await fetchData();
     } catch (error: any) {
@@ -198,13 +220,14 @@ export default function FeaturedBrandsAdminPage() {
     }
   };
 
-  const deleteBrand = async (brandId?: string) => {
-    if (!brandId) {
+  const deleteBrand = async (brand: FeaturedBrandForm) => {
+    if (!brand.id) {
+      setBrands((currentBrands) => currentBrands.filter((item) => item !== brand));
       return;
     }
 
     try {
-      const response = await fetch(`${getRuntimeApiBaseUrl()}/api/featured-brands/${brandId}`, {
+      const response = await fetch(`${getRuntimeApiBaseUrl()}/api/featured-brands/${brand.id}`, {
         method: "DELETE",
       });
 
@@ -212,7 +235,7 @@ export default function FeaturedBrandsAdminPage() {
         throw new Error("Failed to delete featured brand");
       }
 
-      setBrands((currentBrands) => currentBrands.filter((brand) => brand.id !== brandId));
+      setBrands((currentBrands) => currentBrands.filter((item) => item.id !== brand.id));
       toast.success("Featured brand deleted");
     } catch (error: any) {
       console.error(error);
@@ -220,202 +243,354 @@ export default function FeaturedBrandsAdminPage() {
     }
   };
 
+  const moveBrand = (brand: FeaturedBrandForm, direction: "up" | "down") => {
+    setBrands((currentBrands) => {
+      const currentIndex = currentBrands.findIndex((item) => getBrandRowId(item) === getBrandRowId(brand));
+      const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+
+      if (currentIndex < 0 || targetIndex < 0 || targetIndex >= currentBrands.length) {
+        return currentBrands;
+      }
+
+      const nextBrands = [...currentBrands];
+      const [movedBrand] = nextBrands.splice(currentIndex, 1);
+      nextBrands.splice(targetIndex, 0, movedBrand);
+
+      return nextBrands.map((item, index) => ({
+        ...item,
+        sortOrder: index,
+      }));
+    });
+  };
+
+  const saveOrder = async () => {
+    const existingBrands = brands.filter((brand) => brand.id);
+
+    try {
+      setSavingOrder(true);
+      await Promise.all(
+        existingBrands.map((brand) =>
+          fetch(`${getRuntimeApiBaseUrl()}/api/featured-brands/${brand.id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              title: brand.title,
+              logo: brand.logo,
+              isActive: brand.isActive,
+              sortOrder: brand.sortOrder,
+              productIds: brand.productIds.map((productId) => productId.trim()).filter(Boolean),
+            }),
+          }).then(async (response) => {
+            if (!response.ok) {
+              const responseData = await response.json().catch(() => null);
+              throw new Error(responseData?.error || "Failed to save brand order");
+            }
+          })
+        )
+      );
+
+      toast.success("Featured brand order saved");
+      await fetchData();
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error?.message || "Failed to save featured brand order");
+    } finally {
+      setSavingOrder(false);
+    }
+  };
+
+  const addBrand = () => {
+    const nextBrand = createEmptyBrand(brands.length);
+    const rowId = getBrandRowId(nextBrand);
+
+    setBrands((currentBrands) => [...currentBrands, nextBrand]);
+    setEditingIds((currentIds) => [...currentIds, rowId]);
+  };
+
+  const columns: DataTableColumn<FeaturedBrandForm>[] = [
+    {
+      key: "sort",
+      header: "Sort",
+      className: "w-24",
+      cell: (brand) => {
+        const index = brands.findIndex((item) => getBrandRowId(item) === getBrandRowId(brand));
+
+        return (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => moveBrand(brand, "up")}
+              disabled={index <= 0}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)] disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Move brand up"
+              title="Move up"
+            >
+              <FaArrowUp />
+            </button>
+            <button
+              type="button"
+              onClick={() => moveBrand(brand, "down")}
+              disabled={index === brands.length - 1}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)] disabled:cursor-not-allowed disabled:opacity-40"
+              aria-label="Move brand down"
+              title="Move down"
+            >
+              <FaArrowDown />
+            </button>
+          </div>
+        );
+      },
+    },
+    {
+      key: "logo",
+      header: "Logo",
+      className: "min-w-[12rem]",
+      cell: (brand) => {
+        const rowId = getBrandRowId(brand);
+        const isEditing = editingIds.includes(rowId);
+
+        return (
+          <div className="flex min-w-0 flex-col gap-2">
+            {brand.logo ? (
+              <div className="w-fit rounded-md border border-[var(--site-border)] bg-white p-2">
+                <Image
+                  src={`/${brand.logo}`}
+                  alt={brand.title || "Brand logo"}
+                  width={112}
+                  height={48}
+                  className="h-10 w-28 object-contain"
+                />
+              </div>
+            ) : (
+              <span className="text-sm text-[var(--site-muted)]">No logo</span>
+            )}
+            {isEditing ? (
+              <>
+                <input
+                  type="file"
+                  className="file-input file-input-bordered file-input-sm w-full max-w-xs"
+                  accept="image/*"
+                  onChange={async (event) => {
+                    const file = event.target.files?.[0];
+
+                    if (!file) {
+                      return;
+                    }
+
+                    try {
+                      const uploaded = await uploadLogo(file);
+                      updateBrand(rowId, { logo: uploaded.path });
+                      toast.success("Brand logo uploaded");
+                    } catch (error: any) {
+                      console.error(error);
+                      toast.error(error?.message || "Failed to upload brand logo");
+                    }
+                  }}
+                />
+                <input
+                  type="text"
+                  className="input input-bordered input-sm w-full max-w-xs"
+                  value={brand.logo}
+                  onChange={(event) => updateBrand(rowId, { logo: event.target.value })}
+                  placeholder="uploads/logo.webp"
+                />
+              </>
+            ) : null}
+          </div>
+        );
+      },
+    },
+    {
+      key: "title",
+      header: "Brand",
+      searchableText: (brand) => brand.title,
+      className: "min-w-[14rem]",
+      cell: (brand) => {
+        const rowId = getBrandRowId(brand);
+
+        return editingIds.includes(rowId) ? (
+          <input
+            type="text"
+            className="input input-bordered input-sm w-full"
+            value={brand.title}
+            onChange={(event) => updateBrand(rowId, { title: event.target.value })}
+            placeholder="Logitech, HyperX, ASUS..."
+          />
+        ) : (
+          <div>
+            <p className="font-semibold text-[var(--site-text)]">{brand.title || "Untitled brand"}</p>
+            <p className="mt-1 text-xs text-[var(--site-muted)]">Sort order: {brand.sortOrder}</p>
+          </div>
+        );
+      },
+    },
+    {
+      key: "products",
+      header: "Products",
+      searchableText: (brand) =>
+        brand.productIds
+          .map((productId) => productById.get(productId))
+          .filter(Boolean)
+          .map((product) => getProductLabel(product as ProductOption))
+          .join(" "),
+      className: "min-w-[24rem]",
+      cell: (brand) => {
+        const rowId = getBrandRowId(brand);
+        const isEditing = editingIds.includes(rowId);
+
+        if (!isEditing) {
+          const selectedProducts = brand.productIds
+            .map((productId) => productById.get(productId))
+            .filter(Boolean) as ProductOption[];
+
+          return selectedProducts.length > 0 ? (
+            <div className="flex flex-col gap-1 text-sm">
+              {selectedProducts.map((product, index) => (
+                <span key={product.id}>
+                  {index + 1}. {getProductLabel(product)}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <span className="text-sm text-[var(--site-muted)]">No products selected</span>
+          );
+        }
+
+        return (
+          <div className="grid w-full gap-2">
+            {Array.from({ length: MAX_PRODUCTS_PER_BRAND }).map((_, slotIndex) => (
+              <select
+                key={`${rowId}-slot-${slotIndex}`}
+                className="select select-bordered select-sm w-full"
+                value={brand.productIds[slotIndex] || ""}
+                onChange={(event) => updateBrandProductSlot(rowId, slotIndex, event.target.value)}
+              >
+                <option value="">Slot {slotIndex + 1}: No product selected</option>
+                {products.map((product) => (
+                  <option key={product.id} value={product.id}>
+                    {getProductLabel(product)}
+                  </option>
+                ))}
+              </select>
+            ))}
+          </div>
+        );
+      },
+    },
+    {
+      key: "status",
+      header: "Status",
+      className: "w-40",
+      cell: (brand) => {
+        const rowId = getBrandRowId(brand);
+
+        return editingIds.includes(rowId) ? (
+          <select
+            className="select select-bordered select-sm w-full"
+            value={brand.isActive ? "enabled" : "disabled"}
+            onChange={(event) => updateBrand(rowId, { isActive: event.target.value === "enabled" })}
+          >
+            <option value="enabled">Enabled</option>
+            <option value="disabled">Disabled</option>
+          </select>
+        ) : (
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-bold ${
+              brand.isActive
+                ? "bg-green-100 text-green-700"
+                : "bg-[var(--site-panel-soft)] text-[var(--site-muted)]"
+            }`}
+          >
+            {brand.isActive ? "Enabled" : "Disabled"}
+          </span>
+        );
+      },
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      className: "w-36",
+      cell: (brand) => {
+        const rowId = getBrandRowId(brand);
+        const isEditing = editingIds.includes(rowId);
+
+        return (
+          <div className="flex items-center gap-2">
+            {isEditing ? (
+              <button
+                type="button"
+                onClick={() => saveBrand(brand)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-[var(--site-accent)] text-white transition hover:bg-[var(--site-accent-strong)]"
+                aria-label="Save brand"
+                title="Save"
+              >
+                <FaFloppyDisk />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setEditingIds((currentIds) => [...new Set([...currentIds, rowId])])}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
+                aria-label="Edit brand"
+                title="Edit"
+              >
+                <FaPen />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => deleteBrand(brand)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-500 text-red-500 transition hover:bg-red-500 hover:text-white"
+              aria-label="Delete brand"
+              title="Delete"
+            >
+              <FaTrash />
+            </button>
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
     <div className="mx-auto flex max-w-screen-2xl justify-start gap-y-5 bg-[var(--site-bg)] text-[var(--site-text)] xl:h-full max-xl:flex-col">
       <DashboardSidebar />
       <div className="flex w-full flex-col gap-6 xl:ml-5 max-xl:px-5">
-        <div className="flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-start">
-          <div>
-            <h1 className="text-3xl font-semibold">Featured Brands</h1>
-            <p className="mt-2 max-w-3xl text-sm text-[var(--site-muted)]">
-              Create the brand strip shown under homepage featured products. Each brand gets a
-              logo, a title, and up to five ordered products that appear when shoppers click it.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() =>
-              setBrands((currentBrands) => [
-                ...currentBrands,
-                createEmptyBrand(currentBrands.length),
-              ])
-            }
-            className="rounded-md bg-[var(--site-accent)] px-5 py-3 font-semibold text-white transition hover:bg-[var(--site-accent-strong)]"
-          >
-            Add brand set
-          </button>
-        </div>
-
-        <div className="rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel)] p-4 text-sm text-[var(--site-muted)]">
-          Only products already marked as featured and enabled can be used here. Slot 1 shows
-          first on the storefront, slot 2 shows second, and so on up to five products.
-        </div>
-
-        {loading ? (
-          <p className="text-sm text-[var(--site-muted)]">Loading featured brand groups...</p>
-        ) : (
-          <div className="grid gap-6">
-            {brands.map((brand, index) => (
-              <section
-                key={brand.id ?? `featured-brand-${index}`}
-                className="rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel)] p-5 shadow-sm"
+        <DataTable
+          title="Featured Brands"
+          description="Manage the brand strip shown below homepage featured products. Each brand can use any enabled product, not only products marked as featured."
+          data={brands}
+          columns={columns}
+          getRowId={getBrandRowId}
+          loading={loading}
+          emptyMessage="No featured brand sets yet."
+          enableSearch
+          searchPlaceholder="Search brands or selected products..."
+          tableClassName="min-w-[1180px]"
+          actions={
+            <>
+              <button
+                type="button"
+                onClick={saveOrder}
+                disabled={savingOrder || brands.length === 0}
+                className="inline-flex min-h-10 items-center gap-2 rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 text-sm font-semibold text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <div className="mb-5 flex items-center justify-between gap-3 max-sm:flex-col max-sm:items-start">
-                  <div>
-                    <h2 className="text-xl font-semibold">Brand Set {index + 1}</h2>
-                    <p className="mt-1 text-sm text-[var(--site-muted)]">
-                      Manage the logo tile and the five-product selection shown for this brand.
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    {brand.id ? (
-                      <button
-                        type="button"
-                        onClick={() => deleteBrand(brand.id)}
-                        className="rounded-md border border-red-500 px-4 py-2 text-sm font-semibold text-red-500 transition hover:bg-red-500 hover:text-white"
-                      >
-                        Delete
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      onClick={() => saveBrand(brand, index)}
-                      className="rounded-md bg-[var(--site-accent)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--site-accent-strong)]"
-                    >
-                      Save brand set
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <label className="form-control">
-                    <div className="label">
-                      <span className="label-text">Brand title</span>
-                    </div>
-                    <input
-                      type="text"
-                      className="input input-bordered"
-                      value={brand.title}
-                      onChange={(event) => updateBrandField(index, "title", event.target.value)}
-                      placeholder="Logitech, HyperX, ASUS..."
-                    />
-                  </label>
-
-                  <label className="form-control">
-                    <div className="label">
-                      <span className="label-text">Sort order</span>
-                    </div>
-                    <input
-                      type="number"
-                      className="input input-bordered"
-                      value={brand.sortOrder}
-                      onChange={(event) =>
-                        updateBrandField(index, "sortOrder", Number(event.target.value))
-                      }
-                    />
-                  </label>
-
-                  <label className="form-control">
-                    <div className="label">
-                      <span className="label-text">Logo upload</span>
-                    </div>
-                    <input
-                      type="file"
-                      className="file-input file-input-bordered w-full"
-                      accept="image/*"
-                      onChange={async (event) => {
-                        const file = event.target.files?.[0];
-
-                        if (!file) {
-                          return;
-                        }
-
-                        try {
-                          const uploaded = await uploadLogo(file);
-                          updateBrandField(index, "logo", uploaded.path);
-                          toast.success("Brand logo uploaded");
-                        } catch (error: any) {
-                          console.error(error);
-                          toast.error(error?.message || "Failed to upload brand logo");
-                        }
-                      }}
-                    />
-                    <p className="mt-2 text-xs text-[var(--site-muted)]">
-                      Saved path: {brand.logo || "No logo uploaded yet"}
-                    </p>
-                    {brand.logo ? (
-                      <div className="mt-3 rounded-2xl border border-[var(--site-border)] bg-white p-4">
-                        <Image
-                          src={`/${brand.logo}`}
-                          alt={brand.title || "Brand logo"}
-                          width={160}
-                          height={80}
-                          className="h-16 w-auto object-contain"
-                        />
-                      </div>
-                    ) : null}
-                  </label>
-
-                  <label className="form-control">
-                    <div className="label">
-                      <span className="label-text">Visibility</span>
-                    </div>
-                    <select
-                      className="select select-bordered"
-                      value={brand.isActive ? "enabled" : "disabled"}
-                      onChange={(event) =>
-                        updateBrandField(index, "isActive", event.target.value === "enabled")
-                      }
-                    >
-                      <option value="enabled">Enabled</option>
-                      <option value="disabled">Disabled</option>
-                    </select>
-                  </label>
-
-                  <div className="lg:col-span-2">
-                    <div className="mb-3">
-                      <h3 className="text-base font-semibold">Featured product slots</h3>
-                      <p className="mt-1 text-sm text-[var(--site-muted)]">
-                        Pick up to five products in the exact order they should appear.
-                      </p>
-                    </div>
-
-                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                      {Array.from({ length: MAX_PRODUCTS_PER_BRAND }).map((_, slotIndex) => (
-                        <label key={`${brand.id ?? index}-slot-${slotIndex}`} className="form-control">
-                          <div className="label">
-                            <span className="label-text">Slot {slotIndex + 1}</span>
-                          </div>
-                          <select
-                            className="select select-bordered"
-                            value={brand.productIds[slotIndex] || ""}
-                            onChange={(event) =>
-                              updateBrandProductSlot(index, slotIndex, event.target.value)
-                            }
-                          >
-                            <option value="">No product selected</option>
-                            {featuredProducts.map((product) => (
-                              <option key={product.id} value={product.id}>
-                                {getProductLabel(product)}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </section>
-            ))}
-
-            {brands.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-[var(--site-border)] bg-[var(--site-panel)] p-8 text-sm text-[var(--site-muted)]">
-                No featured brand sets yet. Use "Add brand set" to build the strip shown beneath
-                the homepage featured products section.
-              </div>
-            ) : null}
-          </div>
-        )}
+                <FaFloppyDisk />
+                {savingOrder ? "Saving..." : "Save order"}
+              </button>
+              <button
+                type="button"
+                onClick={addBrand}
+                className="inline-flex min-h-10 items-center gap-2 rounded-md bg-[var(--site-accent)] px-4 text-sm font-semibold text-white transition hover:bg-[var(--site-accent-strong)]"
+              >
+                <FaPlus />
+                Add brand
+              </button>
+            </>
+          }
+        />
       </div>
     </div>
   );

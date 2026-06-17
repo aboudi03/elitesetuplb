@@ -42,7 +42,7 @@ function normalizeProductIds(productIds) {
     .slice(0, MAX_PRODUCTS_PER_BRAND);
 }
 
-async function validateFeaturedProducts(productIds) {
+async function validateBrandProducts(productIds) {
   if (productIds.length > MAX_PRODUCTS_PER_BRAND) {
     throw new AppError(`A brand can only contain up to ${MAX_PRODUCTS_PER_BRAND} products`, 400);
   }
@@ -57,12 +57,11 @@ async function validateFeaturedProducts(productIds) {
     return [];
   }
 
-  const featuredProducts = await prisma.product.findMany({
+  const products = await prisma.product.findMany({
     where: {
       id: {
         in: uniqueProductIds,
       },
-      featured: true,
       isActive: true,
     },
     select: {
@@ -70,9 +69,9 @@ async function validateFeaturedProducts(productIds) {
     },
   });
 
-  if (featuredProducts.length !== uniqueProductIds.length) {
+  if (products.length !== uniqueProductIds.length) {
     throw new AppError(
-      "All assigned products must be marked as featured and enabled on the storefront",
+      "All assigned products must be enabled on the storefront",
       400
     );
   }
@@ -138,7 +137,7 @@ const createFeaturedBrand = asyncHandler(async (req, res) => {
   const logo = normalizeText(req.body.logo);
   const isActive = normalizeBoolean(req.body.isActive, true);
   const sortOrder = normalizeSortOrder(req.body.sortOrder, 0);
-  const productIds = await validateFeaturedProducts(normalizeProductIds(req.body.productIds));
+  const productIds = await validateBrandProducts(normalizeProductIds(req.body.productIds));
 
   if (!title) {
     throw new AppError("Brand title is required", 400);
@@ -202,7 +201,7 @@ const updateFeaturedBrand = asyncHandler(async (req, res) => {
   const productIds =
     req.body.productIds === undefined
       ? existingBrand.products.map((item) => item.productId)
-      : await validateFeaturedProducts(normalizeProductIds(req.body.productIds));
+      : await validateBrandProducts(normalizeProductIds(req.body.productIds));
 
   const updatedBrand = await prisma.$transaction(async (tx) => {
     await tx.featuredBrand.update({
