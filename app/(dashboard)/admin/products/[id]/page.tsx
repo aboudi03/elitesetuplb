@@ -577,6 +577,22 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
 
                 <label className="block">
                   <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
+                    Cost
+                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    className={fieldClassName}
+                    value={product?.cost ?? 0}
+                    onChange={(e) =>
+                      setProduct({ ...product!, cost: Math.max(0, Number(e.target.value) || 0) })
+                    }
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
                     Tax % (optional)
                   </span>
                   <input

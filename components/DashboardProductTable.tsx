@@ -248,6 +248,7 @@ const DashboardProductTable = () => {
       Pick<
         Product,
         "inStock" | "isActive" | "featured" | "title" | "model" | "sku" | "price"
+        | "cost"
       >
     >
   ) => {
@@ -500,7 +501,7 @@ const DashboardProductTable = () => {
     {
       key: "price",
       header: "Price",
-      searchableText: (product) => `${product.price} ${product.taxRate ?? 0}`,
+      searchableText: (product) => `${product.price} ${product.cost ?? 0} ${product.taxRate ?? 0}`,
       className: "w-[96px]",
       cell: (product) => (
         <div className="space-y-1">
@@ -521,6 +522,27 @@ const DashboardProductTable = () => {
           </div>
           <div className="text-xs text-[var(--site-muted)]">Tax: {product.taxRate ?? 0}%</div>
         </div>
+      ),
+    },
+    {
+      key: "cost",
+      header: "Cost",
+      searchableText: (product) => String(product.cost ?? 0),
+      className: "w-[96px]",
+      cell: (product) => (
+        <InlineTextEdit
+          value={String(product.cost ?? 0)}
+          displayValue={`$${Number(product.cost || 0).toFixed(2)}`}
+          label={`${sanitize(product.title || product.model || "product")} cost`}
+          type="number"
+          min={0}
+          step={0.01}
+          inputClassName="min-w-[8rem]"
+          onConfirm={async (nextCost) => {
+            await updateProducts([product], { cost: Math.max(0, Number(nextCost) || 0) });
+            toast.success("Cost updated");
+          }}
+        />
       ),
     },
     {

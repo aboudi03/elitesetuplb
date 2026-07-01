@@ -22,6 +22,7 @@ import { sanitize } from "@/lib/sanitize";
 import type { CatalogViewMode } from "@/app/_zustand/catalogViewStore";
 import { useProductStore } from "@/app/_zustand/store";
 import { trackCartAdd } from "@/lib/cartTracking";
+import ProductBannerOverlay from "./ProductBannerOverlay";
 
 const PUBLIC_ORDER_LIMIT = 10;
 
@@ -128,6 +129,7 @@ const ProductItem = ({
             : "aspect-[4/3] min-h-[220px] sm:min-h-[300px]"
         }`}
       >
+        <ProductBannerOverlay product={product} />
         {quickAddEnabled ? (
           <button
             type="button"

@@ -249,6 +249,7 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
               mainImage={normalizedProduct.mainImage}
               images={images}
               title={stripHtml(productName)}
+              product={normalizedProduct}
             />
           </div>
 

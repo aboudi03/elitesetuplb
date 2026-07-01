@@ -26,6 +26,7 @@ const createEmptyProduct = () => ({
   sku: "",
   title: "",
   price: 0,
+  cost: 0,
   taxRate: 0,
   manufacturer: "",
   inStock: 0,
@@ -47,6 +48,7 @@ const AddNewProduct = () => {
     sku: string;
     title: string;
     price: number;
+    cost: number;
     taxRate: number;
     manufacturer: string;
     inStock: number;
@@ -238,6 +240,7 @@ const AddNewProduct = () => {
       ...(fields.sizes !== undefined ? { sizes: fields.sizes || "" } : {}),
       ...(fields.mainImage !== undefined ? { mainImage: fields.mainImage || "" } : {}),
       ...(fields.price !== undefined ? { price: fields.price } : {}),
+      ...(fields.cost !== undefined ? { cost: fields.cost } : {}),
       ...(fields.taxRate !== undefined ? { taxRate: fields.taxRate || 0 } : {}),
       ...(fields.inStock !== undefined ? { inStock: fields.inStock } : {}),
       ...(fields.categoryId !== undefined ? { categoryId: fields.categoryId || "" } : {}),
@@ -453,6 +456,18 @@ const AddNewProduct = () => {
                   onChange={(e) => setProduct({ ...product, price: Number(e.target.value) })}
                 />
               </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">Cost</span>
+                  <input
+                    type="number"
+                    min={0}
+                    className={fieldClassName}
+                    value={product?.cost}
+                    step="0.01"
+                    onChange={(e) => setProduct({ ...product, cost: Math.max(0, Number(e.target.value) || 0) })}
+                  />
+                </label>
 
                 <label className="block">
                   <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">Tax % (optional)</span>

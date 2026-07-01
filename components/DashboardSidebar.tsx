@@ -26,6 +26,8 @@ import {
   FaTable,
   FaBarsStaggered,
   FaTag,
+  FaPercent,
+  FaChartLine,
 } from "react-icons/fa6";
 import { FaFileUpload } from "react-icons/fa";
 import Link from "next/link";
@@ -178,6 +180,30 @@ const DashboardSidebar = () => {
         <div className={itemClassName}>
           <FaTag className="text-2xl" />
           <span className="font-normal">Featured Brands</span>
+        </div>
+      </Link>
+      <Link href="/admin/deals" onClick={handleLinkClick}>
+        <div className={itemClassName}>
+          <FaPercent className="text-2xl" />
+          <span className="font-normal">Deals</span>
+        </div>
+      </Link>
+      <Link href="/admin/product-banners" onClick={handleLinkClick}>
+        <div className={itemClassName}>
+          <FaImages className="text-2xl" />
+          <span className="font-normal">Product Banners</span>
+        </div>
+      </Link>
+      <Link href="/admin/reports/sales" onClick={handleLinkClick}>
+        <div className={itemClassName}>
+          <FaChartLine className="text-2xl" />
+          <span className="font-normal">Sales Report</span>
+        </div>
+      </Link>
+      <Link href="/admin/reports/profit" onClick={handleLinkClick}>
+        <div className={itemClassName}>
+          <FaChartLine className="text-2xl" />
+          <span className="font-normal">Profit Report</span>
         </div>
       </Link>
       <Link href="/admin/categories" onClick={handleLinkClick}>

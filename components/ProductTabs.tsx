@@ -16,6 +16,7 @@ import { sanitize } from "@/lib/sanitize";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { FaStar } from "react-icons/fa6";
+import { getProductColors, getProductSizes } from "@/lib/productColors";
 
 type ProductReview = {
   id: string;
@@ -47,7 +48,12 @@ const ProductTabs = ({ product }: { product: Product }) => {
   });
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
-  const additionalInfoItems = [
+  const colorOptions = getProductColors(product);
+  const sizeOptions = getProductSizes(product);
+  const additionalInfoItems: Array<{
+    label: string;
+    value: React.ReactNode;
+  }> = [
     {
       label: "Manufacturer",
       value: sanitize(product?.manufacturer) || "Not specified",
@@ -58,11 +64,48 @@ const ProductTabs = ({ product }: { product: Product }) => {
         ? sanitize(formatCategoryName(product?.category?.name))
         : "No category",
     },
-    {
-      label: "Color",
-      value: "Check available options above",
-    },
   ];
+
+  if (colorOptions.length > 0) {
+    additionalInfoItems.push({
+      label: "Color",
+      value: (
+        <div className="flex flex-wrap gap-2">
+          {colorOptions.map((color) => (
+            <span
+              key={color.key}
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 py-1.5 text-sm font-semibold text-[var(--site-text)]"
+            >
+              <span
+                className="h-4 w-4 rounded-full border border-black/10 shadow-sm"
+                style={{ backgroundColor: color.swatch }}
+                aria-hidden="true"
+              />
+              {sanitize(color.label)}
+            </span>
+          ))}
+        </div>
+      ),
+    });
+  }
+
+  if (sizeOptions.length > 0) {
+    additionalInfoItems.push({
+      label: "Size",
+      value: (
+        <div className="flex flex-wrap gap-2">
+          {sizeOptions.map((size) => (
+            <span
+              key={size.key}
+              className="inline-flex rounded-full border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 py-1.5 text-sm font-semibold text-[var(--site-text)]"
+            >
+              {sanitize(size.label)}
+            </span>
+          ))}
+        </div>
+      ),
+    });
+  }
 
   useEffect(() => {
     let isCancelled = false;
@@ -203,9 +246,9 @@ const ProductTabs = ({ product }: { product: Product }) => {
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--site-muted)]">
                   {item.label}
                 </p>
-                <p className="mt-2 break-words text-base font-semibold text-[var(--site-text)] sm:text-lg">
+                <div className="mt-2 break-words text-base font-semibold text-[var(--site-text)] sm:text-lg">
                   {item.value}
-                </p>
+                </div>
               </div>
             ))}
           </div>

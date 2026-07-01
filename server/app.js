@@ -23,6 +23,9 @@ const orderStatusesRouter = require("./routes/orderStatuses");
 const dashboardMetricsRouter = require("./routes/dashboardMetrics");
 const cartEventsRouter = require("./routes/cartEvents");
 const featuredBrandsRouter = require("./routes/featuredBrands");
+const dealsRouter = require("./routes/deals");
+const productBannersRouter = require("./routes/productBanners");
+const reportsRouter = require("./routes/reports");
 const prisma = require("./utills/db");
 var cors = require("cors");
 
@@ -154,6 +157,9 @@ app.use("/api/main-image", uploadLimiter);
 app.use("/api/bulk-upload", uploadLimiter);
 app.use("/api/hero-slides", uploadLimiter);
 app.use("/api/cart-events", orderLimiter);
+app.use("/api/deals", orderLimiter);
+app.use("/api/product-banners", uploadLimiter);
+app.use("/api/reports", orderLimiter);
 
 // Apply stricter rate limiting to authentication-related routes
 app.use("/api/users/email", authLimiter); // For login attempts via email lookup 
@@ -179,6 +185,9 @@ app.use("/api/order-statuses", orderStatusesRouter);
 app.use("/api/dashboard-metrics", dashboardMetricsRouter);
 app.use("/api/cart-events", cartEventsRouter);
 app.use("/api/featured-brands", featuredBrandsRouter);
+app.use("/api/deals", dealsRouter);
+app.use("/api/product-banners", productBannersRouter);
+app.use("/api/reports", reportsRouter);
 
 // Health check endpoint (no rate limiting)
 app.get('/health', (req, res) => {

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FaAnglesLeft, FaAnglesRight, FaChevronLeft, FaChevronRight, FaXmark } from "react-icons/fa6";
+import ProductBannerOverlay from "./ProductBannerOverlay";
 
 type ProductGalleryImage = {
   imageID: string;
@@ -13,6 +14,7 @@ type ProductImageGalleryProps = {
   mainImage?: string | null;
   images: ProductGalleryImage[];
   title: string;
+  product?: Product;
 };
 
 const SLIDE_INTERVAL_MS = 3500;
@@ -20,7 +22,7 @@ const SLIDE_INTERVAL_MS = 3500;
 const normalizeImagePath = (imagePath?: string | null) =>
   imagePath ? `/${imagePath.replace(/^\/+/, "")}` : "/product_placeholder.webp";
 
-const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryProps) => {
+const ProductImageGallery = ({ mainImage, images, title, product }: ProductImageGalleryProps) => {
   const slides = useMemo(
     () => [
       {
@@ -234,6 +236,7 @@ const ProductImageGallery = ({ mainImage, images, title }: ProductImageGalleryPr
           className="absolute inset-0 z-10 cursor-zoom-in"
           aria-label="Open product image in full view"
         />
+        {product ? <ProductBannerOverlay product={product} className="left-5 top-5 sm:left-6 sm:top-6" /> : null}
         <Image
           key={activeSlide.src}
           src={activeSlide.src}

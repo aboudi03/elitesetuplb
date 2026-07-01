@@ -17,6 +17,7 @@ interface Product {
   isActive: boolean;
   featured?: boolean;
   featuredSortOrder?: number | null;
+  cost?: number;
   taxRate?: number;
   merchantId?: string | null;
   merchant?: { id: string; name: string } | null;
@@ -115,6 +116,60 @@ interface FeaturedBrand {
     productId: string;
     product: Product;
   }>;
+}
+
+interface DealProduct {
+  id: string;
+  productId: string;
+  sortOrder: number;
+  product: Product;
+}
+
+interface Deal {
+  id: string;
+  slug: string;
+  title: string;
+  description?: string | null;
+  specialPrice: number;
+  originalPrice?: number;
+  savings?: number;
+  isActive: boolean;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  sortOrder: number;
+  products: DealProduct[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface ProductBannerTargetProduct {
+  id: string;
+  productId: string;
+  product?: Pick<Product, "id" | "title" | "model" | "mainImage">;
+}
+
+interface ProductBannerTargetCategory {
+  id: string;
+  categoryId: string;
+  category?: Pick<Category, "id" | "name">;
+}
+
+interface ProductBanner {
+  id: string;
+  title: string;
+  image: string;
+  altText?: string | null;
+  scopeType: "ALL" | "PRODUCTS" | "CATEGORIES";
+  isActive: boolean;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  sortOrder: number;
+  products: ProductBannerTargetProduct[];
+  categories: ProductBannerTargetCategory[];
+  productIds?: string[];
+  categoryIds?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface SingleProductBtnProps {

@@ -21,6 +21,7 @@ model Product {
   sku            String?                  @unique
   mainImage      String?
   price          Float                    @default(0)
+  cost           Float                    @default(0)
   taxRate        Float                    @default(0)
   rating         Int                      @default(0)
   description    String?                  @db.Text
@@ -44,6 +45,35 @@ model Product {
   // Back relation for bulk upload items
   bulkUploadItems bulk_upload_item[]      @relation("ProductBulkItems")
   featuredBrandItems FeaturedBrandProduct[]
+  dealItems      DealProduct[]
+  bannerTargets  ProductBannerProduct[]
+}
+
+model Deal {
+  id           String        @id @default(uuid())
+  slug         String        @unique
+  title        String
+  description  String?       @db.Text
+  specialPrice Float
+  isActive     Boolean       @default(true)
+  startsAt     DateTime?
+  endsAt       DateTime?
+  sortOrder    Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  products     DealProduct[]
+}
+
+model DealProduct {
+  id        String  @id @default(uuid())
+  dealId    String
+  productId String
+  sortOrder Int     @default(0)
+  deal      Deal    @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([dealId, productId])
+  @@index([productId])
 }
 
 model HeroSlide {
@@ -205,6 +235,51 @@ model Category {
   children  Category[] @relation("CategoryChildren")
   sortOrder Int       @default(0)
   products  Product[] // Define a one-to-many relationship
+  bannerTargets ProductBannerCategory[]
+}
+
+model ProductBanner {
+  id          String                  @id @default(uuid())
+  title       String
+  image       String
+  altText     String?
+  scopeType   ProductBannerScope      @default(ALL)
+  isActive    Boolean                 @default(true)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  sortOrder   Int                     @default(0)
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+  products    ProductBannerProduct[]
+  categories  ProductBannerCategory[]
+}
+
+model ProductBannerProduct {
+  id        String        @id @default(uuid())
+  bannerId  String
+  productId String
+  banner    ProductBanner @relation(fields: [bannerId], references: [id], onDelete: Cascade)
+  product   Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([bannerId, productId])
+  @@index([productId])
+}
+
+model ProductBannerCategory {
+  id         String        @id @default(uuid())
+  bannerId   String
+  categoryId String
+  banner     ProductBanner @relation(fields: [bannerId], references: [id], onDelete: Cascade)
+  category   Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([bannerId, categoryId])
+  @@index([categoryId])
+}
+
+enum ProductBannerScope {
+  ALL
+  PRODUCTS
+  CATEGORIES
 }
 
 model Wishlist {

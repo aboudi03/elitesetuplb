@@ -15,6 +15,7 @@ import apiClient from "@/lib/api";
 import toast from "react-hot-toast";
 import DataTable, { DataTableColumn } from "./ui/DataTable";
 import ViewActionLink from "./ui/ViewActionLink";
+import { FaWhatsapp } from "react-icons/fa";
 
 interface OrderStatusOption {
   id: string;
@@ -89,6 +90,49 @@ const ORDER_SORT_OPTIONS = [
   { label: "Status A-Z", value: "status:asc" },
   { label: "Status Z-A", value: "status:desc" },
 ];
+
+const DELIVERY_FEE = 5;
+const DELIVERY_ESTIMATE = "3-5 business days";
+
+function normalizeWhatsappPhone(phone: string) {
+  let digits = String(phone || "").replace(/\D/g, "");
+
+  if (digits.startsWith("00")) {
+    digits = digits.slice(2);
+  }
+
+  if (digits.startsWith("961")) {
+    return digits;
+  }
+
+  if (digits.startsWith("0")) {
+    return `961${digits.slice(1)}`;
+  }
+
+  if (digits.length === 7 && digits.startsWith("3")) {
+    return `961${digits}`;
+  }
+
+  return digits;
+}
+
+function buildOrderConfirmationWhatsappUrl(order: Order) {
+  const phone = normalizeWhatsappPhone(order.phone);
+  const orderLabel = order.orderNumber ? `#${order.orderNumber}` : `#${order.id.slice(0, 8).toUpperCase()}`;
+  const subtotal = Number(order.total || 0);
+  const grandTotal = subtotal + DELIVERY_FEE;
+  const customerName = [order.name, order.lastname].filter(Boolean).join(" ").trim();
+  const message = [
+    `Hello${customerName ? ` ${customerName}` : ""}, your order ${orderLabel} is confirmed.`,
+    `Subtotal: $${subtotal.toFixed(2)}`,
+    `Delivery fee: $${DELIVERY_FEE.toFixed(2)}`,
+    `Total: $${grandTotal.toFixed(2)}`,
+    `Estimated delivery time: ${DELIVERY_ESTIMATE}.`,
+    "Thank you for shopping with Elite Setup.",
+  ].join("\n");
+
+  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+}
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -324,7 +368,20 @@ const AdminOrders = () => {
       key: "actions",
       header: "",
       cell: (order) => (
-        <ViewActionLink href={`/admin/orders/${order.id}`} label="View order details" />
+        <div className="flex items-center justify-end gap-2">
+          <ViewActionLink href={`/admin/orders/${order.id}`} label="View order details" />
+          <a
+            href={buildOrderConfirmationWhatsappUrl(order)}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Send order confirmation on WhatsApp"
+            title="Send order confirmation on WhatsApp"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-emerald-200 bg-emerald-50 text-emerald-700 transition hover:border-emerald-400 hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+          >
+            <FaWhatsapp aria-hidden="true" className="text-lg" />
+            <span className="sr-only">Send order confirmation on WhatsApp</span>
+          </a>
+        </div>
       ),
     },
   ];
