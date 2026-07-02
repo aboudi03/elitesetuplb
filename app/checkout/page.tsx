@@ -22,10 +22,12 @@ const deliveryFee = 5;
 
 type CheckoutSuccessSummary = {
   orderId: string;
+  orderNumber?: number | null;
   customerName: string;
   items: Array<{
     cartItemId?: string;
     title: string;
+    image?: string;
     amount: number;
     price: number;
     selectedColor?: string;
@@ -306,6 +308,7 @@ const CheckoutPage = () => {
       console.log("✅ Parsed response data:", data);
       
       const orderId: string = data.id;
+      const orderNumber = Number.isFinite(Number(data.orderNumber)) ? Number(data.orderNumber) : null;
       console.log("🆔 Extracted order ID:", orderId);
 
       if (!orderId) {
@@ -338,10 +341,12 @@ const CheckoutPage = () => {
 
       const completedOrderSummary: CheckoutSuccessSummary = {
         orderId,
+        orderNumber,
         customerName: `${checkoutForm.name.trim()} ${checkoutForm.lastname.trim()}`.trim(),
         items: products.map((product) => ({
           cartItemId: product.cartItemId,
           title: product.title,
+          image: product.image,
           amount: product.amount,
           price: product.price,
           selectedColor: product.selectedColor,
@@ -948,34 +953,44 @@ const CheckoutPage = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="checkout-success-title"
-            className="w-full max-w-2xl rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel)] p-6 shadow-2xl"
+            className="relative w-full max-w-2xl rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel)] p-6 shadow-2xl"
           >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/12 text-emerald-600">
-                  <svg className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path
-                      fillRule="evenodd"
-                      d="M16.704 5.29a1 1 0 010 1.42l-7.2 7.2a1 1 0 01-1.415 0l-3.2-3.2a1 1 0 111.414-1.42l2.493 2.494 6.493-6.494a1 1 0 011.415 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <h2 id="checkout-success-title" className="text-2xl font-black text-[var(--site-text)]">
-                  Order confirmed
-                </h2>
-                <p className="mt-2 text-sm text-[var(--site-muted)]">
-                  Thanks{successSummary.customerName ? `, ${successSummary.customerName}` : ""}. Your order has been placed successfully.
-                </p>
-              </div>
+            <button
+              type="button"
+              onClick={closeSuccessDialog}
+              className="absolute right-5 top-5 rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 py-2 text-sm font-semibold text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
+            >
+              Close
+            </button>
 
-              <button
-                type="button"
-                onClick={closeSuccessDialog}
-                className="rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 py-2 text-sm font-semibold text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
-              >
-                Close
-              </button>
+            <div className="pr-20 text-center sm:pr-0">
+              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 ring-8 ring-emerald-500/5 animate-[checkoutSuccessPop_560ms_cubic-bezier(0.22,1,0.36,1)_both]">
+                <svg className="h-12 w-12" viewBox="0 0 52 52" fill="none" aria-hidden="true">
+                  <circle
+                    className="animate-[checkoutSuccessCircle_720ms_ease-out_120ms_both]"
+                    cx="26"
+                    cy="26"
+                    r="20"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    className="animate-[checkoutSuccessCheck_520ms_ease-out_520ms_both]"
+                    d="M16 27.5l6.4 6.4L37 19.3"
+                    stroke="currentColor"
+                    strokeWidth="4.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+              <h2 id="checkout-success-title" className="text-2xl font-black text-[var(--site-text)]">
+                Order confirmed
+              </h2>
+              <p className="mx-auto mt-2 max-w-lg text-sm text-[var(--site-muted)]">
+                Thanks{successSummary.customerName ? `, ${successSummary.customerName}` : ""}. Your order has been placed successfully.
+              </p>
             </div>
 
             <div className="mt-5 rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-4">
@@ -984,7 +999,9 @@ const CheckoutPage = () => {
                   Order reference
                 </p>
                 <p className="text-sm font-bold text-[var(--site-accent)]">
-                  {successSummary.orderId.slice(0, 8).toUpperCase()}
+                  {successSummary.orderNumber
+                    ? `#${successSummary.orderNumber}`
+                    : successSummary.orderId.slice(0, 8).toUpperCase()}
                 </p>
               </div>
               <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
@@ -1011,15 +1028,26 @@ const CheckoutPage = () => {
                     key={item.cartItemId || `${item.title}-${item.amount}`}
                     className="flex items-start justify-between gap-4 rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 py-3"
                   >
-                    <div>
-                      <p className="font-semibold text-[var(--site-text)]">{item.title}</p>
-                      <p className="mt-1 text-sm text-[var(--site-muted)]">
-                        Qty: {item.amount}
-                        {item.selectedColor ? ` | Color: ${item.selectedColor}` : ""}
-                        {item.selectedSize ? ` | Size: ${item.selectedSize}` : ""}
-                      </p>
+                    <div className="flex min-w-0 items-start gap-3">
+                      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-[var(--site-border)] bg-white">
+                        <Image
+                          src={item.image ? `/${item.image.replace(/^\/+/, "")}` : "/product_placeholder.webp"}
+                          alt={item.title}
+                          fill
+                          sizes="64px"
+                          className="object-contain p-1.5"
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-[var(--site-text)]">{item.title}</p>
+                        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-[var(--site-muted)]">
+                          <span>Qty: {item.amount}</span>
+                          {item.selectedColor ? <span>Color: {item.selectedColor}</span> : null}
+                          {item.selectedSize ? <span>Size: {item.selectedSize}</span> : null}
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-sm font-semibold text-[var(--site-text)]">
+                    <p className="shrink-0 text-sm font-semibold text-[var(--site-text)]">
                       ${(item.price * item.amount).toFixed(2)}
                     </p>
                   </div>

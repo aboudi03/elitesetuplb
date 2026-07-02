@@ -901,3 +901,40 @@ html[data-theme] .admin-data-table tbody tr:hover .admin-table-select * {
     border-radius: 0.2rem;
     background: transparent;
 }
+
+@keyframes checkoutSuccessPop {
+    0% {
+        opacity: 0;
+        transform: scale(0.72);
+    }
+
+    70% {
+        opacity: 1;
+        transform: scale(1.08);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes checkoutSuccessCircle {
+    0% {
+        stroke-dasharray: 0 126;
+    }
+
+    100% {
+        stroke-dasharray: 126 126;
+    }
+}
+
+@keyframes checkoutSuccessCheck {
+    0% {
+        stroke-dasharray: 0 28;
+    }
+
+    100% {
+        stroke-dasharray: 28 28;
+    }
+}
