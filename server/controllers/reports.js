@@ -54,7 +54,7 @@ function getDateKey(value) {
 const getSalesProfitReport = asyncHandler(async (request, response) => {
   const orderWhere = buildOrderWhere(request.query);
 
-  const [orders, orderProducts] = await Promise.all([
+  const [orders, orderProducts, stockedProducts] = await Promise.all([
     prisma.customer_order.findMany({
       where: orderWhere,
       orderBy: {
@@ -96,9 +96,29 @@ const getSalesProfitReport = asyncHandler(async (request, response) => {
         },
       },
     }),
+    prisma.product.findMany({
+      where: {
+        isActive: true,
+        inStock: {
+          gt: 0,
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        model: true,
+        sku: true,
+        price: true,
+        cost: true,
+        inStock: true,
+      },
+    }),
   ]);
 
-  const revenue = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
+  const revenue = orderProducts.reduce(
+    (sum, item) => sum + Number(item.product?.price || 0) * Number(item.quantity || 0),
+    0
+  );
   const orderCount = orders.length;
   const itemCount = orderProducts.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
   const cogs = orderProducts.reduce(
@@ -118,28 +138,34 @@ const getSalesProfitReport = asyncHandler(async (request, response) => {
     };
 
     current.orders += 1;
-    current.revenue += Number(order.total || 0);
     dailyMap.set(dateKey, current);
   }
 
   const costByOrderDate = new Map();
+  const revenueByOrderDate = new Map();
   for (const item of orderProducts) {
     const dateKey = getDateKey(item.customerOrder?.dateTime);
+    const quantity = Number(item.quantity || 0);
+    revenueByOrderDate.set(
+      dateKey,
+      (revenueByOrderDate.get(dateKey) || 0) + Number(item.product?.price || 0) * quantity
+    );
     costByOrderDate.set(
       dateKey,
       (costByOrderDate.get(dateKey) || 0) +
-        Number(item.product?.cost || 0) * Number(item.quantity || 0)
+        Number(item.product?.cost || 0) * quantity
     );
   }
 
   const daily = Array.from(dailyMap.values())
     .map((item) => {
       const dailyCogs = costByOrderDate.get(item.date) || 0;
+      const dailyRevenue = revenueByOrderDate.get(item.date) || 0;
       return {
         ...item,
-        revenue: toCurrency(item.revenue),
+        revenue: toCurrency(dailyRevenue),
         cogs: toCurrency(dailyCogs),
-        profit: toCurrency(item.revenue - dailyCogs),
+        profit: toCurrency(dailyRevenue - dailyCogs),
       };
     })
     .sort((first, second) => second.date.localeCompare(first.date));
@@ -176,6 +202,38 @@ const getSalesProfitReport = asyncHandler(async (request, response) => {
     }))
     .sort((first, second) => second.cogs - first.cogs);
 
+  const expectedProducts = stockedProducts
+    .map((product) => {
+      const quantity = Number(product.inStock || 0);
+      const unitPrice = Number(product.price || 0);
+      const unitCost = Number(product.cost || 0);
+      const expectedRevenue = unitPrice * quantity;
+      const expectedCogs = unitCost * quantity;
+
+      return {
+        productId: product.id,
+        title: product.title || product.model || "Untitled product",
+        sku: product.sku || "",
+        quantity,
+        unitCost: toCurrency(unitCost),
+        unitPrice: toCurrency(unitPrice),
+        expectedRevenue: toCurrency(expectedRevenue),
+        expectedCogs: toCurrency(expectedCogs),
+        expectedProfit: toCurrency(expectedRevenue - expectedCogs),
+      };
+    })
+    .sort((first, second) => second.expectedProfit - first.expectedProfit);
+
+  const expectedRevenue = expectedProducts.reduce(
+    (sum, product) => sum + Number(product.expectedRevenue || 0),
+    0
+  );
+  const expectedCogs = expectedProducts.reduce(
+    (sum, product) => sum + Number(product.expectedCogs || 0),
+    0
+  );
+  const expectedProfit = expectedRevenue - expectedCogs;
+
   return response.status(200).json({
     summary: {
       orderCount,
@@ -185,6 +243,13 @@ const getSalesProfitReport = asyncHandler(async (request, response) => {
       grossProfit: toCurrency(grossProfit),
       margin: toCurrency(margin),
       averageOrderValue: toCurrency(orderCount > 0 ? revenue / orderCount : 0),
+    },
+    expected: {
+      revenue: toCurrency(expectedRevenue),
+      cogs: toCurrency(expectedCogs),
+      profit: toCurrency(expectedProfit),
+      itemCount: expectedProducts.reduce((sum, product) => sum + Number(product.quantity || 0), 0),
+      products: expectedProducts,
     },
     daily,
     products,

@@ -2,6 +2,7 @@
 
 import { DashboardSidebar } from "@/components";
 import apiClient from "@/lib/api";
+import ReportChart from "@/components/ReportChart";
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -16,6 +17,8 @@ type ReportResponse = {
     date: string;
     orders: number;
     revenue: number;
+    cogs: number;
+    profit: number;
   }>;
   orders: Array<{
     id: string;
@@ -56,6 +59,8 @@ const SalesReportPage = () => {
     if (status !== "all") params.set("status", status);
     return params.toString();
   }, [dateFrom, dateTo, status]);
+
+  const dailyChartRows = useMemo(() => [...(report?.daily || [])].reverse(), [report?.daily]);
 
   useEffect(() => {
     const loadStatuses = async () => {
@@ -139,6 +144,33 @@ const SalesReportPage = () => {
             <p className="text-sm text-[var(--site-muted)]">Average order</p>
             <p className="mt-2 text-3xl font-bold">{formatMoney(report?.summary.averageOrderValue || 0)}</p>
           </div>
+        </div>
+
+        <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.65fr)]">
+          <ReportChart
+            title="Sales graph"
+            labels={dailyChartRows.map((row) => row.date)}
+            datasets={[
+              {
+                label: "Merchandise revenue",
+                data: dailyChartRows.map((row) => row.revenue),
+                color: "#d90429",
+              },
+            ]}
+          />
+          <ReportChart
+            title="Orders graph"
+            labels={dailyChartRows.map((row) => row.date)}
+            datasets={[
+              {
+                label: "Orders",
+                data: dailyChartRows.map((row) => row.orders),
+                color: "#047857",
+              },
+            ]}
+            type="bar"
+            valuePrefix=""
+          />
         </div>
 
         <section className={`${cardClassName} mt-6`}>

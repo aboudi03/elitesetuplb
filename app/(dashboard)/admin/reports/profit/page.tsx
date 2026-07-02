@@ -2,6 +2,7 @@
 
 import { DashboardSidebar } from "@/components";
 import apiClient from "@/lib/api";
+import ReportChart from "@/components/ReportChart";
 import { sanitize } from "@/lib/sanitize";
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -30,6 +31,23 @@ type ReportResponse = {
     cogs: number;
     estimatedProfit: number;
   }>;
+  expected: {
+    revenue: number;
+    cogs: number;
+    profit: number;
+    itemCount: number;
+    products: Array<{
+      productId: string;
+      title: string;
+      sku: string;
+      quantity: number;
+      unitCost: number;
+      unitPrice: number;
+      expectedRevenue: number;
+      expectedCogs: number;
+      expectedProfit: number;
+    }>;
+  };
 };
 
 type OrderStatusOption = {
@@ -37,6 +55,8 @@ type OrderStatusOption = {
   code: string;
   name: string;
 };
+
+type ProfitChartMode = "expected" | "real";
 
 const cardClassName =
   "rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel)] p-5 shadow-sm";
@@ -51,6 +71,13 @@ const ProfitReportPage = () => {
   const [dateTo, setDateTo] = useState("");
   const [status, setStatus] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
+  const [profitChartMode, setProfitChartMode] = useState<ProfitChartMode>("expected");
+  const [manualCosts, setManualCosts] = useState({
+    packaging: 0,
+    ads: 0,
+    sellerShipping: 0,
+    other: 0,
+  });
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
@@ -59,6 +86,71 @@ const ProfitReportPage = () => {
     if (status !== "all") params.set("status", status);
     return params.toString();
   }, [dateFrom, dateTo, status]);
+
+  const dailyChartRows = useMemo(() => [...(report?.daily || [])].reverse(), [report?.daily]);
+  const profitComparisonRows = useMemo(() => {
+    const rowsByProduct = new Map<
+      string,
+      {
+        productId: string;
+        title: string;
+        expectedProfit: number;
+        expectedRevenue: number;
+        realProfit: number;
+        realRevenue: number;
+      }
+    >();
+
+    for (const product of report?.expected.products || []) {
+      rowsByProduct.set(product.productId, {
+        productId: product.productId,
+        title: product.title,
+        expectedProfit: Number(product.expectedProfit || 0),
+        expectedRevenue: Number(product.expectedRevenue || 0),
+        realProfit: 0,
+        realRevenue: 0,
+      });
+    }
+
+    for (const product of report?.products || []) {
+      const current = rowsByProduct.get(product.productId) || {
+        productId: product.productId,
+        title: product.title,
+        expectedProfit: 0,
+        expectedRevenue: 0,
+        realProfit: 0,
+        realRevenue: 0,
+      };
+
+      current.realProfit = Number(product.estimatedProfit || 0);
+      current.realRevenue = Number(product.estimatedRevenue || 0);
+      current.title = current.title || product.title;
+      rowsByProduct.set(product.productId, current);
+    }
+
+    return Array.from(rowsByProduct.values())
+      .sort((first, second) =>
+        profitChartMode === "expected"
+          ? second.expectedProfit - first.expectedProfit
+          : second.realProfit - first.realProfit
+      )
+      .slice(0, 10)
+      .reverse();
+  }, [profitChartMode, report?.expected.products, report?.products]);
+  const manualDeductionTotal = useMemo(
+    () =>
+      Object.values(manualCosts).reduce((sum, value) => sum + Math.max(0, Number(value) || 0), 0),
+    [manualCosts]
+  );
+  const netGrossProfit = Number(report?.summary.grossProfit || 0) - manualDeductionTotal;
+  const netExpectedProfit = Number(report?.expected.profit || 0) - manualDeductionTotal;
+
+  const updateManualCost = (key: keyof typeof manualCosts, value: string) => {
+    setManualCosts((current) => ({
+      ...current,
+      [key]: Math.max(0, Number(value) || 0),
+    }));
+  };
 
   useEffect(() => {
     const loadStatuses = async () => {
@@ -111,7 +203,7 @@ const ProfitReportPage = () => {
           </p>
           <h1 className="mt-3 text-4xl font-semibold tracking-tight">Profit report</h1>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--site-muted)]">
-            Profit uses order subtotal revenue and product cost multiplied by sold quantity. Product revenue rows are estimates because old order items do not store sold unit price snapshots.
+            Profit uses merchandise revenue only, so delivery fees are not counted. Product revenue rows are estimates because old order items do not store sold unit price snapshots.
           </p>
         </div>
 
@@ -147,6 +239,139 @@ const ProfitReportPage = () => {
           </div>
         </div>
 
+        <div className="mt-6 grid gap-4 md:grid-cols-4">
+          <div className={cardClassName}>
+            <p className="text-sm text-[var(--site-muted)]">Expected sales</p>
+            <p className="mt-2 text-3xl font-bold">{formatMoney(report?.expected.revenue || 0)}</p>
+            <p className="mt-1 text-xs text-[var(--site-muted)]">Current in-stock value</p>
+          </div>
+          <div className={cardClassName}>
+            <p className="text-sm text-[var(--site-muted)]">Expected cost</p>
+            <p className="mt-2 text-3xl font-bold">{formatMoney(report?.expected.cogs || 0)}</p>
+          </div>
+          <div className={cardClassName}>
+            <p className="text-sm text-[var(--site-muted)]">Expected winnings</p>
+            <p className="mt-2 text-3xl font-bold text-[var(--site-accent)]">{formatMoney(report?.expected.profit || 0)}</p>
+          </div>
+          <div className={cardClassName}>
+            <p className="text-sm text-[var(--site-muted)]">Expected net</p>
+            <p className="mt-2 text-3xl font-bold">{formatMoney(netExpectedProfit)}</p>
+            <p className="mt-1 text-xs text-[var(--site-muted)]">After manual deductions</p>
+          </div>
+        </div>
+
+        <section className={`${cardClassName} mt-6`}>
+          <div className="flex flex-col gap-2">
+            <h2 className="text-2xl font-semibold">Manual deductions</h2>
+            <p className="text-sm text-[var(--site-muted)]">
+              Add costs paid by you only. Delivery company fees are already excluded from sales.
+            </p>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-4">
+            <label className="grid gap-1 text-sm font-semibold text-[var(--site-muted)]">
+              Packaging
+              <input
+                type="number"
+                min="0"
+                value={manualCosts.packaging}
+                onChange={(event) => updateManualCost("packaging", event.target.value)}
+                className={inputClassName}
+              />
+            </label>
+            <label className="grid gap-1 text-sm font-semibold text-[var(--site-muted)]">
+              Ads
+              <input
+                type="number"
+                min="0"
+                value={manualCosts.ads}
+                onChange={(event) => updateManualCost("ads", event.target.value)}
+                className={inputClassName}
+              />
+            </label>
+            <label className="grid gap-1 text-sm font-semibold text-[var(--site-muted)]">
+              Shipping you paid
+              <input
+                type="number"
+                min="0"
+                value={manualCosts.sellerShipping}
+                onChange={(event) => updateManualCost("sellerShipping", event.target.value)}
+                className={inputClassName}
+              />
+            </label>
+            <label className="grid gap-1 text-sm font-semibold text-[var(--site-muted)]">
+              Other
+              <input
+                type="number"
+                min="0"
+                value={manualCosts.other}
+                onChange={(event) => updateManualCost("other", event.target.value)}
+                className={inputClassName}
+              />
+            </label>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <div className="rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-4">
+              <p className="text-sm text-[var(--site-muted)]">Manual deductions</p>
+              <p className="mt-1 text-2xl font-bold">{formatMoney(manualDeductionTotal)}</p>
+            </div>
+            <div className="rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-4">
+              <p className="text-sm text-[var(--site-muted)]">Net sold profit</p>
+              <p className="mt-1 text-2xl font-bold">{formatMoney(netGrossProfit)}</p>
+            </div>
+            <div className="rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-4">
+              <p className="text-sm text-[var(--site-muted)]">Net expected winnings</p>
+              <p className="mt-1 text-2xl font-bold text-[var(--site-accent)]">{formatMoney(netExpectedProfit)}</p>
+            </div>
+          </div>
+        </section>
+
+        <div className="mt-6 grid gap-6 xl:grid-cols-2">
+          <ReportChart
+            title="Daily profit graph"
+            labels={dailyChartRows.map((row) => row.date)}
+            datasets={[
+              { label: "Revenue", data: dailyChartRows.map((row) => row.revenue), color: "#d90429" },
+              { label: "COGS", data: dailyChartRows.map((row) => row.cogs), color: "#6b7280" },
+              { label: "Profit", data: dailyChartRows.map((row) => row.profit), color: "#047857" },
+            ]}
+          />
+          <ReportChart
+            title={profitChartMode === "expected" ? "Expected vs real winnings" : "Real sales until now"}
+            labels={profitComparisonRows.map((row) => sanitize(row.title).slice(0, 18))}
+            datasets={[
+              {
+                label: "Expected profit",
+                data: profitComparisonRows.map((row) => row.expectedProfit),
+                color: "#047857",
+              },
+              {
+                label: "Real sold profit",
+                data: profitComparisonRows.map((row) => row.realProfit),
+                color: "#d90429",
+              },
+            ]}
+            type="bar"
+            actions={
+              <>
+                {(["expected", "real"] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setProfitChartMode(mode)}
+                    className={`min-h-10 rounded-xl border px-4 text-sm font-semibold transition ${
+                      profitChartMode === mode
+                        ? "border-[var(--site-accent)] bg-[var(--site-accent)] text-white"
+                        : "border-[var(--site-border)] bg-[var(--site-panel-soft)] text-[var(--site-text)] hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
+                    }`}
+                  >
+                    {mode === "expected" ? "Expected" : "Real sales until now"}
+                  </button>
+                ))}
+              </>
+            }
+          />
+        </div>
+
         <section className={`${cardClassName} mt-6`}>
           <h2 className="text-2xl font-semibold">Product profit</h2>
           <div className="mt-4 overflow-x-auto">
@@ -180,6 +405,45 @@ const ProfitReportPage = () => {
                   ))
                 ) : (
                   <tr><td className="py-6 text-[var(--site-muted)]" colSpan={6}>No profit data found.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className={`${cardClassName} mt-6`}>
+          <h2 className="text-2xl font-semibold">Expected product winnings</h2>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-left text-xs uppercase tracking-[0.08em] text-[var(--site-muted)]">
+                <tr>
+                  <th className="py-3">Product</th>
+                  <th className="py-3">Stock</th>
+                  <th className="py-3">Price</th>
+                  <th className="py-3">Cost</th>
+                  <th className="py-3">Expected sales</th>
+                  <th className="py-3">Expected winnings</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr><td className="py-6 text-[var(--site-muted)]" colSpan={6}>Loading...</td></tr>
+                ) : report?.expected.products.length ? (
+                  report.expected.products.map((row) => (
+                    <tr key={row.productId} className="border-t border-[var(--site-border)]">
+                      <td className="py-3">
+                        <p className="font-semibold">{sanitize(row.title)}</p>
+                        <p className="text-xs text-[var(--site-muted)]">{sanitize(row.sku || "-")}</p>
+                      </td>
+                      <td className="py-3">{row.quantity}</td>
+                      <td className="py-3">{formatMoney(row.unitPrice)}</td>
+                      <td className="py-3">{formatMoney(row.unitCost)}</td>
+                      <td className="py-3">{formatMoney(row.expectedRevenue)}</td>
+                      <td className="py-3 font-semibold text-[var(--site-accent)]">{formatMoney(row.expectedProfit)}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr><td className="py-6 text-[var(--site-muted)]" colSpan={6}>No expected stock data found.</td></tr>
                 )}
               </tbody>
             </table>

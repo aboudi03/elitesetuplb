@@ -19,44 +19,51 @@ const generateId = async () => {
 /**
  * Create an order update notification
  */
-const createOrderUpdateNotification = async (userId, orderStatus, orderId, totalAmount = null) => {
+const createOrderUpdateNotification = async (
+  userId,
+  orderStatus,
+  orderId,
+  totalAmount = null,
+  orderReference = null
+) => {
   try {
+    const displayOrderReference = orderReference || orderId;
     const statusMessages = {
       'pending': {
         title: 'Order Received',
-        message: `Thank you! Your order #${orderId} has been received and is being processed.`,
+        message: `Thank you! Your order #${displayOrderReference} has been received and is being processed.`,
         priority: 'NORMAL'
       },
       'confirmed': {
         title: 'Order Confirmed',
-        message: `Great news! Your order #${orderId} has been confirmed and will be prepared for shipping.`,
+        message: `Great news! Your order #${displayOrderReference} has been confirmed and will be prepared for shipping.`,
         priority: 'HIGH'
       },
       'processing': {
         title: 'Order Processing',
-        message: `Your order #${orderId} is currently being processed and will ship soon.`,
+        message: `Your order #${displayOrderReference} is currently being processed and will ship soon.`,
         priority: 'NORMAL'
       },
       'shipped': {
         title: 'Order Shipped',
-        message: `Excellent! Your order #${orderId} has been shipped and is on its way to you.`,
+        message: `Excellent! Your order #${displayOrderReference} has been shipped and is on its way to you.`,
         priority: 'HIGH'
       },
       'delivered': {
         title: 'Order Delivered',
-        message: `Your order #${orderId} has been successfully delivered. We hope you love your new items!`,
+        message: `Your order #${displayOrderReference} has been successfully delivered. We hope you love your new items!`,
         priority: 'HIGH'
       },
       'cancelled': {
         title: 'Order Cancelled',
-        message: `Your order #${orderId} has been cancelled. If you have any questions, please contact our support.`,
+        message: `Your order #${displayOrderReference} has been cancelled. If you have any questions, please contact our support.`,
         priority: 'URGENT'
       }
     };
 
     const statusInfo = statusMessages[orderStatus.toLowerCase()] || {
       title: 'Order Update',
-      message: `Your order #${orderId} status has been updated to: ${orderStatus}`,
+      message: `Your order #${displayOrderReference} status has been updated to: ${orderStatus}`,
       priority: 'NORMAL'
     };
 
@@ -73,6 +80,7 @@ const createOrderUpdateNotification = async (userId, orderStatus, orderId, total
         isRead: false,
         metadata: {
           orderId: orderId,
+          orderReference: displayOrderReference,
           status: orderStatus,
           ...(totalAmount && { totalAmount: totalAmount })
         }

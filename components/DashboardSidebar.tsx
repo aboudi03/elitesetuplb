@@ -66,13 +66,13 @@ const DashboardSidebar = () => {
           setIsPinnedOpen((current) => !current);
           setIsHoverOpen(false);
         }}
-        className="fixed left-4 top-28 z-[70] flex h-11 w-11 items-center justify-center rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] text-[var(--site-text)] shadow-lg transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
+        className="fixed left-4 top-28 z-[130] flex h-11 w-11 items-center justify-center rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] text-[var(--site-text)] shadow-lg transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
       >
         {isOpen ? <FaChevronLeft className="h-4 w-4" /> : <FaBars className="h-4 w-4" />}
       </button>
 
       <div
-        className="fixed inset-y-0 left-0 z-[55] hidden w-5 xl:block"
+        className="fixed inset-y-0 left-0 z-[120] hidden w-5 xl:block"
         onMouseEnter={() => setIsHoverOpen(true)}
       />
 
@@ -80,7 +80,7 @@ const DashboardSidebar = () => {
         <button
           type="button"
           aria-label="Close sidebar overlay"
-          className="fixed inset-0 z-[58] bg-black/20 xl:hidden"
+          className="fixed inset-0 z-[125] bg-black/20 xl:hidden"
           onClick={() => {
             setIsPinnedOpen(false);
             setIsHoverOpen(false);
@@ -89,7 +89,7 @@ const DashboardSidebar = () => {
       )}
 
       <nav
-        className={`fixed left-0 top-0 z-[60] flex h-screen w-[320px] flex-col gap-2 overflow-y-auto border-r border-[var(--site-border)] bg-[var(--site-panel)] px-3 pb-6 pt-24 shadow-2xl transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed left-0 top-0 z-[126] flex h-screen w-[320px] flex-col gap-2 overflow-y-auto border-r border-[var(--site-border)] bg-[var(--site-panel)] px-3 pb-6 pt-24 shadow-2xl transition-transform duration-300 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
         onMouseEnter={() => setIsHoverOpen(true)}
         onMouseLeave={handleTemporaryClose}
       >

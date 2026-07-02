@@ -579,6 +579,12 @@ html[data-theme] textarea {
     font: inherit;
 }
 
+html[data-theme] select {
+    padding-right: 2.5rem;
+    background-position: right 0.8rem center;
+    background-size: 1rem 1rem;
+}
+
 @keyframes productImageFade {
     from {
         opacity: 0;

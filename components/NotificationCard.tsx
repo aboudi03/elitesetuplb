@@ -1,5 +1,5 @@
 import React from 'react';
-import { Notification, NotificationType, NotificationPriority } from '@/types/notification';
+import { Notification, NotificationType } from '@/types/notification';
 // Simple date formatter function
 const formatTimeAgo = (date: string) => {
   const now = new Date();
@@ -60,28 +60,6 @@ const getTypeColor = (type: NotificationType) => {
   }
 };
 
-const getPriorityBadge = (priority: NotificationPriority) => {
-  const priorityStyles = {
-    [NotificationPriority.LOW]: 'bg-gray-100 text-gray-600 border-gray-300',
-    [NotificationPriority.NORMAL]: 'bg-[var(--site-accent-soft)] text-[var(--site-accent)] border-[var(--site-accent)]',
-    [NotificationPriority.HIGH]: 'bg-orange-100 text-orange-600 border-orange-300',
-    [NotificationPriority.URGENT]: 'bg-red-100 text-red-600 border-red-300'
-  };
-
-  const priorityLabels = {
-    [NotificationPriority.LOW]: 'Low',
-    [NotificationPriority.NORMAL]: 'Normal',
-    [NotificationPriority.HIGH]: 'High',
-    [NotificationPriority.URGENT]: 'Urgent'
-  };
-
-  return (
-    <span className={`px-2 py-1 text-xs font-medium rounded-full border ${priorityStyles[priority]}`}>
-      {priorityLabels[priority]}
-    </span>
-  );
-};
-
 const NotificationCard: React.FC<NotificationCardProps> = ({
   notification,
   isSelected,
@@ -127,10 +105,6 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
               )}
             </div>
 
-            {/* Priority Badge */}
-            <div className="flex-shrink-0 ml-2">
-              {getPriorityBadge(notification.priority)}
-            </div>
           </div>
 
           {/* Message */}

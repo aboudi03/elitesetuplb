@@ -293,7 +293,8 @@ async function createCustomerOrder(request, response) {
           user.id,
           'confirmed',
           corder.id,
-          validatedData.total
+          validatedData.total,
+          corder.orderNumber
         );
         console.log(`📧 Order confirmation notification sent to user: ${user.email}`);
       } else {
@@ -510,7 +511,8 @@ async function updateCustomerOrder(request, response) {
             user.id,
             validatedData.status,
             updatedOrder.id,
-            validatedData.total
+            validatedData.total,
+            updatedOrder.orderNumber
           );
           console.log(`📧 Status update notification sent to user: ${user.email} - Status: ${validatedData.status}`);
         }
