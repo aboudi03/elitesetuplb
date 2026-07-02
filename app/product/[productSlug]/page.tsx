@@ -1,6 +1,5 @@
 import {
   StockAvailabillity,
-  UrgencyText,
   ProductItem,
   ProductTabs,
   ProductImageGallery,
@@ -318,9 +317,6 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
                   stock={normalizedProduct.inStock}
                   inStock={normalizedProduct.inStock}
                 />
-                {normalizedProduct.inStock > 0 && normalizedProduct.inStock <= 5 ? (
-                  <UrgencyText stock={normalizedProduct.inStock} />
-                ) : null}
               </div>
               <div className="border-t border-[var(--site-border)] pt-5">
                 <SingleProductDynamicFields product={normalizedProduct} />

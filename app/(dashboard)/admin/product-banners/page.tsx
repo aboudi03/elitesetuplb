@@ -313,6 +313,10 @@ const ProductBannersAdminPage = () => {
 
               <div className="md:col-span-2">
                 <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">Banner image</span>
+                <p className="mb-3 text-sm text-[var(--site-muted)]">
+                  Recommended: 480 x 160 px WebP or PNG with a transparent background.
+                  Keep text and artwork centered inside the badge so it stays readable on mobile.
+                </p>
                 <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
                   <input
                     className={fieldClassName}

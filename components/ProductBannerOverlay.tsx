@@ -64,9 +64,11 @@ function productMatchesBanner(product: Product, banner: ProductBanner) {
 const ProductBannerOverlay = ({
   product,
   className = "",
+  variant = "card",
 }: {
   product: Product;
   className?: string;
+  variant?: "card" | "gallery";
 }) => {
   const [banners, setBanners] = useState<ProductBanner[]>(bannerCache || []);
 
@@ -93,17 +95,22 @@ const ProductBannerOverlay = ({
     return null;
   }
 
+  const sizeClassName =
+    variant === "gallery"
+      ? "h-10 w-28 sm:h-12 sm:w-32 lg:h-14 lg:w-36"
+      : "h-8 w-24 sm:h-9 sm:w-28";
+
   return (
     <div
-      className={`pointer-events-none absolute left-3 top-3 z-30 max-w-[48%] sm:left-4 sm:top-4 ${className}`}
+      className={`pointer-events-none absolute left-3 top-3 z-30 max-w-[32%] sm:left-4 sm:top-4 ${className}`}
       aria-label={sanitize(matchingBanner.altText || matchingBanner.title)}
     >
-      <div className="relative h-12 w-28 drop-shadow-[0_10px_18px_rgba(15,23,42,0.20)] sm:h-14 sm:w-36">
+      <div className={`relative ${sizeClassName} drop-shadow-[0_10px_18px_rgba(15,23,42,0.20)]`}>
         <Image
           src={`/${matchingBanner.image.replace(/^\/+/, "")}`}
           alt={sanitize(matchingBanner.altText || matchingBanner.title)}
           fill
-          sizes="144px"
+          sizes={variant === "gallery" ? "144px" : "112px"}
           className="object-contain object-left-top"
         />
       </div>

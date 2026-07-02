@@ -236,7 +236,13 @@ const ProductImageGallery = ({ mainImage, images, title, product }: ProductImage
           className="absolute inset-0 z-10 cursor-zoom-in"
           aria-label="Open product image in full view"
         />
-        {product ? <ProductBannerOverlay product={product} className="left-5 top-5 sm:left-6 sm:top-6" /> : null}
+        {product ? (
+          <ProductBannerOverlay
+            product={product}
+            variant="gallery"
+            className="left-4 top-4 sm:left-5 sm:top-5 lg:left-6 lg:top-6"
+          />
+        ) : null}
         <Image
           key={activeSlide.src}
           src={activeSlide.src}
