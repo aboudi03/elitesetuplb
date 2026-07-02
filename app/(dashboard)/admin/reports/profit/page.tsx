@@ -72,6 +72,7 @@ const ProfitReportPage = () => {
   const [status, setStatus] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [profitChartMode, setProfitChartMode] = useState<ProfitChartMode>("expected");
+  const [excludedGraphProductIds, setExcludedGraphProductIds] = useState<string[]>([]);
   const [manualCosts, setManualCosts] = useState({
     packaging: 0,
     ads: 0,
@@ -88,7 +89,7 @@ const ProfitReportPage = () => {
   }, [dateFrom, dateTo, status]);
 
   const dailyChartRows = useMemo(() => [...(report?.daily || [])].reverse(), [report?.daily]);
-  const profitComparisonRows = useMemo(() => {
+  const profitComparisonAllRows = useMemo(() => {
     const rowsByProduct = new Map<
       string,
       {
@@ -129,6 +130,7 @@ const ProfitReportPage = () => {
     }
 
     return Array.from(rowsByProduct.values())
+      .filter((row) => !excludedGraphProductIds.includes(row.productId))
       .sort((first, second) =>
         profitChartMode === "expected"
           ? second.expectedProfit - first.expectedProfit
@@ -136,7 +138,28 @@ const ProfitReportPage = () => {
       )
       .slice(0, 10)
       .reverse();
-  }, [profitChartMode, report?.expected.products, report?.products]);
+  }, [excludedGraphProductIds, profitChartMode, report?.expected.products, report?.products]);
+  const graphProductOptions = useMemo(() => {
+    const optionMap = new Map<string, { productId: string; title: string }>();
+
+    for (const product of report?.expected.products || []) {
+      optionMap.set(product.productId, {
+        productId: product.productId,
+        title: product.title,
+      });
+    }
+
+    for (const product of report?.products || []) {
+      optionMap.set(product.productId, {
+        productId: product.productId,
+        title: product.title,
+      });
+    }
+
+    return Array.from(optionMap.values()).sort((first, second) =>
+      first.title.localeCompare(second.title)
+    );
+  }, [report?.expected.products, report?.products]);
   const manualDeductionTotal = useMemo(
     () =>
       Object.values(manualCosts).reduce((sum, value) => sum + Math.max(0, Number(value) || 0), 0),
@@ -150,6 +173,14 @@ const ProfitReportPage = () => {
       ...current,
       [key]: Math.max(0, Number(value) || 0),
     }));
+  };
+
+  const toggleGraphProduct = (productId: string) => {
+    setExcludedGraphProductIds((current) =>
+      current.includes(productId)
+        ? current.filter((currentId) => currentId !== productId)
+        : [...current, productId]
+    );
   };
 
   useEffect(() => {
@@ -325,6 +356,44 @@ const ProfitReportPage = () => {
           </div>
         </section>
 
+        <section className={`${cardClassName} mt-6`}>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold">Graph products</h2>
+              <p className="mt-1 text-sm text-[var(--site-muted)]">
+                Uncheck products you want to hide from the expected vs real graph.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setExcludedGraphProductIds([])}
+              className="min-h-10 rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 text-sm font-semibold text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
+            >
+              Select all
+            </button>
+          </div>
+          <div className="mt-4 grid max-h-56 gap-2 overflow-y-auto pr-1 sm:grid-cols-2 xl:grid-cols-3">
+            {graphProductOptions.length > 0 ? (
+              graphProductOptions.map((product) => (
+                <label
+                  key={product.productId}
+                  className="flex min-w-0 items-center gap-2 rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 py-2 text-sm font-semibold text-[var(--site-text)]"
+                >
+                  <input
+                    type="checkbox"
+                    checked={!excludedGraphProductIds.includes(product.productId)}
+                    onChange={() => toggleGraphProduct(product.productId)}
+                    className="h-4 w-4 shrink-0 accent-[var(--site-accent)]"
+                  />
+                  <span className="truncate">{sanitize(product.title)}</span>
+                </label>
+              ))
+            ) : (
+              <p className="text-sm text-[var(--site-muted)]">No products available for the graph.</p>
+            )}
+          </div>
+        </section>
+
         <div className="mt-6 grid gap-6 xl:grid-cols-2">
           <ReportChart
             title="Daily profit graph"
@@ -337,16 +406,16 @@ const ProfitReportPage = () => {
           />
           <ReportChart
             title={profitChartMode === "expected" ? "Expected vs real winnings" : "Real sales until now"}
-            labels={profitComparisonRows.map((row) => sanitize(row.title).slice(0, 18))}
+            labels={profitComparisonAllRows.map((row) => sanitize(row.title).slice(0, 18))}
             datasets={[
               {
                 label: "Expected profit",
-                data: profitComparisonRows.map((row) => row.expectedProfit),
+                data: profitComparisonAllRows.map((row) => row.expectedProfit),
                 color: "#047857",
               },
               {
                 label: "Real sold profit",
-                data: profitComparisonRows.map((row) => row.realProfit),
+                data: profitComparisonAllRows.map((row) => row.realProfit),
                 color: "#d90429",
               },
             ]}
