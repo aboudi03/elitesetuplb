@@ -207,6 +207,12 @@ const DashboardProductTable = () => {
     });
   };
 
+  const removeFeaturedDraftProduct = (productId: string) => {
+    setFeaturedDraftProducts((currentProducts) =>
+      currentProducts.filter((product) => product.id !== productId)
+    );
+  };
+
   const saveFeaturedOrder = async () => {
     setIsSavingFeaturedOrder(true);
 
@@ -229,6 +235,7 @@ const DashboardProductTable = () => {
       setFeaturedDraftProducts(responseData);
       setIsFeaturedOrderDialogOpen(false);
       setDraggedFeaturedProductId(null);
+      await loadProducts();
       toast.success("Featured product order updated");
     } catch (error: any) {
       toast.error(error?.message || "Failed to save featured order");
@@ -711,7 +718,7 @@ const DashboardProductTable = () => {
         }
       />
       {isFeaturedOrderDialogOpen && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/55 px-4 py-6">
+        <div className="fixed inset-0 z-[140] flex items-center justify-center bg-black/55 px-4 py-6">
           <div className="w-full max-w-3xl rounded-3xl border border-[var(--site-border)] bg-[var(--site-panel)] shadow-2xl">
             <div className="flex items-start justify-between gap-4 border-b border-[var(--site-border)] px-6 py-5">
               <div>
@@ -781,6 +788,17 @@ const DashboardProductTable = () => {
                           {sanitize(product.model || "-")} {product.sku ? `| SKU: ${sanitize(product.sku)}` : ""}
                         </p>
                       </div>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          removeFeaturedDraftProduct(product.id);
+                        }}
+                        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-red-200 bg-red-50 text-red-600 transition hover:border-red-400 hover:bg-red-100"
+                        aria-label={`Remove ${sanitize(product.title || product.model || "product")} from featured`}
+                      >
+                        <FaXmark />
+                      </button>
                     </div>
                   ))
                 ) : (
@@ -802,7 +820,7 @@ const DashboardProductTable = () => {
               <button
                 type="button"
                 onClick={saveFeaturedOrder}
-                disabled={isSavingFeaturedOrder || featuredDraftProducts.length === 0}
+                disabled={isSavingFeaturedOrder}
                 className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--site-accent)] px-5 text-sm font-semibold text-white transition hover:bg-[var(--site-accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSavingFeaturedOrder ? "Saving..." : "Save featured order"}

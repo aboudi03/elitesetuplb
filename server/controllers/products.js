@@ -876,7 +876,7 @@ const updateProduct = asyncHandler(async (request, response) => {
 const updateFeaturedProductOrder = asyncHandler(async (request, response) => {
   const { productIds } = request.body;
 
-  if (!Array.isArray(productIds) || productIds.length === 0) {
+  if (!Array.isArray(productIds)) {
     throw new AppError("Featured product order is required", 400);
   }
 
@@ -918,32 +918,18 @@ const updateFeaturedProductOrder = asyncHandler(async (request, response) => {
       )
     );
 
-    const remainingFeaturedProducts = await tx.product.findMany({
+    await tx.product.updateMany({
       where: {
         featured: true,
         id: {
           notIn: uniqueIds,
         },
       },
-      orderBy: [
-        { featuredSortOrder: "asc" },
-        { updatedAt: "desc" },
-      ],
-      select: {
-        id: true,
+      data: {
+        featured: false,
+        featuredSortOrder: null,
       },
     });
-
-    await Promise.all(
-      remainingFeaturedProducts.map((product, index) =>
-        tx.product.update({
-          where: { id: product.id },
-          data: {
-            featuredSortOrder: uniqueIds.length + index + 1,
-          },
-        })
-      )
-    );
   });
 
   const orderedFeaturedProducts = await prisma.product.findMany({

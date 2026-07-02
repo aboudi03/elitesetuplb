@@ -804,6 +804,15 @@ html[data-theme] .admin-data-table tbody tr:hover .admin-table-select * {
     color: var(--site-text);
 }
 
+.admin-data-table td:has(.inline-edit-active-text) {
+    min-width: min(30rem, 72vw);
+    white-space: normal;
+}
+
+.admin-data-table td:has(.inline-edit-active-text) > div {
+    align-items: stretch;
+}
+
 .admin-table-select-menu {
     background-color: var(--site-panel);
     color: var(--site-text);

@@ -27,7 +27,7 @@ export default function InlineTextEdit({
   const [isEditing, setIsEditing] = useState(false);
   const [draftValue, setDraftValue] = useState(value);
   const [isSaving, setIsSaving] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (!isEditing) {
@@ -91,28 +91,55 @@ export default function InlineTextEdit({
   }
 
   return (
-    <div className="flex items-center justify-center" onClick={(event) => event.stopPropagation()}>
-      <input
-        ref={inputRef}
-        type={type}
-        min={min}
-        step={step}
-        value={draftValue}
-        onChange={(event) => setDraftValue(event.target.value)}
-        onBlur={() => void finishEditing()}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            void finishEditing();
-          }
+    <div
+      className={`flex w-full min-w-0 items-center justify-center ${
+        type === "text" ? "inline-edit-active-text" : ""
+      }`}
+      onClick={(event) => event.stopPropagation()}
+    >
+      {type === "number" ? (
+        <input
+          ref={inputRef as React.RefObject<HTMLInputElement>}
+          type={type}
+          min={min}
+          step={step}
+          value={draftValue}
+          onChange={(event) => setDraftValue(event.target.value)}
+          onBlur={() => void finishEditing()}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              void finishEditing();
+            }
 
-          if (event.key === "Escape") {
-            event.preventDefault();
-            cancelEditing();
-          }
-        }}
-        className={`h-9 min-w-[6rem] rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-2.5 text-center text-sm font-semibold text-[var(--site-text)] outline-none transition focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent-soft)] ${inputClassName}`}
-      />
+            if (event.key === "Escape") {
+              event.preventDefault();
+              cancelEditing();
+            }
+          }}
+          className={`h-9 min-w-[6rem] rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-2.5 text-center text-sm font-semibold text-[var(--site-text)] outline-none transition focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent-soft)] ${inputClassName}`}
+        />
+      ) : (
+        <textarea
+          ref={inputRef as React.RefObject<HTMLTextAreaElement>}
+          rows={3}
+          value={draftValue}
+          onChange={(event) => setDraftValue(event.target.value)}
+          onBlur={() => void finishEditing()}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+              event.preventDefault();
+              void finishEditing();
+            }
+
+            if (event.key === "Escape") {
+              event.preventDefault();
+              cancelEditing();
+            }
+          }}
+          className={`min-h-24 w-full min-w-[18rem] resize-y rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 py-2 text-left text-sm font-semibold leading-5 text-[var(--site-text)] outline-none transition focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent-soft)] ${inputClassName}`}
+        />
+      )}
       {isSaving ? <FaSpinner className="ml-2 animate-spin text-[var(--site-accent)]" /> : null}
     </div>
   );
