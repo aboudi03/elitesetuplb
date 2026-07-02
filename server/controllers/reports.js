@@ -92,6 +92,19 @@ const getSalesProfitReport = asyncHandler(async (request, response) => {
             sku: true,
             price: true,
             cost: true,
+            manufacturer: true,
+            categoryId: true,
+            category: {
+              select: {
+                name: true,
+              },
+            },
+            merchantId: true,
+            merchant: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
       },
@@ -111,6 +124,19 @@ const getSalesProfitReport = asyncHandler(async (request, response) => {
         price: true,
         cost: true,
         inStock: true,
+        manufacturer: true,
+        categoryId: true,
+        category: {
+          select: {
+            name: true,
+          },
+        },
+        merchantId: true,
+        merchant: {
+          select: {
+            name: true,
+          },
+        },
       },
     }),
   ]);
@@ -185,6 +211,11 @@ const getSalesProfitReport = asyncHandler(async (request, response) => {
       productId,
       title: item.product.title || item.product.model || "Untitled product",
       sku: item.product?.sku || "",
+      manufacturer: item.product?.manufacturer || "",
+      categoryId: item.product?.categoryId || "",
+      categoryName: item.product?.category?.name || "Uncategorized",
+      merchantId: item.product?.merchantId || "",
+      merchantName: item.product?.merchant?.name || "No merchant",
       quantity: 0,
       unitCost: Number(item.product?.cost || 0),
       unitPrice: Number(item.product?.price || 0),
@@ -222,6 +253,11 @@ const getSalesProfitReport = asyncHandler(async (request, response) => {
         productId: product.id,
         title: product.title || product.model || "Untitled product",
         sku: product.sku || "",
+        manufacturer: product.manufacturer || "",
+        categoryId: product.categoryId || "",
+        categoryName: product.category?.name || "Uncategorized",
+        merchantId: product.merchantId || "",
+        merchantName: product.merchant?.name || "No merchant",
         quantity,
         unitCost: toCurrency(unitCost),
         unitPrice: toCurrency(unitPrice),

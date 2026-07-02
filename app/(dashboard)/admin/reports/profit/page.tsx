@@ -30,6 +30,11 @@ type ReportResponse = {
     estimatedRevenue: number;
     cogs: number;
     estimatedProfit: number;
+    manufacturer: string;
+    categoryId: string;
+    categoryName: string;
+    merchantId: string;
+    merchantName: string;
   }>;
   expected: {
     revenue: number;
@@ -46,6 +51,11 @@ type ReportResponse = {
       expectedRevenue: number;
       expectedCogs: number;
       expectedProfit: number;
+      manufacturer: string;
+      categoryId: string;
+      categoryName: string;
+      merchantId: string;
+      merchantName: string;
     }>;
   };
 };
@@ -72,7 +82,10 @@ const ProfitReportPage = () => {
   const [status, setStatus] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [profitChartMode, setProfitChartMode] = useState<ProfitChartMode>("expected");
-  const [excludedGraphProductIds, setExcludedGraphProductIds] = useState<string[]>([]);
+  const [selectedGraphProductIds, setSelectedGraphProductIds] = useState<string[]>([]);
+  const [graphCategoryFilter, setGraphCategoryFilter] = useState("all");
+  const [graphMerchantFilter, setGraphMerchantFilter] = useState("all");
+  const [graphBrandFilter, setGraphBrandFilter] = useState("all");
   const [manualCosts, setManualCosts] = useState({
     packaging: 0,
     ads: 0,
@@ -99,6 +112,11 @@ const ProfitReportPage = () => {
         expectedRevenue: number;
         realProfit: number;
         realRevenue: number;
+        manufacturer: string;
+        categoryId: string;
+        categoryName: string;
+        merchantId: string;
+        merchantName: string;
       }
     >();
 
@@ -110,6 +128,11 @@ const ProfitReportPage = () => {
         expectedRevenue: Number(product.expectedRevenue || 0),
         realProfit: 0,
         realRevenue: 0,
+        manufacturer: product.manufacturer || "",
+        categoryId: product.categoryId || "",
+        categoryName: product.categoryName || "Uncategorized",
+        merchantId: product.merchantId || "",
+        merchantName: product.merchantName || "No merchant",
       });
     }
 
@@ -121,16 +144,26 @@ const ProfitReportPage = () => {
         expectedRevenue: 0,
         realProfit: 0,
         realRevenue: 0,
+        manufacturer: product.manufacturer || "",
+        categoryId: product.categoryId || "",
+        categoryName: product.categoryName || "Uncategorized",
+        merchantId: product.merchantId || "",
+        merchantName: product.merchantName || "No merchant",
       };
 
       current.realProfit = Number(product.estimatedProfit || 0);
       current.realRevenue = Number(product.estimatedRevenue || 0);
       current.title = current.title || product.title;
+      current.manufacturer = current.manufacturer || product.manufacturer || "";
+      current.categoryId = current.categoryId || product.categoryId || "";
+      current.categoryName = current.categoryName || product.categoryName || "Uncategorized";
+      current.merchantId = current.merchantId || product.merchantId || "";
+      current.merchantName = current.merchantName || product.merchantName || "No merchant";
       rowsByProduct.set(product.productId, current);
     }
 
     return Array.from(rowsByProduct.values())
-      .filter((row) => !excludedGraphProductIds.includes(row.productId))
+      .filter((row) => selectedGraphProductIds.includes(row.productId))
       .sort((first, second) =>
         profitChartMode === "expected"
           ? second.expectedProfit - first.expectedProfit
@@ -138,27 +171,84 @@ const ProfitReportPage = () => {
       )
       .slice(0, 10)
       .reverse();
-  }, [excludedGraphProductIds, profitChartMode, report?.expected.products, report?.products]);
+  }, [profitChartMode, report?.expected.products, report?.products, selectedGraphProductIds]);
   const graphProductOptions = useMemo(() => {
-    const optionMap = new Map<string, { productId: string; title: string }>();
+    const optionMap = new Map<
+      string,
+      {
+        productId: string;
+        title: string;
+        manufacturer: string;
+        categoryId: string;
+        categoryName: string;
+        merchantId: string;
+        merchantName: string;
+      }
+    >();
 
     for (const product of report?.expected.products || []) {
       optionMap.set(product.productId, {
         productId: product.productId,
         title: product.title,
+        manufacturer: product.manufacturer || "",
+        categoryId: product.categoryId || "",
+        categoryName: product.categoryName || "Uncategorized",
+        merchantId: product.merchantId || "",
+        merchantName: product.merchantName || "No merchant",
       });
     }
 
     for (const product of report?.products || []) {
+      const current = optionMap.get(product.productId);
       optionMap.set(product.productId, {
         productId: product.productId,
-        title: product.title,
+        title: current?.title || product.title,
+        manufacturer: current?.manufacturer || product.manufacturer || "",
+        categoryId: current?.categoryId || product.categoryId || "",
+        categoryName: current?.categoryName || product.categoryName || "Uncategorized",
+        merchantId: current?.merchantId || product.merchantId || "",
+        merchantName: current?.merchantName || product.merchantName || "No merchant",
       });
     }
 
-    return Array.from(optionMap.values()).sort((first, second) =>
-      first.title.localeCompare(second.title)
+    return Array.from(optionMap.values())
+      .filter((product) => graphCategoryFilter === "all" || product.categoryId === graphCategoryFilter)
+      .filter((product) => graphMerchantFilter === "all" || product.merchantId === graphMerchantFilter)
+      .filter((product) => graphBrandFilter === "all" || product.manufacturer === graphBrandFilter)
+      .sort((first, second) => first.title.localeCompare(second.title));
+  }, [
+    graphBrandFilter,
+    graphCategoryFilter,
+    graphMerchantFilter,
+    report?.expected.products,
+    report?.products,
+  ]);
+  const graphCategoryOptions = useMemo(() => {
+    const options = new Map<string, string>();
+    for (const product of [...(report?.expected.products || []), ...(report?.products || [])]) {
+      if (product.categoryId) options.set(product.categoryId, product.categoryName || "Uncategorized");
+    }
+    return Array.from(options, ([id, name]) => ({ id, name })).sort((a, b) =>
+      a.name.localeCompare(b.name)
     );
+  }, [report?.expected.products, report?.products]);
+  const graphMerchantOptions = useMemo(() => {
+    const options = new Map<string, string>();
+    for (const product of [...(report?.expected.products || []), ...(report?.products || [])]) {
+      if (product.merchantId) options.set(product.merchantId, product.merchantName || "No merchant");
+    }
+    return Array.from(options, ([id, name]) => ({ id, name })).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+  }, [report?.expected.products, report?.products]);
+  const graphBrandOptions = useMemo(() => {
+    return Array.from(
+      new Set(
+        [...(report?.expected.products || []), ...(report?.products || [])]
+          .map((product) => product.manufacturer)
+          .filter(Boolean)
+      )
+    ).sort((a, b) => a.localeCompare(b));
   }, [report?.expected.products, report?.products]);
   const manualDeductionTotal = useMemo(
     () =>
@@ -176,11 +266,17 @@ const ProfitReportPage = () => {
   };
 
   const toggleGraphProduct = (productId: string) => {
-    setExcludedGraphProductIds((current) =>
+    setSelectedGraphProductIds((current) =>
       current.includes(productId)
         ? current.filter((currentId) => currentId !== productId)
         : [...current, productId]
     );
+  };
+
+  const selectVisibleGraphProducts = () => {
+    setSelectedGraphProductIds((current) => [
+      ...new Set([...current, ...graphProductOptions.map((product) => product.productId)]),
+    ]);
   };
 
   useEffect(() => {
@@ -361,16 +457,63 @@ const ProfitReportPage = () => {
             <div>
               <h2 className="text-2xl font-semibold">Graph products</h2>
               <p className="mt-1 text-sm text-[var(--site-muted)]">
-                Uncheck products you want to hide from the expected vs real graph.
+                Select products to show in the expected vs real graph.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setExcludedGraphProductIds([])}
-              className="min-h-10 rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 text-sm font-semibold text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={selectVisibleGraphProducts}
+                className="min-h-10 rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 text-sm font-semibold text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
+              >
+                Select visible
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedGraphProductIds([])}
+                className="min-h-10 rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 text-sm font-semibold text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
+              >
+                Deselect all
+              </button>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <select
+              value={graphCategoryFilter}
+              onChange={(event) => setGraphCategoryFilter(event.target.value)}
+              className={inputClassName}
             >
-              Select all
-            </button>
+              <option value="all">All categories</option>
+              {graphCategoryOptions.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+            <select
+              value={graphMerchantFilter}
+              onChange={(event) => setGraphMerchantFilter(event.target.value)}
+              className={inputClassName}
+            >
+              <option value="all">All merchants</option>
+              {graphMerchantOptions.map((merchant) => (
+                <option key={merchant.id} value={merchant.id}>
+                  {merchant.name}
+                </option>
+              ))}
+            </select>
+            <select
+              value={graphBrandFilter}
+              onChange={(event) => setGraphBrandFilter(event.target.value)}
+              className={inputClassName}
+            >
+              <option value="all">All brands</option>
+              {graphBrandOptions.map((brand) => (
+                <option key={brand} value={brand}>
+                  {brand}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="mt-4 grid max-h-56 gap-2 overflow-y-auto pr-1 sm:grid-cols-2 xl:grid-cols-3">
             {graphProductOptions.length > 0 ? (
@@ -381,11 +524,16 @@ const ProfitReportPage = () => {
                 >
                   <input
                     type="checkbox"
-                    checked={!excludedGraphProductIds.includes(product.productId)}
+                    checked={selectedGraphProductIds.includes(product.productId)}
                     onChange={() => toggleGraphProduct(product.productId)}
                     className="h-4 w-4 shrink-0 accent-[var(--site-accent)]"
                   />
-                  <span className="truncate">{sanitize(product.title)}</span>
+                  <span className="min-w-0">
+                    <span className="block truncate">{sanitize(product.title)}</span>
+                    <span className="block truncate text-xs text-[var(--site-muted)]">
+                      {sanitize(product.categoryName)} | {sanitize(product.merchantName)}
+                    </span>
+                  </span>
                 </label>
               ))
             ) : (
