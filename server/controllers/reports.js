@@ -115,13 +115,21 @@ const getSalesProfitReport = asyncHandler(async (request, response) => {
     }),
   ]);
 
-  const revenue = orderProducts.reduce(
+  const realOrderProducts = orderProducts.filter((item) => item.product?.id);
+  const realOrderIds = new Set(
+    realOrderProducts
+      .map((item) => item.customerOrder?.id)
+      .filter(Boolean)
+  );
+  const realOrders = orders.filter((order) => realOrderIds.has(order.id));
+
+  const revenue = realOrderProducts.reduce(
     (sum, item) => sum + Number(item.product?.price || 0) * Number(item.quantity || 0),
     0
   );
-  const orderCount = orders.length;
-  const itemCount = orderProducts.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
-  const cogs = orderProducts.reduce(
+  const orderCount = realOrders.length;
+  const itemCount = realOrderProducts.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+  const cogs = realOrderProducts.reduce(
     (sum, item) => sum + Number(item.product?.cost || 0) * Number(item.quantity || 0),
     0
   );
@@ -129,7 +137,7 @@ const getSalesProfitReport = asyncHandler(async (request, response) => {
   const margin = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
 
   const dailyMap = new Map();
-  for (const order of orders) {
+  for (const order of realOrders) {
     const dateKey = getDateKey(order.dateTime);
     const current = dailyMap.get(dateKey) || {
       date: dateKey,
@@ -143,7 +151,7 @@ const getSalesProfitReport = asyncHandler(async (request, response) => {
 
   const costByOrderDate = new Map();
   const revenueByOrderDate = new Map();
-  for (const item of orderProducts) {
+  for (const item of realOrderProducts) {
     const dateKey = getDateKey(item.customerOrder?.dateTime);
     const quantity = Number(item.quantity || 0);
     revenueByOrderDate.set(
@@ -171,11 +179,11 @@ const getSalesProfitReport = asyncHandler(async (request, response) => {
     .sort((first, second) => second.date.localeCompare(first.date));
 
   const productMap = new Map();
-  for (const item of orderProducts) {
-    const productId = item.product?.id || "deleted-product";
+  for (const item of realOrderProducts) {
+    const productId = item.product.id;
     const current = productMap.get(productId) || {
       productId,
-      title: item.product?.title || item.product?.model || "Deleted product",
+      title: item.product.title || item.product.model || "Untitled product",
       sku: item.product?.sku || "",
       quantity: 0,
       unitCost: Number(item.product?.cost || 0),
@@ -253,7 +261,7 @@ const getSalesProfitReport = asyncHandler(async (request, response) => {
     },
     daily,
     products,
-    orders: orders.map((order) => ({
+    orders: realOrders.map((order) => ({
       ...order,
       total: toCurrency(order.total),
     })),
