@@ -4,16 +4,16 @@ const DEFAULT_DELIVERY_ZONES = [
     country: "Lebanon",
     governorate: "Lebanon",
     city: "Lebanon",
-    label: "Standard Lebanon",
+    label: "All over Lebanon",
     fee: 5,
-    sortOrder: 0,
+    sortOrder: 3,
   },
   {
     code: "inside-tripoli",
     country: "Lebanon",
     governorate: "North Lebanon",
     city: "Tripoli",
-    label: "Inside Tripoli",
+    label: "Tripoli",
     fee: 3,
     sortOrder: 1,
   },
@@ -26,72 +26,11 @@ const DEFAULT_DELIVERY_ZONES = [
     fee: 4,
     sortOrder: 2,
   },
-  {
-    code: "beirut",
-    country: "Lebanon",
-    governorate: "Beirut",
-    city: "Beirut",
-    label: "Beirut",
-    fee: 5,
-    sortOrder: 10,
-  },
-  {
-    code: "mount-lebanon",
-    country: "Lebanon",
-    governorate: "Mount Lebanon",
-    city: "Mount Lebanon",
-    label: "Mount Lebanon",
-    fee: 5,
-    sortOrder: 20,
-  },
-  {
-    code: "north-lebanon",
-    country: "Lebanon",
-    governorate: "North Lebanon",
-    city: "North Lebanon",
-    label: "North Lebanon outside Tripoli",
-    fee: 5,
-    sortOrder: 30,
-  },
-  {
-    code: "south-lebanon",
-    country: "Lebanon",
-    governorate: "South Lebanon",
-    city: "South Lebanon",
-    label: "South Lebanon",
-    fee: 5,
-    sortOrder: 40,
-  },
-  {
-    code: "nabatieh",
-    country: "Lebanon",
-    governorate: "Nabatieh",
-    city: "Nabatieh",
-    label: "Nabatieh",
-    fee: 5,
-    sortOrder: 50,
-  },
-  {
-    code: "beqaa",
-    country: "Lebanon",
-    governorate: "Beqaa",
-    city: "Beqaa",
-    label: "Beqaa",
-    fee: 5,
-    sortOrder: 60,
-  },
-  {
-    code: "baalbek-hermel",
-    country: "Lebanon",
-    governorate: "Baalbek-Hermel",
-    city: "Baalbek-Hermel",
-    label: "Baalbek-Hermel",
-    fee: 5,
-    sortOrder: 70,
-  },
 ];
 
 async function ensureDefaultDeliveryZones(prisma) {
+  const activeCodes = DEFAULT_DELIVERY_ZONES.map((zone) => zone.code);
+
   for (const zone of DEFAULT_DELIVERY_ZONES) {
     await prisma.deliveryZone.upsert({
       where: { code: zone.code },
@@ -105,6 +44,17 @@ async function ensureDefaultDeliveryZones(prisma) {
       },
     });
   }
+
+  await prisma.deliveryZone.updateMany({
+    where: {
+      code: {
+        notIn: activeCodes,
+      },
+    },
+    data: {
+      isActive: false,
+    },
+  });
 }
 
 module.exports = {

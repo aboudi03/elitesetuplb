@@ -968,6 +968,9 @@ const CheckoutPage = () => {
                       Delivery fee: ${deliveryFee.toFixed(2)}
                     </p>
                   ) : null}
+                  <p className="mt-1 text-xs font-semibold text-[var(--site-muted)]">
+                    All over Lebanon delivery is $5. Tripoli and Akkar have special rates.
+                  </p>
                 </div>
 
                 <div className="sm:col-span-3">
