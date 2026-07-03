@@ -51,10 +51,12 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
     .map((value) => value.trim().toUpperCase())
     .filter(Boolean);
 
-  const buildProductFileNameSeed = () => {
+  const buildProductFileNameSeed = (orderNumber?: number) => {
     const sku = String(product?.sku || "").trim();
-    const model = String(product?.model || "").trim();
-    return [sku, model].filter(Boolean).join("-");
+    const fallbackName = String(product?.model || product?.id || "product").trim();
+    const baseName = sku || fallbackName;
+
+    return [baseName, orderNumber].filter(Boolean).join("-");
   };
 
   const handleColorsChange = (nextColors: string[]) => {
@@ -108,12 +110,12 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
 
     try {
       const resolvedMediaRows = await Promise.all(
-        mediaRows.map(async (row) => {
+        mediaRows.map(async (row, index) => {
           if (!row.file) {
             return row;
           }
 
-          const uploadedPath = await uploadFile(row.file, row.isMain ? "main" : "gallery");
+          const uploadedPath = await uploadFile(row.file, row.isMain ? "main" : "gallery", index + 1);
           if (!uploadedPath) {
             throw new Error(`Failed to upload ${row.fileName}`);
           }
@@ -129,7 +131,11 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
         })
       );
 
-      const mainImageRow = resolvedMediaRows.find((row) => row.isMain && row.path);
+      const renamedMediaRows = await Promise.all(
+        resolvedMediaRows.map((row, index) => renameStoredMediaRow(row, index + 1))
+      );
+
+      const mainImageRow = renamedMediaRows.find((row) => row.isMain && row.path);
 
       const sanitizedProduct = sanitizeFormData({
         ...product,
@@ -150,7 +156,7 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
       if (response.status === 200) {
         await response.json();
 
-        const galleryPayload = resolvedMediaRows
+        const galleryPayload = renamedMediaRows
           .filter((row) => !row.isMain && row.path)
           .map((row, index) => ({
             imageID: row.imageId,
@@ -179,12 +185,16 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
   };
 
   // functionality for uploading main image file
-  const uploadFile = async (file: File, assetType: "main" | "gallery" = "main") => {
+  const uploadFile = async (
+    file: File,
+    assetType: "main" | "gallery" = "main",
+    orderNumber?: number
+  ) => {
     const formData = new FormData();
     formData.append("uploadedFile", file);
     formData.append("productId", id);
     formData.append("assetType", assetType);
-    formData.append("fileNameSeed", buildProductFileNameSeed());
+    formData.append("fileNameSeed", buildProductFileNameSeed(orderNumber));
 
     try {
       const response = await fetch(`${getRuntimeApiBaseUrl()}/api/main-image`, {
@@ -204,6 +214,41 @@ const DashboardProductDetails = ({ params }: DashboardProductDetailsProps) => {
     }
 
     return "";
+  };
+
+  const renameStoredMediaRow = async (row: ProductMediaRow, orderNumber: number) => {
+    if (!row.path) {
+      return row;
+    }
+
+    const response = await fetch(`${getRuntimeApiBaseUrl()}/api/main-image/rename`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        path: row.path,
+        productId: id,
+        imageId: row.imageId,
+        assetType: row.isMain ? "main" : "gallery",
+        fileNameSeed: buildProductFileNameSeed(orderNumber),
+      }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok || !data?.path) {
+      throw new Error(data?.message || `Failed to rename ${row.fileName}`);
+    }
+
+    return {
+      ...row,
+      id: row.isMain ? `main-${data.path}` : row.id,
+      path: data.path as string,
+      previewUrl: `/${data.path}`,
+      fileName: data.fileName || data.path.split("/").pop() || row.fileName,
+      source: row.isMain ? ("existing-main" as const) : ("existing-gallery" as const),
+    };
   };
 
   // fetching main product data including other product images

@@ -78,10 +78,12 @@ const AddNewProduct = () => {
     .map((value) => value.trim().toUpperCase())
     .filter(Boolean);
 
-  const buildProductFileNameSeed = () => {
+  const buildProductFileNameSeed = (orderNumber?: number) => {
     const sku = String(product.sku || "").trim();
-    const model = String(product.model || "").trim();
-    return [sku, model].filter(Boolean).join("-");
+    const fallbackName = String(product.model || product.id || "product").trim();
+    const baseName = sku || fallbackName;
+
+    return [baseName, orderNumber].filter(Boolean).join("-");
   };
 
   const handleColorsChange = (nextColors: string[]) => {
@@ -106,12 +108,12 @@ const AddNewProduct = () => {
 
     try {
       const resolvedMediaRows = await Promise.all(
-        mediaRows.map(async (row) => {
+        mediaRows.map(async (row, index) => {
           if (!row.file) {
             return row;
           }
 
-          const uploadedPath = await uploadFile(row.file, product.id, row.isMain ? "main" : "gallery");
+          const uploadedPath = await uploadFile(row.file, product.id, row.isMain ? "main" : "gallery", index + 1);
           if (!uploadedPath) {
             throw new Error(`Failed to upload ${row.fileName}`);
           }
@@ -188,13 +190,14 @@ const AddNewProduct = () => {
   const uploadFile = async (
     file: File,
     productId: string,
-    assetType: "main" | "gallery" = "main"
+    assetType: "main" | "gallery" = "main",
+    orderNumber?: number
   ) => {
     const formData = new FormData();
     formData.append("uploadedFile", file);
     formData.append("productId", productId);
     formData.append("assetType", assetType);
-    formData.append("fileNameSeed", buildProductFileNameSeed());
+    formData.append("fileNameSeed", buildProductFileNameSeed(orderNumber));
 
     try {
       const response = await fetch(`${getRuntimeApiBaseUrl()}/api/main-image`, {
