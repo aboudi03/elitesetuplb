@@ -14,6 +14,7 @@ import { pcBuilderWhatsAppNumber } from "@/lib/pc-builder";
 
 const inputClassName =
   "block w-full rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 py-2 text-[var(--site-text)] shadow-sm outline-none focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent)] sm:text-sm disabled:cursor-not-allowed disabled:opacity-60";
+const requiredStar = <span className="text-red-600">*</span>;
 
 const isValidLebanesePhone = (phone: string) =>
   /^(03\d{6}|(?:70|71|76|78|79|81)\d{6})$/.test(phone);
@@ -70,6 +71,7 @@ const CheckoutPage = () => {
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasSubmittedForm, setHasSubmittedForm] = useState(false);
   const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
   const [successSummary, setSuccessSummary] = useState<CheckoutSuccessSummary | null>(null);
   const hasTrackedCheckoutStart = useRef(false);
@@ -227,6 +229,8 @@ const CheckoutPage = () => {
   };
 
   const makePurchase = async () => {
+    setHasSubmittedForm(true);
+
     // Client-side validation first
     const validationErrors = validateForm();
     if (validationErrors.length > 0) {
@@ -431,6 +435,7 @@ const CheckoutPage = () => {
         deliveryZoneId: defaultDeliveryZone?.id || "",
         orderNotice: "",
       });
+      setHasSubmittedForm(false);
       clearCart();
       
       // Refresh notification count if user is logged in
@@ -642,7 +647,7 @@ const CheckoutPage = () => {
                   htmlFor="name-input"
                   className="block text-sm font-medium text-[var(--site-muted)]"
                 >
-                  Name * (min 2 characters)
+                  Name {requiredStar}
                 </label>
                 <div className="mt-1">
                   <input
@@ -662,6 +667,11 @@ const CheckoutPage = () => {
                     className={inputClassName}
                   />
                 </div>
+                {hasSubmittedForm && checkoutForm.name.trim().length < 2 ? (
+                  <p className="mt-1 text-sm font-semibold text-red-600">
+                    Name must be at least 2 characters.
+                  </p>
+                ) : null}
               </div>
 
               <div className="mt-6">
@@ -669,7 +679,7 @@ const CheckoutPage = () => {
                   htmlFor="lastname-input"
                   className="block text-sm font-medium text-[var(--site-muted)]"
                 >
-                  Lastname * (min 2 characters)
+                  Lastname {requiredStar}
                 </label>
                 <div className="mt-1">
                   <input
@@ -689,6 +699,11 @@ const CheckoutPage = () => {
                     className={inputClassName}
                   />
                 </div>
+                {hasSubmittedForm && checkoutForm.lastname.trim().length < 2 ? (
+                  <p className="mt-1 text-sm font-semibold text-red-600">
+                    Lastname must be at least 2 characters.
+                  </p>
+                ) : null}
               </div>
 
               <div className="mt-6">
@@ -696,7 +711,7 @@ const CheckoutPage = () => {
                   htmlFor="phone-input"
                   className="block text-sm font-medium text-[var(--site-muted)]"
                 >
-                  Phone number * (Lebanon)
+                  Phone number {requiredStar} (Lebanon)
                 </label>
                 <div className="mt-1">
                   <input
@@ -724,7 +739,7 @@ const CheckoutPage = () => {
                   htmlFor="email-address"
                   className="block text-sm font-medium text-[var(--site-muted)]"
                 >
-                  Email address *
+                  Email address {requiredStar}
                 </label>
                 <div className="mt-1">
                   <input
@@ -882,7 +897,7 @@ const CheckoutPage = () => {
                     htmlFor="address"
                     className="block text-sm font-medium text-[var(--site-muted)]"
                   >
-                    Address *
+                    Address {requiredStar}
                   </label>
                   <div className="mt-1">
                     <input
@@ -934,7 +949,7 @@ const CheckoutPage = () => {
                     htmlFor="delivery-zone"
                     className="block text-sm font-medium text-[var(--site-muted)]"
                   >
-                    Delivery area *
+                    Delivery area {requiredStar}
                   </label>
                   <div className="mt-1">
                     <select
