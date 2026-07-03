@@ -92,6 +92,8 @@ const ProfitReportPage = () => {
   const [selectedGraphCategoryIds, setSelectedGraphCategoryIds] = useState<string[]>([]);
   const [selectedGraphMerchantIds, setSelectedGraphMerchantIds] = useState<string[]>([]);
   const [graphBrandFilter, setGraphBrandFilter] = useState("all");
+  const [deliveryCost, setDeliveryCost] = useState(0);
+  const [shippingCostProductIds, setShippingCostProductIds] = useState<string[]>([]);
   const [manualCosts, setManualCosts] = useState({
     packaging: 0,
     ads: 0,
@@ -272,6 +274,33 @@ const ProfitReportPage = () => {
       )
     ).sort((a, b) => a.localeCompare(b));
   }, [report?.expected.products, report?.products]);
+  const shippingCostProductOptions = useMemo(() => {
+    const options = new Map<string, { productId: string; title: string; sku: string; mainImage: string }>();
+
+    for (const product of report?.products || []) {
+      options.set(product.productId, {
+        productId: product.productId,
+        title: product.title,
+        sku: product.sku || "",
+        mainImage: product.mainImage || "",
+      });
+    }
+
+    for (const product of report?.expected.products || []) {
+      if (!options.has(product.productId)) {
+        options.set(product.productId, {
+          productId: product.productId,
+          title: product.title,
+          sku: product.sku || "",
+          mainImage: product.mainImage || "",
+        });
+      }
+    }
+
+    return Array.from(options.values()).sort((first, second) =>
+      first.title.localeCompare(second.title)
+    );
+  }, [report?.expected.products, report?.products]);
   const hasSelectedGraphScope =
     selectedGraphProductIds.length > 0 ||
     selectedGraphCategoryIds.length > 0 ||
@@ -346,6 +375,18 @@ const ProfitReportPage = () => {
       [key]: Math.max(0, Number(value) || 0),
     }));
   };
+  const updateDeliveryCost = (value: string) => {
+    setDeliveryCost(Math.max(0, Number(value) || 0));
+  };
+  const toggleShippingCostProduct = (productId: string) => {
+    setShippingCostProductIds((current) =>
+      current.includes(productId)
+        ? current.filter((currentId) => currentId !== productId)
+        : [...current, productId]
+    );
+  };
+  const getCostAfterShipping = (productId: string, cost: number) =>
+    Number(cost || 0) + (shippingCostProductIds.includes(productId) ? deliveryCost : 0);
 
   const toggleGraphProduct = (productId: string) => {
     setSelectedGraphProductIds((current) =>
@@ -448,6 +489,73 @@ const ProfitReportPage = () => {
             ))}
           </select>
         </div>
+
+        <section className={`${cardClassName} mb-6`}>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold">Delivery cost by product</h2>
+              <p className="mt-1 text-sm text-[var(--site-muted)]">
+                Selected products add this delivery cost in the Cost after shipping column.
+              </p>
+            </div>
+            <label className="grid min-w-[220px] gap-1 text-sm font-semibold text-[var(--site-muted)]">
+              Delivery cost
+              <input
+                type="number"
+                min="0"
+                value={deliveryCost}
+                onChange={(event) => updateDeliveryCost(event.target.value)}
+                className={inputClassName}
+              />
+            </label>
+          </div>
+          <div className="mt-4 rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-[var(--site-muted)]">
+                Products with shipping cost ({shippingCostProductIds.length})
+              </p>
+              {shippingCostProductIds.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setShippingCostProductIds([])}
+                  className="text-xs font-semibold text-[var(--site-accent)]"
+                >
+                  Clear
+                </button>
+              ) : null}
+            </div>
+            <div className="grid max-h-56 gap-2 overflow-y-auto pr-1 sm:grid-cols-2 xl:grid-cols-3">
+              {shippingCostProductOptions.length > 0 ? (
+                shippingCostProductOptions.map((product) => (
+                  <label
+                    key={product.productId}
+                    className="flex min-w-0 items-center gap-2 rounded-xl border border-[var(--site-border)] bg-[var(--site-panel)] px-3 py-2 text-sm font-semibold text-[var(--site-text)]"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={shippingCostProductIds.includes(product.productId)}
+                      onChange={() => toggleShippingCostProduct(product.productId)}
+                      className="h-4 w-4 shrink-0 accent-[var(--site-accent)]"
+                    />
+                    <HoverImagePreview
+                      src={getProductImageSrc(product.mainImage)}
+                      alt={sanitize(product.title) || "Product image"}
+                      thumbnailClassName="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-1"
+                    />
+                    <span className="min-w-0">
+                      <span className="block truncate">{sanitize(product.title)}</span>
+                      <span className="block truncate text-xs text-[var(--site-muted)]">
+                        {sanitize(product.sku || "-")}
+                      </span>
+                    </span>
+                  </label>
+                ))
+              ) : (
+                <p className="text-sm text-[var(--site-muted)]">No products available.</p>
+              )}
+            </div>
+          </div>
+        </section>
 
         <div className="grid gap-4 md:grid-cols-4">
           <div className={cardClassName}>
@@ -768,13 +876,14 @@ const ProfitReportPage = () => {
                   <th className="py-3">Qty</th>
                   <th className="py-3">Unit cost</th>
                   <th className="py-3">COGS</th>
+                  <th className="py-3">Cost after shipping</th>
                   <th className="py-3">Est. revenue</th>
                   <th className="py-3">Est. profit</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
-                  <tr><td className="py-6 text-[var(--site-muted)]" colSpan={7}>Loading...</td></tr>
+                  <tr><td className="py-6 text-[var(--site-muted)]" colSpan={8}>Loading...</td></tr>
                 ) : report?.products.length ? (
                   report.products.map((row) => (
                     <tr key={row.productId} className="border-t border-[var(--site-border)]">
@@ -792,12 +901,15 @@ const ProfitReportPage = () => {
                       <td className="py-3">{row.quantity}</td>
                       <td className="py-3">{formatMoney(row.unitCost)}</td>
                       <td className="py-3">{formatMoney(row.cogs)}</td>
+                      <td className="py-3 font-semibold">
+                        {formatMoney(getCostAfterShipping(row.productId, row.cogs))}
+                      </td>
                       <td className="py-3">{formatMoney(row.estimatedRevenue)}</td>
                       <td className="py-3 font-semibold text-[var(--site-accent)]">{formatMoney(row.estimatedProfit)}</td>
                     </tr>
                   ))
                 ) : (
-                  <tr><td className="py-6 text-[var(--site-muted)]" colSpan={7}>No profit data found.</td></tr>
+                  <tr><td className="py-6 text-[var(--site-muted)]" colSpan={8}>No profit data found.</td></tr>
                 )}
               </tbody>
             </table>
@@ -815,13 +927,14 @@ const ProfitReportPage = () => {
                   <th className="py-3">Stock</th>
                   <th className="py-3">Price</th>
                   <th className="py-3">Cost</th>
+                  <th className="py-3">Cost after shipping</th>
                   <th className="py-3">Expected revenue</th>
                   <th className="py-3">Expected net profit</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
-                  <tr><td className="py-6 text-[var(--site-muted)]" colSpan={7}>Loading...</td></tr>
+                  <tr><td className="py-6 text-[var(--site-muted)]" colSpan={8}>Loading...</td></tr>
                 ) : report?.expected.products.length ? (
                   report.expected.products.map((row) => (
                     <tr key={row.productId} className="border-t border-[var(--site-border)]">
@@ -839,12 +952,15 @@ const ProfitReportPage = () => {
                       <td className="py-3">{row.quantity}</td>
                       <td className="py-3">{formatMoney(row.unitPrice)}</td>
                       <td className="py-3">{formatMoney(row.unitCost)}</td>
+                      <td className="py-3 font-semibold">
+                        {formatMoney(getCostAfterShipping(row.productId, row.expectedCogs))}
+                      </td>
                       <td className="py-3">{formatMoney(row.expectedRevenue)}</td>
                       <td className="py-3 font-semibold text-[var(--site-accent)]">{formatMoney(row.expectedProfit)}</td>
                     </tr>
                   ))
                 ) : (
-                  <tr><td className="py-6 text-[var(--site-muted)]" colSpan={7}>No expected stock data found.</td></tr>
+                  <tr><td className="py-6 text-[var(--site-muted)]" colSpan={8}>No expected stock data found.</td></tr>
                 )}
               </tbody>
             </table>
