@@ -3,6 +3,7 @@ const prisma = new PrismaClient();
 const { validateOrderData, ValidationError } = require('../utills/validation');
 const { createOrderUpdateNotification } = require('../utills/notificationHelpers');
 const { getStatusWithGroup, ensureDefaultOrderStatuses } = require('../utills/orderStatus');
+const { ensureDefaultDeliveryZones } = require('../utills/deliveryZones');
 
 function normalizeStatusCode(status) {
   return status === 'canceled' ? 'cancelled' : status;
@@ -43,6 +44,35 @@ function parseOptionalDate(value, { endOfDay = false } = {}) {
   );
 
   return Number.isNaN(dateValue.getTime()) ? undefined : dateValue;
+}
+
+async function resolveDeliveryZone(deliveryZoneId) {
+  await ensureDefaultDeliveryZones(prisma);
+
+  const normalizedId =
+    typeof deliveryZoneId === "string" && deliveryZoneId.trim().length > 0
+      ? deliveryZoneId.trim()
+      : "";
+
+  if (normalizedId) {
+    const selectedZone = await prisma.deliveryZone.findFirst({
+      where: {
+        id: normalizedId,
+        isActive: true,
+      },
+    });
+
+    if (selectedZone) {
+      return selectedZone;
+    }
+  }
+
+  return prisma.deliveryZone.findFirst({
+    where: {
+      code: "standard-lebanon",
+      isActive: true,
+    },
+  });
 }
 
 function buildOrderSearchConditions(searchValue) {
@@ -204,6 +234,9 @@ async function createCustomerOrder(request, response) {
     console.log("Creating order in database...");
     await ensureDefaultOrderStatuses(prisma);
     const nextStatusInfo = await getStatusWithGroup(prisma, validatedData.status);
+    const deliveryZone = await resolveDeliveryZone(request.body.deliveryZoneId);
+    const deliveryFee = Number(deliveryZone?.fee || 5);
+    const grandTotal = Number(validatedData.total || 0) + deliveryFee;
 
     // Create the order with validated data
     const corder = await prisma.$transaction(async (tx) => {
@@ -234,8 +267,11 @@ async function createCustomerOrder(request, response) {
           apartment: validatedData.apartment,
           postalCode: "",
           status: validatedData.status,
-          city: validatedData.city,
-          country: "",
+          city: deliveryZone?.city || validatedData.city,
+          country: deliveryZone?.country || "Lebanon",
+          deliveryZoneId: deliveryZone?.id || null,
+          deliveryFee,
+          grandTotal,
           orderNotice: validatedData.orderNotice,
           total: validatedData.total,
           dateTime: new Date()
@@ -411,6 +447,9 @@ async function updateCustomerOrder(request, response) {
       statusChanged &&
       previousStatusInfo.group.isCompletedGroup &&
       !nextStatusInfo.group.isCompletedGroup;
+    const deliveryZone = await resolveDeliveryZone(request.body.deliveryZoneId || existingOrder.deliveryZoneId);
+    const deliveryFee = Number(deliveryZone?.fee ?? existingOrder.deliveryFee ?? 5);
+    const grandTotal = Number(validatedData.total || 0) + deliveryFee;
 
     const updatedOrder = await prisma.$transaction(async (tx) => {
       const orderUpdate = await tx.customer_order.update({
@@ -427,8 +466,11 @@ async function updateCustomerOrder(request, response) {
           apartment: validatedData.apartment,
           postalCode: "",
           status: validatedData.status,
-          city: validatedData.city,
-          country: "",
+          city: deliveryZone?.city || validatedData.city,
+          country: deliveryZone?.country || existingOrder.country || "Lebanon",
+          deliveryZoneId: deliveryZone?.id || existingOrder.deliveryZoneId || null,
+          deliveryFee,
+          grandTotal,
           orderNotice: validatedData.orderNotice,
           total: validatedData.total,
         },

@@ -96,6 +96,9 @@ interface Order {
   status: string;
   city: string;
   country?: string;
+  deliveryZoneId?: string | null;
+  deliveryFee?: number;
+  grandTotal?: number | null;
   orderNotice: string?;
   total: number;
   failedHistoryCount?: number;

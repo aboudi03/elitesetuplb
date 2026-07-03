@@ -14,39 +14,39 @@ datasource db {
 }
 
 model Product {
-  id             String                   @id @default(uuid())
-  slug           String?                  @unique
-  title          String?
-  model          String
-  sku            String?                  @unique
-  mainImage      String?
-  price          Float                    @default(0)
-  cost           Float                    @default(0)
-  taxRate        Float                    @default(0)
-  rating         Int                      @default(0)
-  description    String?                  @db.Text
-  manufacturer   String?
-  colors         String?                  @db.Text
-  sizes          String?                  @db.Text
-  inStock        Int                      @default(0)
-  isActive       Boolean                  @default(true)
-  featured       Boolean                  @default(false)
+  id                String                   @id @default(uuid())
+  slug              String?                  @unique
+  title             String?
+  model             String
+  sku               String?                  @unique
+  mainImage         String?
+  price             Float                    @default(0)
+  cost              Float                    @default(0)
+  taxRate           Float                    @default(0)
+  rating            Int                      @default(0)
+  description       String?                  @db.Text
+  manufacturer      String?
+  colors            String?                  @db.Text
+  sizes             String?                  @db.Text
+  inStock           Int                      @default(0)
+  isActive          Boolean                  @default(true)
+  featured          Boolean                  @default(false)
   featuredSortOrder Int?
-  categoryId     String?
-  category       Category?                @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  customerOrders customer_order_product[]
-  Wishlist       Wishlist[]
-  reviews        Review[]
+  categoryId        String?
+  category          Category?                @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  customerOrders    customer_order_product[]
+  Wishlist          Wishlist[]
+  reviews           Review[]
 
-  merchantId     String?
-  merchant       Merchant? @relation(fields: [merchantId], references: [id], onDelete: SetNull)
-  createdAt      DateTime                 @default(now())
-  updatedAt      DateTime                 @default(now()) @updatedAt
+  merchantId         String?
+  merchant           Merchant?              @relation(fields: [merchantId], references: [id], onDelete: SetNull)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @default(now()) @updatedAt
   // Back relation for bulk upload items
-  bulkUploadItems bulk_upload_item[]      @relation("ProductBulkItems")
+  bulkUploadItems    bulk_upload_item[]     @relation("ProductBulkItems")
   featuredBrandItems FeaturedBrandProduct[]
-  dealItems      DealProduct[]
-  bannerTargets  ProductBannerProduct[]
+  dealItems          DealProduct[]
+  bannerTargets      ProductBannerProduct[]
 }
 
 model Deal {
@@ -120,37 +120,58 @@ model FeaturedBrandProduct {
 }
 
 model User {
-  id            String         @id @default(uuid())
-  email         String         @unique
-  password      String?
-  role          String?        @default("user")
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @default(now()) @updatedAt
-  Wishlist      Wishlist[]
-  notifications Notification[]
-  reviews       Review[]
+  id                String              @id @default(uuid())
+  email             String              @unique
+  password          String?
+  role              String?             @default("user")
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @default(now()) @updatedAt
+  Wishlist          Wishlist[]
+  notifications     Notification[]
+  reviews           Review[]
   // Back relation for bulk upload batches
   bulkUploadBatches bulk_upload_batch[] @relation("UserBatches")
 }
 
 model Customer_order {
-  id          String                   @id @default(uuid())
-  orderNumber Int?                     @unique
-  name        String
-  lastname    String
-  phone       String
-  email       String
-  company     String
-  adress      String
-  apartment   String
-  postalCode  String
-  dateTime    DateTime?                @default(now())
-  status      String
+  id             String                   @id @default(uuid())
+  orderNumber    Int?                     @unique
+  name           String
+  lastname       String
+  phone          String
+  email          String
+  company        String
+  adress         String
+  apartment      String
+  postalCode     String
+  dateTime       DateTime?                @default(now())
+  status         String
+  city           String
+  country        String
+  deliveryZoneId String?
+  deliveryZone   DeliveryZone?            @relation(fields: [deliveryZoneId], references: [id], onDelete: SetNull)
+  deliveryFee    Float                    @default(5)
+  grandTotal     Float?
+  orderNotice    String?
+  total          Int
+  products       customer_order_product[]
+
+  @@index([deliveryZoneId])
+}
+
+model DeliveryZone {
+  id          String           @id @default(uuid())
+  code        String           @unique
+  country     String           @default("Lebanon")
+  governorate String
   city        String
-  country     String
-  orderNotice String?
-  total       Int
-  products    customer_order_product[]
+  label       String
+  fee         Float            @default(5)
+  isActive    Boolean          @default(true)
+  sortOrder   Int              @default(0)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  orders      Customer_order[]
 }
 
 model OrderStatusGroup {
@@ -165,14 +186,14 @@ model OrderStatusGroup {
 }
 
 model OrderStatus {
-  id          String   @id @default(uuid())
-  code        String   @unique
-  name        String
-  groupCode   String
-  isActive    Boolean  @default(true)
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  groupCode String
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model OrderStatusHistory {
@@ -200,14 +221,14 @@ model ProductStockHistory {
 }
 
 model CartEvent {
-  id          String   @id @default(uuid())
-  productId   String
+  id           String   @id @default(uuid())
+  productId    String
   productTitle String?
-  userId      String?
-  sessionId   String?
-  quantity    Int      @default(1)
-  eventType   String   @default("ADD")
-  createdAt   DateTime @default(now())
+  userId       String?
+  sessionId    String?
+  quantity     Int      @default(1)
+  eventType    String   @default("ADD")
+  createdAt    DateTime @default(now())
 
   @@index([createdAt])
   @@index([productId])
@@ -227,31 +248,31 @@ model customer_order_product {
 }
 
 model Category {
-  id        String    @id @default(uuid())
-  name      String    @unique
-  menuImage String?
-  parentId  String?
-  parent    Category? @relation("CategoryChildren", fields: [parentId], references: [id], onDelete: SetNull)
-  children  Category[] @relation("CategoryChildren")
-  sortOrder Int       @default(0)
-  products  Product[] // Define a one-to-many relationship
+  id            String                  @id @default(uuid())
+  name          String                  @unique
+  menuImage     String?
+  parentId      String?
+  parent        Category?               @relation("CategoryChildren", fields: [parentId], references: [id], onDelete: SetNull)
+  children      Category[]              @relation("CategoryChildren")
+  sortOrder     Int                     @default(0)
+  products      Product[] // Define a one-to-many relationship
   bannerTargets ProductBannerCategory[]
 }
 
 model ProductBanner {
-  id          String                  @id @default(uuid())
-  title       String
-  image       String
-  altText     String?
-  scopeType   ProductBannerScope      @default(ALL)
-  isActive    Boolean                 @default(true)
-  startsAt    DateTime?
-  endsAt      DateTime?
-  sortOrder   Int                     @default(0)
-  createdAt   DateTime                @default(now())
-  updatedAt   DateTime                @updatedAt
-  products    ProductBannerProduct[]
-  categories  ProductBannerCategory[]
+  id         String                  @id @default(uuid())
+  title      String
+  image      String
+  altText    String?
+  scopeType  ProductBannerScope      @default(ALL)
+  isActive   Boolean                 @default(true)
+  startsAt   DateTime?
+  endsAt     DateTime?
+  sortOrder  Int                     @default(0)
+  createdAt  DateTime                @default(now())
+  updatedAt  DateTime                @updatedAt
+  products   ProductBannerProduct[]
+  categories ProductBannerCategory[]
 }
 
 model ProductBannerProduct {
@@ -338,6 +359,7 @@ model Notification {
   @@index([userId, type])
   @@index([createdAt])
 }
+
 model Merchant {
   id          String   @id @default(uuid())
   name        String
@@ -354,40 +376,40 @@ model Merchant {
 }
 
 model bulk_upload_batch {
-  id         String              @id @default(uuid())
+  id         String             @id @default(uuid())
   fileName   String?
-  createdAt  DateTime            @default(now())
-  status     BulkUploadStatus    @default(PENDING)
-  itemCount  Int                 @default(0)
-  errorCount Int                 @default(0)
+  createdAt  DateTime           @default(now())
+  status     BulkUploadStatus   @default(PENDING)
+  itemCount  Int                @default(0)
+  errorCount Int                @default(0)
   items      bulk_upload_item[]
 
   // optional uploader link if you later associate sessions/users
   userId String?
-  user   User?                  @relation(name: "UserBatches", fields: [userId], references: [id])
+  user   User?   @relation(name: "UserBatches", fields: [userId], references: [id])
 }
 
 model bulk_upload_item {
-  id        String            @id @default(uuid())
-  batchId   String
-  batch     bulk_upload_batch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  id      String            @id @default(uuid())
+  batchId String
+  batch   bulk_upload_batch @relation(fields: [batchId], references: [id], onDelete: Cascade)
 
   // created product reference
   productId String?
-  product   Product?          @relation(name: "ProductBulkItems", fields: [productId], references: [id], onDelete: SetNull)
+  product   Product? @relation(name: "ProductBulkItems", fields: [productId], references: [id], onDelete: SetNull)
 
   // snapshot fields for auditing and re-commit edits
-  title         String?
-  slug          String?
-  price         Float                @default(0)
-  manufacturer  String?
-  description   String?
-  mainImage     String?
-  categoryId    String?
-  inStock       Int                  @default(0)
+  title        String?
+  slug         String?
+  price        Float   @default(0)
+  manufacturer String?
+  description  String?
+  mainImage    String?
+  categoryId   String?
+  inStock      Int     @default(0)
 
-  status        BulkUploadItemStatus @default(CREATED)
-  error         String?
+  status BulkUploadItemStatus @default(CREATED)
+  error  String?
 }
 
 enum BulkUploadStatus {

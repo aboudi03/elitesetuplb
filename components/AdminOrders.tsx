@@ -91,7 +91,6 @@ const ORDER_SORT_OPTIONS = [
   { label: "Status Z-A", value: "status:desc" },
 ];
 
-const DELIVERY_FEE = 5;
 const DELIVERY_ESTIMATE = "3-5 business days";
 
 function normalizeWhatsappPhone(phone: string) {
@@ -120,12 +119,13 @@ function buildOrderConfirmationWhatsappUrl(order: Order) {
   const phone = normalizeWhatsappPhone(order.phone);
   const orderLabel = order.orderNumber ? `#${order.orderNumber}` : `#${order.id.slice(0, 8).toUpperCase()}`;
   const subtotal = Number(order.total || 0);
-  const grandTotal = subtotal + DELIVERY_FEE;
+  const deliveryFee = Number(order.deliveryFee ?? 5);
+  const grandTotal = Number(order.grandTotal ?? subtotal + deliveryFee);
   const customerName = [order.name, order.lastname].filter(Boolean).join(" ").trim();
   const message = [
     `Hello${customerName ? ` ${customerName}` : ""}, your order ${orderLabel} is confirmed.`,
     `Subtotal: $${subtotal.toFixed(2)}`,
-    `Delivery fee: $${DELIVERY_FEE.toFixed(2)}`,
+    `Delivery fee: $${deliveryFee.toFixed(2)}`,
     `Total: $${grandTotal.toFixed(2)}`,
     `Estimated delivery time: ${DELIVERY_ESTIMATE}.`,
     "Thank you for shopping with Elite Setup.",

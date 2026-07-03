@@ -26,6 +26,7 @@ const featuredBrandsRouter = require("./routes/featuredBrands");
 const dealsRouter = require("./routes/deals");
 const productBannersRouter = require("./routes/productBanners");
 const reportsRouter = require("./routes/reports");
+const deliveryZonesRouter = require("./routes/deliveryZones");
 const prisma = require("./utills/db");
 var cors = require("cors");
 
@@ -188,6 +189,7 @@ app.use("/api/featured-brands", featuredBrandsRouter);
 app.use("/api/deals", dealsRouter);
 app.use("/api/product-banners", productBannersRouter);
 app.use("/api/reports", reportsRouter);
+app.use("/api/delivery-zones", deliveryZonesRouter);
 
 // Health check endpoint (no rate limiting)
 app.get('/health', (req, res) => {

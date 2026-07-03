@@ -96,6 +96,8 @@ const AdminSingleOrder = () => {
     orderNotice: "",
     status: "processing",
     total: 0,
+    deliveryFee: 5,
+    grandTotal: 5,
   });
   const [statusHistory, setStatusHistory] = useState<StatusHistoryItem[]>([]);
   const [stockHistory, setStockHistory] = useState<StockHistoryItem[]>([]);
@@ -368,11 +370,13 @@ const AdminSingleOrder = () => {
                   </div>
                   <div className="mt-3 flex items-center justify-between text-base">
                     <span className="text-[var(--site-muted)]">Shipping</span>
-                    <span className="font-semibold">$5</span>
+                    <span className="font-semibold">${Number(order?.deliveryFee ?? 5).toFixed(2)}</span>
                   </div>
                   <div className="mt-4 flex items-center justify-between border-t border-[var(--site-border)] pt-4 text-lg">
                     <span className="font-semibold">Estimated total</span>
-                    <span className="text-2xl font-semibold">${order?.total + 5}</span>
+                    <span className="text-2xl font-semibold">
+                      ${Number(order?.grandTotal ?? Number(order?.total || 0) + Number(order?.deliveryFee ?? 5)).toFixed(2)}
+                    </span>
                   </div>
                 </div>
 

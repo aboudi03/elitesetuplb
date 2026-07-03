@@ -18,7 +18,15 @@ const inputClassName =
 const isValidLebanesePhone = (phone: string) =>
   /^(03\d{6}|(?:70|71|76|78|79|81)\d{6})$/.test(phone);
 
-const deliveryFee = 5;
+type DeliveryZone = {
+  id: string;
+  code: string;
+  country: string;
+  governorate: string;
+  city: string;
+  label: string;
+  fee: number;
+};
 
 type CheckoutSuccessSummary = {
   orderId: string;
@@ -57,10 +65,12 @@ const CheckoutPage = () => {
     adress: "",
     apartment: "",
     city: "",
+    deliveryZoneId: "",
     orderNotice: "",
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
   const [successSummary, setSuccessSummary] = useState<CheckoutSuccessSummary | null>(null);
   const hasTrackedCheckoutStart = useRef(false);
   const hasCompletedCheckout = useRef(false);
@@ -70,12 +80,48 @@ const CheckoutPage = () => {
   const clearCart = typeof cartState?.clearCart === "function" ? cartState.clearCart : () => undefined;
   const router = useRouter();
 
+  const selectedDeliveryZone = deliveryZones.find(
+    (zone) => zone.id === checkoutForm.deliveryZoneId
+  );
+  const deliveryFee = total === 0 ? 0 : Number(selectedDeliveryZone?.fee || 5);
   const orderTaxTotal = calculateCartTax(products);
-  const orderGrandTotal = calculateCartGrandTotal(products, total);
+  const orderGrandTotal = calculateCartGrandTotal(products, total, deliveryFee);
   const whatsappHref = `https://wa.me/${pcBuilderWhatsAppNumber}`;
 
   useEffect(() => {
     setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const loadDeliveryZones = async () => {
+      try {
+        const response = await apiClient.get("/api/delivery-zones", {
+          cache: "no-store",
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data?.details || data?.error || "Failed to load delivery areas");
+        }
+
+        const zones = Array.isArray(data?.zones) ? data.zones : [];
+        setDeliveryZones(zones);
+        setCheckoutForm((current) => {
+          if (current.deliveryZoneId || zones.length === 0) return current;
+          const standardZone =
+            zones.find((zone: DeliveryZone) => zone.code === "standard-lebanon") || zones[0];
+          return {
+            ...current,
+            deliveryZoneId: standardZone.id,
+            city: standardZone.city,
+          };
+        });
+      } catch (error: any) {
+        toast.error(error?.message || "Failed to load delivery areas");
+      }
+    };
+
+    loadDeliveryZones();
   }, []);
 
   useEffect(() => {
@@ -173,8 +219,8 @@ const CheckoutPage = () => {
     }
     
     // City validation
-    if (!checkoutForm.city.trim() || checkoutForm.city.trim().length < 2) {
-      errors.push("City must be at least 2 characters");
+    if (!checkoutForm.deliveryZoneId) {
+      errors.push("Please select a delivery area");
     }
     
     return errors;
@@ -192,7 +238,7 @@ const CheckoutPage = () => {
 
     // Basic client-side checks for required fields (UX only)
     const requiredFields = [
-      'name', 'lastname', 'phone', 'email', 'adress', 'city'
+      'name', 'lastname', 'phone', 'email', 'adress', 'deliveryZoneId'
     ];
     
     const missingFields = requiredFields.filter(field => 
@@ -253,7 +299,8 @@ const CheckoutPage = () => {
         apartment: checkoutForm.apartment.trim(),
         status: "pending",
         total: total,
-        city: checkoutForm.city.trim(),
+        city: selectedDeliveryZone?.city || checkoutForm.city.trim(),
+        deliveryZoneId: checkoutForm.deliveryZoneId,
         orderNotice: checkoutForm.orderNotice.trim(),
         userId: userId // Add user ID for notifications
       };
@@ -370,6 +417,8 @@ const CheckoutPage = () => {
       setSuccessSummary(completedOrderSummary);
 
       // Clear form and cart
+      const defaultDeliveryZone =
+        deliveryZones.find((zone) => zone.code === "standard-lebanon") || deliveryZones[0];
       setCheckoutForm({
         name: "",
         lastname: "",
@@ -378,7 +427,8 @@ const CheckoutPage = () => {
         company: "",
         adress: "",
         apartment: "",
-        city: "",
+        city: defaultDeliveryZone?.city || "",
+        deliveryZoneId: defaultDeliveryZone?.id || "",
         orderNotice: "",
       });
       clearCart();
@@ -560,7 +610,7 @@ const CheckoutPage = () => {
               </div>
               <div className="flex items-center justify-between">
                 <dt className="text-[var(--site-muted)]">Shipping</dt>
-                <dd>$5</dd>
+                <dd>${deliveryFee.toFixed(2)}</dd>
               </div>
               <div className="flex items-center justify-between">
                 <dt className="text-[var(--site-muted)]">Taxes</dt>
@@ -879,31 +929,45 @@ const CheckoutPage = () => {
                   </div>
                 </div>
 
-                <div>
+                <div className="sm:col-span-3">
                   <label
-                    htmlFor="city"
+                    htmlFor="delivery-zone"
                     className="block text-sm font-medium text-[var(--site-muted)]"
                   >
-                    City *
+                    Delivery area *
                   </label>
                   <div className="mt-1">
-                    <input
-                      type="text"
-                      id="city"
-                      name="city"
-                      autoComplete="address-level2"
+                    <select
+                      id="delivery-zone"
+                      name="delivery-zone"
                       required
                       disabled={isSubmitting}
                       className={inputClassName}
-                      value={checkoutForm.city}
+                      value={checkoutForm.deliveryZoneId}
                       onChange={(e) =>
-                        setCheckoutForm({
-                          ...checkoutForm,
-                          city: e.target.value,
+                        setCheckoutForm((current) => {
+                          const zone = deliveryZones.find((item) => item.id === e.target.value);
+                          return {
+                            ...current,
+                            deliveryZoneId: e.target.value,
+                            city: zone?.city || "",
+                          };
                         })
                       }
-                    />
+                    >
+                      <option value="">Select delivery area</option>
+                      {deliveryZones.map((zone) => (
+                        <option key={zone.id} value={zone.id}>
+                          {zone.label} - ${Number(zone.fee || 0).toFixed(2)}
+                        </option>
+                      ))}
+                    </select>
                   </div>
+                  {selectedDeliveryZone ? (
+                    <p className="mt-2 text-sm font-semibold text-[var(--site-muted)]">
+                      Delivery fee: ${deliveryFee.toFixed(2)}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="sm:col-span-3">

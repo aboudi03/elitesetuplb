@@ -6,7 +6,11 @@ export const calculateCartTax = (products: ProductInCart[]) =>
     return sum + product.price * product.amount * (rate / 100);
   }, 0);
 
-export const calculateCartGrandTotal = (products: ProductInCart[], subtotal: number) => {
-  const shipping = subtotal === 0 ? 0 : 5;
+export const calculateCartGrandTotal = (
+  products: ProductInCart[],
+  subtotal: number,
+  deliveryFee = 5
+) => {
+  const shipping = subtotal === 0 ? 0 : deliveryFee;
   return Math.round(subtotal + calculateCartTax(products) + shipping);
 };
