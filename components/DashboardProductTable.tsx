@@ -23,7 +23,7 @@ import HoverImagePreview from "./ui/HoverImagePreview";
 import ViewActionLink from "./ui/ViewActionLink";
 import toast from "react-hot-toast";
 import Image from "next/image";
-import { FaGripVertical, FaXmark } from "react-icons/fa6";
+import { FaGripVertical, FaLink, FaXmark } from "react-icons/fa6";
 
 function truncateWords(value: string | null | undefined, limit = 4) {
   const words = String(value || "")
@@ -297,6 +297,7 @@ const DashboardProductTable = () => {
           src={product.mainImage ? `/${product.mainImage}` : "/product_placeholder.webp"}
           alt={sanitize(product.title) || "Product image"}
           thumbnailClassName="mask mask-squircle h-12 w-12 overflow-hidden bg-[var(--site-panel-soft)]"
+          previewSize={520}
         />
       ),
     },
@@ -564,7 +565,20 @@ const DashboardProductTable = () => {
       key: "actions",
       header: "",
       cell: (product) => (
-        <ViewActionLink href={`/admin/products/${product.id}`} label="View product details" />
+        <div className="flex items-center gap-2">
+          <ViewActionLink href={`/admin/products/${product.id}`} label="View product details" />
+          <Link
+            href={`/product/${encodeURIComponent(product.slug || product.id)}`}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Open storefront product page"
+            title="Open storefront product page"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:bg-[var(--site-accent-soft)] hover:text-[var(--site-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--site-accent-soft)]"
+          >
+            <FaLink aria-hidden="true" className="text-base" />
+            <span className="sr-only">Open storefront product page</span>
+          </Link>
+        </div>
       ),
     },
   ];

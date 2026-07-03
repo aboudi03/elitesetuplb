@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { FaAnglesLeft, FaAnglesRight, FaChevronLeft, FaChevronRight, FaXmark } from "react-icons/fa6";
 import ProductBannerOverlay from "./ProductBannerOverlay";
 
@@ -106,6 +107,9 @@ const ProductImageGallery = ({ mainImage, images, title, product }: ProductImage
   useEffect(() => {
     if (!isLightboxOpen) return;
 
+    const previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setIsLightboxOpen(false);
@@ -124,6 +128,7 @@ const ProductImageGallery = ({ mainImage, images, title, product }: ProductImage
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
+      document.body.style.overflow = previousBodyOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isLightboxOpen, goToNextSlide, goToPreviousSlide]);
@@ -347,9 +352,9 @@ const ProductImageGallery = ({ mainImage, images, title, product }: ProductImage
         ) : null}
       </div>
 
-      {isLightboxOpen ? (
+      {isLightboxOpen && typeof document !== "undefined" ? createPortal(
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/82 px-4 py-6 backdrop-blur-sm animate-[lightboxFadeIn_220ms_ease-out]"
+          className="fixed inset-0 z-[2147483647] isolate flex items-center justify-center bg-black/90 px-4 py-6 backdrop-blur-sm animate-[lightboxFadeIn_220ms_ease-out]"
           onClick={() => {
             setIsLightboxOpen(false);
             setIsLightboxZoomed(false);
@@ -442,7 +447,8 @@ const ProductImageGallery = ({ mainImage, images, title, product }: ProductImage
               }}
             />
           </div>
-        </div>
+        </div>,
+        document.body
       ) : null}
     </div>
   );

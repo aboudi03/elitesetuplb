@@ -8,6 +8,7 @@ type HoverImagePreviewProps = {
   alt: string;
   thumbnailClassName?: string;
   previewClassName?: string;
+  previewSize?: number;
 };
 
 const HoverImagePreview = ({
@@ -15,6 +16,7 @@ const HoverImagePreview = ({
   alt,
   thumbnailClassName = "",
   previewClassName = "",
+  previewSize = 260,
 }: HoverImagePreviewProps) => {
   return (
     <div className="group relative">
@@ -31,10 +33,13 @@ const HoverImagePreview = ({
       <div
         className={`pointer-events-none absolute left-full top-1/2 z-40 ml-5 hidden -translate-y-1/2 rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel)]/98 p-3 shadow-[0_28px_70px_rgba(0,0,0,0.24)] backdrop-blur group-hover:block ${previewClassName}`}
       >
-        <div className="flex h-[260px] w-[260px] items-center justify-center overflow-hidden rounded-xl bg-[var(--site-panel-soft)] p-4">
+        <div
+          className="flex items-center justify-center overflow-hidden rounded-xl bg-[var(--site-panel-soft)] p-4"
+          style={{ height: previewSize, width: previewSize }}
+        >
           <Image
-            width={260}
-            height={260}
+            width={previewSize}
+            height={previewSize}
             src={src}
             alt={alt}
             className="h-full w-full object-contain"
