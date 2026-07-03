@@ -3,6 +3,7 @@
 import { DashboardSidebar } from "@/components";
 import apiClient from "@/lib/api";
 import ReportChart from "@/components/ReportChart";
+import HoverImagePreview from "@/components/ui/HoverImagePreview";
 import { sanitize } from "@/lib/sanitize";
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -24,6 +25,7 @@ type ReportResponse = {
     productId: string;
     title: string;
     sku: string;
+    mainImage: string;
     quantity: number;
     unitCost: number;
     unitPrice: number;
@@ -45,6 +47,7 @@ type ReportResponse = {
       productId: string;
       title: string;
       sku: string;
+      mainImage: string;
       quantity: number;
       unitCost: number;
       unitPrice: number;
@@ -74,6 +77,8 @@ const cardClassName =
 const inputClassName =
   "min-h-11 rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 text-sm text-[var(--site-text)]";
 const formatMoney = (value: number) => `$${Number(value || 0).toFixed(2)}`;
+const getProductImageSrc = (image?: string | null) =>
+  image ? `/${image.replace(/^\/+/, "")}` : "/product_placeholder.webp";
 
 const ProfitReportPage = () => {
   const [report, setReport] = useState<ReportResponse | null>(null);
@@ -84,8 +89,8 @@ const ProfitReportPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [profitChartMode, setProfitChartMode] = useState<ProfitChartMode>("expected");
   const [selectedGraphProductIds, setSelectedGraphProductIds] = useState<string[]>([]);
-  const [graphCategoryFilter, setGraphCategoryFilter] = useState("all");
-  const [graphMerchantFilter, setGraphMerchantFilter] = useState("all");
+  const [selectedGraphCategoryIds, setSelectedGraphCategoryIds] = useState<string[]>([]);
+  const [selectedGraphMerchantIds, setSelectedGraphMerchantIds] = useState<string[]>([]);
   const [graphBrandFilter, setGraphBrandFilter] = useState("all");
   const [manualCosts, setManualCosts] = useState({
     packaging: 0,
@@ -221,16 +226,24 @@ const ProfitReportPage = () => {
     }
 
     return Array.from(optionMap.values())
-      .filter((product) => graphCategoryFilter === "all" || product.categoryId === graphCategoryFilter)
-      .filter((product) => graphMerchantFilter === "all" || product.merchantId === graphMerchantFilter)
+      .filter(
+        (product) =>
+          selectedGraphCategoryIds.length === 0 ||
+          selectedGraphCategoryIds.includes(product.categoryId)
+      )
+      .filter(
+        (product) =>
+          selectedGraphMerchantIds.length === 0 ||
+          selectedGraphMerchantIds.includes(product.merchantId)
+      )
       .filter((product) => graphBrandFilter === "all" || product.manufacturer === graphBrandFilter)
       .sort((first, second) => first.title.localeCompare(second.title));
   }, [
     graphBrandFilter,
-    graphCategoryFilter,
-    graphMerchantFilter,
     report?.expected.products,
     report?.products,
+    selectedGraphCategoryIds,
+    selectedGraphMerchantIds,
   ]);
   const graphCategoryOptions = useMemo(() => {
     const options = new Map<string, string>();
@@ -261,15 +274,17 @@ const ProfitReportPage = () => {
   }, [report?.expected.products, report?.products]);
   const hasSelectedGraphScope =
     selectedGraphProductIds.length > 0 ||
-    graphCategoryFilter !== "all" ||
-    graphMerchantFilter !== "all" ||
+    selectedGraphCategoryIds.length > 0 ||
+    selectedGraphMerchantIds.length > 0 ||
     graphBrandFilter !== "all";
   const selectedProfitRows = useMemo(() => {
     if (!hasSelectedGraphScope) return [];
 
     return profitComparisonAllRows.filter((row) => {
-      const matchesCategory = graphCategoryFilter === "all" || row.categoryId === graphCategoryFilter;
-      const matchesMerchant = graphMerchantFilter === "all" || row.merchantId === graphMerchantFilter;
+      const matchesCategory =
+        selectedGraphCategoryIds.length === 0 || selectedGraphCategoryIds.includes(row.categoryId);
+      const matchesMerchant =
+        selectedGraphMerchantIds.length === 0 || selectedGraphMerchantIds.includes(row.merchantId);
       const matchesBrand = graphBrandFilter === "all" || row.manufacturer === graphBrandFilter;
       const matchesProduct =
         selectedGraphProductIds.length === 0 || selectedGraphProductIds.includes(row.productId);
@@ -278,10 +293,10 @@ const ProfitReportPage = () => {
     });
   }, [
     graphBrandFilter,
-    graphCategoryFilter,
-    graphMerchantFilter,
     hasSelectedGraphScope,
     profitComparisonAllRows,
+    selectedGraphCategoryIds,
+    selectedGraphMerchantIds,
     selectedGraphProductIds,
   ]);
   const profitComparisonRows = useMemo(
@@ -339,6 +354,20 @@ const ProfitReportPage = () => {
         : [...current, productId]
     );
   };
+  const toggleGraphCategory = (categoryId: string) => {
+    setSelectedGraphCategoryIds((current) =>
+      current.includes(categoryId)
+        ? current.filter((currentId) => currentId !== categoryId)
+        : [...current, categoryId]
+    );
+  };
+  const toggleGraphMerchant = (merchantId: string) => {
+    setSelectedGraphMerchantIds((current) =>
+      current.includes(merchantId)
+        ? current.filter((currentId) => currentId !== merchantId)
+        : [...current, merchantId]
+    );
+  };
 
   const selectVisibleGraphProducts = () => {
     setSelectedGraphProductIds((current) => [
@@ -347,8 +376,8 @@ const ProfitReportPage = () => {
   };
   const clearGraphSelection = () => {
     setSelectedGraphProductIds([]);
-    setGraphCategoryFilter("all");
-    setGraphMerchantFilter("all");
+    setSelectedGraphCategoryIds([]);
+    setSelectedGraphMerchantIds([]);
     setGraphBrandFilter("all");
   };
 
@@ -552,31 +581,67 @@ const ProfitReportPage = () => {
               </button>
             </div>
           </div>
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
-            <select
-              value={graphCategoryFilter}
-              onChange={(event) => setGraphCategoryFilter(event.target.value)}
-              className={inputClassName}
-            >
-              <option value="all">All categories</option>
-              {graphCategoryOptions.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-            <select
-              value={graphMerchantFilter}
-              onChange={(event) => setGraphMerchantFilter(event.target.value)}
-              className={inputClassName}
-            >
-              <option value="all">All merchants</option>
-              {graphMerchantOptions.map((merchant) => (
-                <option key={merchant.id} value={merchant.id}>
-                  {merchant.name}
-                </option>
-              ))}
-            </select>
+          <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(220px,0.7fr)]">
+            <div className="rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-3">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-[var(--site-muted)]">Categories</p>
+                {selectedGraphCategoryIds.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedGraphCategoryIds([])}
+                    className="text-xs font-semibold text-[var(--site-accent)]"
+                  >
+                    Clear
+                  </button>
+                ) : null}
+              </div>
+              <div className="grid max-h-40 gap-2 overflow-y-auto pr-1">
+                {graphCategoryOptions.map((category) => (
+                  <label
+                    key={category.id}
+                    className="flex min-w-0 items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-semibold text-[var(--site-text)] transition hover:bg-[var(--site-panel)]"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedGraphCategoryIds.includes(category.id)}
+                      onChange={() => toggleGraphCategory(category.id)}
+                      className="h-4 w-4 shrink-0 accent-[var(--site-accent)]"
+                    />
+                    <span className="truncate">{sanitize(category.name)}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-3">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-[var(--site-muted)]">Merchants</p>
+                {selectedGraphMerchantIds.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedGraphMerchantIds([])}
+                    className="text-xs font-semibold text-[var(--site-accent)]"
+                  >
+                    Clear
+                  </button>
+                ) : null}
+              </div>
+              <div className="grid max-h-40 gap-2 overflow-y-auto pr-1">
+                {graphMerchantOptions.map((merchant) => (
+                  <label
+                    key={merchant.id}
+                    className="flex min-w-0 items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-semibold text-[var(--site-text)] transition hover:bg-[var(--site-panel)]"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedGraphMerchantIds.includes(merchant.id)}
+                      onChange={() => toggleGraphMerchant(merchant.id)}
+                      className="h-4 w-4 shrink-0 accent-[var(--site-accent)]"
+                    />
+                    <span className="truncate">{sanitize(merchant.name)}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
             <select
               value={graphBrandFilter}
               onChange={(event) => setGraphBrandFilter(event.target.value)}
@@ -698,6 +763,7 @@ const ProfitReportPage = () => {
             <table className="w-full text-sm">
               <thead className="text-left text-xs uppercase tracking-[0.08em] text-[var(--site-muted)]">
                 <tr>
+                  <th className="py-3">Image</th>
                   <th className="py-3">Product</th>
                   <th className="py-3">Qty</th>
                   <th className="py-3">Unit cost</th>
@@ -708,10 +774,17 @@ const ProfitReportPage = () => {
               </thead>
               <tbody>
                 {isLoading ? (
-                  <tr><td className="py-6 text-[var(--site-muted)]" colSpan={6}>Loading...</td></tr>
+                  <tr><td className="py-6 text-[var(--site-muted)]" colSpan={7}>Loading...</td></tr>
                 ) : report?.products.length ? (
                   report.products.map((row) => (
                     <tr key={row.productId} className="border-t border-[var(--site-border)]">
+                      <td className="py-3">
+                        <HoverImagePreview
+                          src={getProductImageSrc(row.mainImage)}
+                          alt={sanitize(row.title) || "Product image"}
+                          thumbnailClassName="h-12 w-12 overflow-hidden rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-1"
+                        />
+                      </td>
                       <td className="py-3">
                         <p className="font-semibold">{sanitize(row.title)}</p>
                         <p className="text-xs text-[var(--site-muted)]">{sanitize(row.sku || "-")}</p>
@@ -724,7 +797,7 @@ const ProfitReportPage = () => {
                     </tr>
                   ))
                 ) : (
-                  <tr><td className="py-6 text-[var(--site-muted)]" colSpan={6}>No profit data found.</td></tr>
+                  <tr><td className="py-6 text-[var(--site-muted)]" colSpan={7}>No profit data found.</td></tr>
                 )}
               </tbody>
             </table>
@@ -737,6 +810,7 @@ const ProfitReportPage = () => {
             <table className="w-full text-sm">
               <thead className="text-left text-xs uppercase tracking-[0.08em] text-[var(--site-muted)]">
                 <tr>
+                  <th className="py-3">Image</th>
                   <th className="py-3">Product</th>
                   <th className="py-3">Stock</th>
                   <th className="py-3">Price</th>
@@ -747,10 +821,17 @@ const ProfitReportPage = () => {
               </thead>
               <tbody>
                 {isLoading ? (
-                  <tr><td className="py-6 text-[var(--site-muted)]" colSpan={6}>Loading...</td></tr>
+                  <tr><td className="py-6 text-[var(--site-muted)]" colSpan={7}>Loading...</td></tr>
                 ) : report?.expected.products.length ? (
                   report.expected.products.map((row) => (
                     <tr key={row.productId} className="border-t border-[var(--site-border)]">
+                      <td className="py-3">
+                        <HoverImagePreview
+                          src={getProductImageSrc(row.mainImage)}
+                          alt={sanitize(row.title) || "Product image"}
+                          thumbnailClassName="h-12 w-12 overflow-hidden rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-1"
+                        />
+                      </td>
                       <td className="py-3">
                         <p className="font-semibold">{sanitize(row.title)}</p>
                         <p className="text-xs text-[var(--site-muted)]">{sanitize(row.sku || "-")}</p>
@@ -763,7 +844,7 @@ const ProfitReportPage = () => {
                     </tr>
                   ))
                 ) : (
-                  <tr><td className="py-6 text-[var(--site-muted)]" colSpan={6}>No expected stock data found.</td></tr>
+                  <tr><td className="py-6 text-[var(--site-muted)]" colSpan={7}>No expected stock data found.</td></tr>
                 )}
               </tbody>
             </table>
