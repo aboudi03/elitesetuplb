@@ -17,17 +17,17 @@ CREATE TABLE `DeliveryZone` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AlterTable
-ALTER TABLE `customer_order`
+ALTER TABLE `Customer_order`
     ADD COLUMN `deliveryZoneId` VARCHAR(191) NULL,
     ADD COLUMN `deliveryFee` DOUBLE NOT NULL DEFAULT 5,
     ADD COLUMN `grandTotal` DOUBLE NULL;
 
 -- AddIndex
-CREATE INDEX `customer_order_deliveryZoneId_idx` ON `customer_order`(`deliveryZoneId`);
+CREATE INDEX `Customer_order_deliveryZoneId_idx` ON `Customer_order`(`deliveryZoneId`);
 
 -- AddForeignKey
-ALTER TABLE `customer_order`
-    ADD CONSTRAINT `customer_order_deliveryZoneId_fkey`
+ALTER TABLE `Customer_order`
+    ADD CONSTRAINT `Customer_order_deliveryZoneId_fkey`
     FOREIGN KEY (`deliveryZoneId`) REFERENCES `DeliveryZone`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- SeedData
