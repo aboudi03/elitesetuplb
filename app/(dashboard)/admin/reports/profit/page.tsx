@@ -64,6 +64,7 @@ type OrderStatusOption = {
   id: string;
   code: string;
   name: string;
+  groupCode: string;
 };
 
 type ProfitChartMode = "expected" | "real";
@@ -100,6 +101,10 @@ const ProfitReportPage = () => {
     if (status !== "all") params.set("status", status);
     return params.toString();
   }, [dateFrom, dateTo, status]);
+  const soldStatusOptions = useMemo(
+    () => statuses.filter((item) => item.groupCode === "completed"),
+    [statuses]
+  );
 
   const dailyChartRows = useMemo(() => [...(report?.daily || [])].reverse(), [report?.daily]);
   const profitComparisonAllRows = useMemo(() => {
@@ -110,8 +115,10 @@ const ProfitReportPage = () => {
         title: string;
         expectedProfit: number;
         expectedRevenue: number;
+        expectedCogs: number;
         realProfit: number;
         realRevenue: number;
+        realCogs: number;
         manufacturer: string;
         categoryId: string;
         categoryName: string;
@@ -126,8 +133,10 @@ const ProfitReportPage = () => {
         title: product.title,
         expectedProfit: Number(product.expectedProfit || 0),
         expectedRevenue: Number(product.expectedRevenue || 0),
+        expectedCogs: Number(product.expectedCogs || 0),
         realProfit: 0,
         realRevenue: 0,
+        realCogs: 0,
         manufacturer: product.manufacturer || "",
         categoryId: product.categoryId || "",
         categoryName: product.categoryName || "Uncategorized",
@@ -142,8 +151,10 @@ const ProfitReportPage = () => {
         title: product.title,
         expectedProfit: 0,
         expectedRevenue: 0,
+        expectedCogs: 0,
         realProfit: 0,
         realRevenue: 0,
+        realCogs: 0,
         manufacturer: product.manufacturer || "",
         categoryId: product.categoryId || "",
         categoryName: product.categoryName || "Uncategorized",
@@ -153,6 +164,7 @@ const ProfitReportPage = () => {
 
       current.realProfit = Number(product.estimatedProfit || 0);
       current.realRevenue = Number(product.estimatedRevenue || 0);
+      current.realCogs = Number(product.cogs || 0);
       current.title = current.title || product.title;
       current.manufacturer = current.manufacturer || product.manufacturer || "";
       current.categoryId = current.categoryId || product.categoryId || "";
@@ -163,15 +175,12 @@ const ProfitReportPage = () => {
     }
 
     return Array.from(rowsByProduct.values())
-      .filter((row) => selectedGraphProductIds.includes(row.productId))
       .sort((first, second) =>
         profitChartMode === "expected"
           ? second.expectedProfit - first.expectedProfit
           : second.realProfit - first.realProfit
       )
-      .slice(0, 10)
-      .reverse();
-  }, [profitChartMode, report?.expected.products, report?.products, selectedGraphProductIds]);
+  }, [profitChartMode, report?.expected.products, report?.products]);
   const graphProductOptions = useMemo(() => {
     const optionMap = new Map<
       string,
@@ -250,13 +259,71 @@ const ProfitReportPage = () => {
       )
     ).sort((a, b) => a.localeCompare(b));
   }, [report?.expected.products, report?.products]);
+  const hasSelectedGraphScope =
+    selectedGraphProductIds.length > 0 ||
+    graphCategoryFilter !== "all" ||
+    graphMerchantFilter !== "all" ||
+    graphBrandFilter !== "all";
+  const selectedProfitRows = useMemo(() => {
+    if (!hasSelectedGraphScope) return [];
+
+    return profitComparisonAllRows.filter((row) => {
+      const matchesCategory = graphCategoryFilter === "all" || row.categoryId === graphCategoryFilter;
+      const matchesMerchant = graphMerchantFilter === "all" || row.merchantId === graphMerchantFilter;
+      const matchesBrand = graphBrandFilter === "all" || row.manufacturer === graphBrandFilter;
+      const matchesProduct =
+        selectedGraphProductIds.length === 0 || selectedGraphProductIds.includes(row.productId);
+
+      return matchesCategory && matchesMerchant && matchesBrand && matchesProduct;
+    });
+  }, [
+    graphBrandFilter,
+    graphCategoryFilter,
+    graphMerchantFilter,
+    hasSelectedGraphScope,
+    profitComparisonAllRows,
+    selectedGraphProductIds,
+  ]);
+  const profitComparisonRows = useMemo(
+    () =>
+      [...selectedProfitRows]
+        .sort((first, second) =>
+          profitChartMode === "expected"
+            ? second.expectedProfit - first.expectedProfit
+            : second.realProfit - first.realProfit
+        )
+        .slice(0, 10)
+        .reverse(),
+    [profitChartMode, selectedProfitRows]
+  );
   const manualDeductionTotal = useMemo(
     () =>
       Object.values(manualCosts).reduce((sum, value) => sum + Math.max(0, Number(value) || 0), 0),
     [manualCosts]
   );
-  const netGrossProfit = Number(report?.summary.grossProfit || 0) - manualDeductionTotal;
-  const netExpectedProfit = Number(report?.expected.profit || 0) - manualDeductionTotal;
+  const selectedSummary = useMemo(() => {
+    const revenue = selectedProfitRows.reduce((sum, row) => sum + row.realRevenue, 0);
+    const cogs = selectedProfitRows.reduce((sum, row) => sum + row.realCogs, 0);
+    const grossProfit = selectedProfitRows.reduce((sum, row) => sum + row.realProfit, 0);
+    const expectedRevenue = selectedProfitRows.reduce((sum, row) => sum + row.expectedRevenue, 0);
+    const expectedCogs = selectedProfitRows.reduce((sum, row) => sum + row.expectedCogs, 0);
+    const expectedProfit = selectedProfitRows.reduce((sum, row) => sum + row.expectedProfit, 0);
+
+    return {
+      revenue,
+      cogs,
+      grossProfit,
+      margin: revenue > 0 ? (grossProfit / revenue) * 100 : 0,
+      expectedRevenue,
+      expectedCogs,
+      expectedProfit,
+    };
+  }, [selectedProfitRows]);
+  const netGrossProfit = selectedSummary.grossProfit - manualDeductionTotal;
+  const netExpectedProfit = selectedSummary.expectedProfit - manualDeductionTotal;
+  const selectedScopeLabel = hasSelectedGraphScope
+    ? `${selectedProfitRows.length} selected product${selectedProfitRows.length === 1 ? "" : "s"}`
+    : "Nothing selected";
 
   const updateManualCost = (key: keyof typeof manualCosts, value: string) => {
     setManualCosts((current) => ({
@@ -277,6 +344,12 @@ const ProfitReportPage = () => {
     setSelectedGraphProductIds((current) => [
       ...new Set([...current, ...graphProductOptions.map((product) => product.productId)]),
     ]);
+  };
+  const clearGraphSelection = () => {
+    setSelectedGraphProductIds([]);
+    setGraphCategoryFilter("all");
+    setGraphMerchantFilter("all");
+    setGraphBrandFilter("all");
   };
 
   useEffect(() => {
@@ -338,8 +411,8 @@ const ProfitReportPage = () => {
           <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} className={inputClassName} />
           <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} className={inputClassName} />
           <select value={status} onChange={(event) => setStatus(event.target.value)} className={inputClassName}>
-            <option value="all">All statuses</option>
-            {statuses.map((item) => (
+            <option value="all">All sold statuses</option>
+            {soldStatusOptions.map((item) => (
               <option key={item.id} value={item.code}>
                 {item.name}
               </option>
@@ -350,35 +423,36 @@ const ProfitReportPage = () => {
         <div className="grid gap-4 md:grid-cols-4">
           <div className={cardClassName}>
             <p className="text-sm text-[var(--site-muted)]">Revenue</p>
-            <p className="mt-2 text-3xl font-bold">{formatMoney(report?.summary.revenue || 0)}</p>
+            <p className="mt-2 text-3xl font-bold">{formatMoney(selectedSummary.revenue)}</p>
           </div>
           <div className={cardClassName}>
             <p className="text-sm text-[var(--site-muted)]">COGS</p>
-            <p className="mt-2 text-3xl font-bold">{formatMoney(report?.summary.cogs || 0)}</p>
+            <p className="mt-2 text-3xl font-bold">{formatMoney(selectedSummary.cogs)}</p>
           </div>
           <div className={cardClassName}>
             <p className="text-sm text-[var(--site-muted)]">Gross profit</p>
-            <p className="mt-2 text-3xl font-bold text-[var(--site-accent)]">{formatMoney(report?.summary.grossProfit || 0)}</p>
+            <p className="mt-2 text-3xl font-bold text-[var(--site-accent)]">{formatMoney(selectedSummary.grossProfit)}</p>
           </div>
           <div className={cardClassName}>
             <p className="text-sm text-[var(--site-muted)]">Margin</p>
-            <p className="mt-2 text-3xl font-bold">{Number(report?.summary.margin || 0).toFixed(1)}%</p>
+            <p className="mt-2 text-3xl font-bold">{Number(selectedSummary.margin || 0).toFixed(1)}%</p>
           </div>
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-4">
           <div className={cardClassName}>
-            <p className="text-sm text-[var(--site-muted)]">Expected sales</p>
-            <p className="mt-2 text-3xl font-bold">{formatMoney(report?.expected.revenue || 0)}</p>
+            <p className="text-sm text-[var(--site-muted)]">Expected revenue</p>
+            <p className="mt-2 text-3xl font-bold">{formatMoney(selectedSummary.expectedRevenue)}</p>
             <p className="mt-1 text-xs text-[var(--site-muted)]">Current in-stock value</p>
           </div>
           <div className={cardClassName}>
             <p className="text-sm text-[var(--site-muted)]">Expected cost</p>
-            <p className="mt-2 text-3xl font-bold">{formatMoney(report?.expected.cogs || 0)}</p>
+            <p className="mt-2 text-3xl font-bold">{formatMoney(selectedSummary.expectedCogs)}</p>
           </div>
           <div className={cardClassName}>
-            <p className="text-sm text-[var(--site-muted)]">Expected winnings</p>
-            <p className="mt-2 text-3xl font-bold text-[var(--site-accent)]">{formatMoney(report?.expected.profit || 0)}</p>
+            <p className="text-sm text-[var(--site-muted)]">Expected net profit</p>
+            <p className="mt-2 text-3xl font-bold text-[var(--site-accent)]">{formatMoney(selectedSummary.expectedProfit)}</p>
+            <p className="mt-1 text-xs text-[var(--site-muted)]">Revenue minus cost by quantity</p>
           </div>
           <div className={cardClassName}>
             <p className="text-sm text-[var(--site-muted)]">Expected net</p>
@@ -457,8 +531,9 @@ const ProfitReportPage = () => {
             <div>
               <h2 className="text-2xl font-semibold">Graph products</h2>
               <p className="mt-1 text-sm text-[var(--site-muted)]">
-                Select products to show in the expected vs real graph.
+                Select a category or products to update the totals and expected vs real graph.
               </p>
+              <p className="mt-1 text-sm font-semibold text-[var(--site-text)]">{selectedScopeLabel}</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <button
@@ -470,10 +545,10 @@ const ProfitReportPage = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setSelectedGraphProductIds([])}
+                onClick={clearGraphSelection}
                 className="min-h-10 rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 text-sm font-semibold text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
               >
-                Deselect all
+                Clear selection
               </button>
             </div>
           </div>
@@ -542,7 +617,7 @@ const ProfitReportPage = () => {
           </div>
         </section>
 
-        <div className="mt-6 grid gap-6 xl:grid-cols-2">
+        <div className="mt-6 grid gap-6">
           <ReportChart
             title="Daily profit graph"
             labels={dailyChartRows.map((row) => row.date)}
@@ -552,24 +627,15 @@ const ProfitReportPage = () => {
               { label: "Profit", data: dailyChartRows.map((row) => row.profit), color: "#047857" },
             ]}
           />
-          <ReportChart
-            title={profitChartMode === "expected" ? "Expected vs real winnings" : "Real sales until now"}
-            labels={profitComparisonAllRows.map((row) => sanitize(row.title).slice(0, 18))}
-            datasets={[
-              {
-                label: "Expected profit",
-                data: profitComparisonAllRows.map((row) => row.expectedProfit),
-                color: "#047857",
-              },
-              {
-                label: "Real sold profit",
-                data: profitComparisonAllRows.map((row) => row.realProfit),
-                color: "#d90429",
-              },
-            ]}
-            type="bar"
-            actions={
-              <>
+          <section className="rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel)] p-5 shadow-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 className="text-2xl font-semibold">
+                  {profitChartMode === "expected" ? "Expected vs real winnings" : "Real sales until now"}
+                </h2>
+                <p className="mt-1 text-sm text-[var(--site-muted)]">{selectedScopeLabel}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
                 {(["expected", "real"] as const).map((mode) => (
                   <button
                     key={mode}
@@ -584,9 +650,46 @@ const ProfitReportPage = () => {
                     {mode === "expected" ? "Expected" : "Real sales until now"}
                   </button>
                 ))}
-              </>
-            }
-          />
+              </div>
+            </div>
+            <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
+              <div className="min-h-[320px] min-w-0 rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-3">
+                <ReportChart
+                  title=""
+                  labels={profitComparisonRows.map((row) => sanitize(row.title).slice(0, 18))}
+                  datasets={[
+                    {
+                      label: "Expected profit",
+                      data: profitComparisonRows.map((row) => row.expectedProfit),
+                      color: "#047857",
+                    },
+                    {
+                      label: "Real sold profit",
+                      data: profitComparisonRows.map((row) => row.realProfit),
+                      color: "#d90429",
+                    },
+                  ]}
+                  type="bar"
+                  chartOnly
+                />
+              </div>
+              <aside className="rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-5">
+                <p className="text-sm font-semibold text-[var(--site-muted)]">Total profit</p>
+                <p className="mt-2 text-4xl font-bold text-[var(--site-accent)]">
+                  {formatMoney(profitChartMode === "expected" ? selectedSummary.expectedProfit : selectedSummary.grossProfit)}
+                </p>
+                <p className="mt-3 text-sm text-[var(--site-muted)]">
+                  Expected: {formatMoney(selectedSummary.expectedProfit)}
+                </p>
+                <p className="mt-1 text-sm text-[var(--site-muted)]">
+                  Sold: {formatMoney(selectedSummary.grossProfit)}
+                </p>
+                <p className="mt-1 text-sm text-[var(--site-muted)]">
+                  Net sold: {formatMoney(netGrossProfit)}
+                </p>
+              </aside>
+            </div>
+          </section>
         </div>
 
         <section className={`${cardClassName} mt-6`}>
@@ -629,7 +732,7 @@ const ProfitReportPage = () => {
         </section>
 
         <section className={`${cardClassName} mt-6`}>
-          <h2 className="text-2xl font-semibold">Expected product winnings</h2>
+          <h2 className="text-2xl font-semibold">Expected product net profit</h2>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-left text-xs uppercase tracking-[0.08em] text-[var(--site-muted)]">
@@ -638,8 +741,8 @@ const ProfitReportPage = () => {
                   <th className="py-3">Stock</th>
                   <th className="py-3">Price</th>
                   <th className="py-3">Cost</th>
-                  <th className="py-3">Expected sales</th>
-                  <th className="py-3">Expected winnings</th>
+                  <th className="py-3">Expected revenue</th>
+                  <th className="py-3">Expected net profit</th>
                 </tr>
               </thead>
               <tbody>

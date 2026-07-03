@@ -1,5 +1,6 @@
 const prisma = require("../utills/db");
 const { asyncHandler } = require("../utills/errorHandler");
+const { ensureDefaultOrderStatuses } = require("../utills/orderStatus");
 
 function parseDate(value, { endOfDay = false } = {}) {
   if (!value || typeof value !== "string") {
@@ -16,7 +17,7 @@ function parseDate(value, { endOfDay = false } = {}) {
   return Number.isNaN(date.getTime()) ? undefined : date;
 }
 
-function buildOrderWhere(query) {
+function buildOrderWhere(query, soldStatusCodes) {
   const dateFrom = parseDate(query.dateFrom);
   const dateTo = parseDate(query.dateTo, { endOfDay: true });
   const status = typeof query.status === "string" ? query.status.trim() : "";
@@ -35,7 +36,11 @@ function buildOrderWhere(query) {
   }
 
   if (status && status !== "all") {
-    where.status = status;
+    where.status = soldStatusCodes.includes(status) ? status : "__not_a_sold_status__";
+  } else {
+    where.status = {
+      in: soldStatusCodes,
+    };
   }
 
   return where;
@@ -52,7 +57,30 @@ function getDateKey(value) {
 }
 
 const getSalesProfitReport = asyncHandler(async (request, response) => {
-  const orderWhere = buildOrderWhere(request.query);
+  await ensureDefaultOrderStatuses(prisma);
+
+  const soldStatusGroups = await prisma.orderStatusGroup.findMany({
+    where: {
+      isCompletedGroup: true,
+    },
+    select: {
+      code: true,
+    },
+  });
+  const soldStatusGroupCodes = soldStatusGroups.map((group) => group.code);
+  const soldStatuses = await prisma.orderStatus.findMany({
+    where: {
+      isActive: true,
+      groupCode: {
+        in: soldStatusGroupCodes,
+      },
+    },
+    select: {
+      code: true,
+    },
+  });
+  const soldStatusCodes = soldStatuses.map((status) => status.code);
+  const orderWhere = buildOrderWhere(request.query, soldStatusCodes);
 
   const [orders, orderProducts, stockedProducts] = await Promise.all([
     prisma.customer_order.findMany({

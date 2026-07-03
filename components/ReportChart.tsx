@@ -38,6 +38,7 @@ type ReportChartProps = {
   type?: "bar" | "line";
   valuePrefix?: string;
   actions?: React.ReactNode;
+  chartOnly?: boolean;
 };
 
 const ReportChart = ({
@@ -47,6 +48,7 @@ const ReportChart = ({
   type = "line",
   valuePrefix = "$",
   actions,
+  chartOnly = false,
 }: ReportChartProps) => {
   const data = {
     labels,
@@ -110,6 +112,21 @@ const ReportChart = ({
   };
 
   const ChartComponent = type === "bar" ? Bar : Line;
+  const chartContent = (
+    <div className={chartOnly ? "h-full min-h-[320px] min-w-0" : "mt-4 h-[320px] min-w-0"}>
+      {labels.length > 0 ? (
+        <ChartComponent data={data} options={options} />
+      ) : (
+        <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-[var(--site-border)] text-sm text-[var(--site-muted)]">
+          No chart data yet.
+        </div>
+      )}
+    </div>
+  );
+
+  if (chartOnly) {
+    return chartContent;
+  }
 
   return (
     <section className="rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel)] p-5 shadow-sm">
@@ -117,15 +134,7 @@ const ReportChart = ({
         <h2 className="text-2xl font-semibold">{title}</h2>
         {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
       </div>
-      <div className="mt-4 h-[320px] min-w-0">
-        {labels.length > 0 ? (
-          <ChartComponent data={data} options={options} />
-        ) : (
-          <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-[var(--site-border)] text-sm text-[var(--site-muted)]">
-            No chart data yet.
-          </div>
-        )}
-      </div>
+      {chartContent}
     </section>
   );
 };

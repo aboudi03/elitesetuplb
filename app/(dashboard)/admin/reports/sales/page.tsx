@@ -35,6 +35,7 @@ type OrderStatusOption = {
   id: string;
   code: string;
   name: string;
+  groupCode: string;
 };
 
 const cardClassName =
@@ -61,6 +62,10 @@ const SalesReportPage = () => {
   }, [dateFrom, dateTo, status]);
 
   const dailyChartRows = useMemo(() => [...(report?.daily || [])].reverse(), [report?.daily]);
+  const soldStatusOptions = useMemo(
+    () => statuses.filter((item) => item.groupCode === "completed"),
+    [statuses]
+  );
 
   useEffect(() => {
     const loadStatuses = async () => {
@@ -118,8 +123,8 @@ const SalesReportPage = () => {
           <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} className={inputClassName} />
           <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} className={inputClassName} />
           <select value={status} onChange={(event) => setStatus(event.target.value)} className={inputClassName}>
-            <option value="all">All statuses</option>
-            {statuses.map((item) => (
+            <option value="all">All sold statuses</option>
+            {soldStatusOptions.map((item) => (
               <option key={item.id} value={item.code}>
                 {item.name}
               </option>
