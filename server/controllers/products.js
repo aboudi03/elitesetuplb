@@ -224,6 +224,19 @@ function validateSortValue(sortValue) {
   return ALLOWED_SORT_VALUES.includes(sortValue);
 }
 
+function getPublicProductOrderBy(featuredOnly = false) {
+  if (featuredOnly) {
+    return [{ featuredSortOrder: "asc" }, { createdAt: "desc" }];
+  }
+
+  return [
+    { inStock: "desc" },
+    { featured: "desc" },
+    { featuredSortOrder: "asc" },
+    { createdAt: "desc" },
+  ];
+}
+
 function validateAndSanitizeFilterValue(filterType, filterValue) {
   switch (filterType) {
     case 'price':
@@ -574,9 +587,7 @@ const getAllProducts = asyncHandler(async (request, response) => {
           orderBy:
             Object.keys(sortObj).length > 0
               ? sortObj
-              : featuredOnly
-                ? [{ featuredSortOrder: "asc" }, { createdAt: "desc" }]
-                : undefined,
+              : getPublicProductOrderBy(featuredOnly),
         }),
         includePagination ? prisma.product.count({ where: queryWhere }) : Promise.resolve(0),
       ]);
@@ -610,9 +621,7 @@ const getAllProducts = asyncHandler(async (request, response) => {
             orderBy:
               Object.keys(sortObj).length > 0
                 ? sortObj
-                : featuredOnly
-                  ? [{ featuredSortOrder: "asc" }, { createdAt: "desc" }]
-                  : undefined,
+                : getPublicProductOrderBy(featuredOnly),
           }),
           includePagination ? prisma.product.count({ where: queryWhere }) : Promise.resolve(0),
         ]);
@@ -635,9 +644,7 @@ const getAllProducts = asyncHandler(async (request, response) => {
             orderBy:
               Object.keys(sortObj).length > 0
                 ? sortObj
-                : featuredOnly
-                  ? [{ featuredSortOrder: "asc" }, { createdAt: "desc" }]
-                  : undefined,
+                : getPublicProductOrderBy(featuredOnly),
           }),
           includePagination ? prisma.product.count({ where: baseWhereClause }) : Promise.resolve(0),
         ]);
