@@ -55,6 +55,7 @@ const ProductItem = ({
   const cartItemId = `${product.id}::default`;
   const productPathSegment = encodeURIComponent(product.slug || product.id);
   const productHref = `/product/${productPathSegment}`;
+  const isOutOfStock = Number(product.inStock || 0) <= 0;
 
   const handleCardClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (!mobileCardLinkEnabled || isListView) {
@@ -119,7 +120,9 @@ const ProductItem = ({
       onClick={handleCardClick}
       className={`group/card flex h-full w-full min-w-0 overflow-hidden rounded-[1.6rem] text-left transition duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:scale-[1.02] ${
         isListView ? "flex-row items-start gap-3 p-3 sm:items-stretch sm:gap-4 sm:p-4" : "flex-col"
-      } ${mobileCardLinkEnabled && !isListView ? "cursor-pointer sm:cursor-default" : ""}`}
+      } ${mobileCardLinkEnabled && !isListView ? "cursor-pointer sm:cursor-default" : ""} ${
+        isOutOfStock ? "opacity-75 grayscale-[0.35] hover:opacity-95" : ""
+      }`}
     >
       <Link
         href={productHref}
@@ -130,11 +133,21 @@ const ProductItem = ({
         }`}
       >
         <ProductBannerOverlay product={product} />
+        {isOutOfStock ? (
+          <div className="absolute left-3 top-3 z-30 rounded-full border border-red-200 bg-white/95 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.12em] text-red-600 shadow-[0_10px_24px_rgba(220,38,38,0.18)] backdrop-blur">
+            Out of stock
+          </div>
+        ) : null}
         {quickAddEnabled ? (
           <button
             type="button"
             onClick={handleQuickAdd}
-            className="absolute right-3 top-3 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-[var(--site-border)] bg-[color-mix(in_srgb,var(--site-panel)_92%,white_8%)] text-[var(--site-text)] shadow-[0_10px_24px_rgba(15,23,42,0.10)] backdrop-blur transition duration-300 hover:scale-110 hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
+            disabled={isOutOfStock}
+            className={`absolute right-3 top-3 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-[var(--site-border)] bg-[color-mix(in_srgb,var(--site-panel)_92%,white_8%)] text-[var(--site-text)] shadow-[0_10px_24px_rgba(15,23,42,0.10)] backdrop-blur transition duration-300 ${
+              isOutOfStock
+                ? "cursor-not-allowed opacity-60"
+                : "hover:scale-110 hover:border-[var(--site-accent)] hover:text-[var(--site-accent)]"
+            }`}
             aria-label={`Add ${sanitize(displayTitle)} to cart`}
           >
             <HiOutlineShoppingBag className="h-5 w-5" />
@@ -150,7 +163,7 @@ const ProductItem = ({
           sizes={isListView ? "(max-width: 640px) 128px, 340px" : "(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"}
           className={`relative z-10 object-contain object-center transition duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] max-sm:scale-100 sm:scale-[1.03] group-hover/card:sm:scale-[1.08] group-hover/media:sm:scale-[1.2] ${
             isListView ? "p-2 sm:p-4" : "p-0 sm:p-1"
-          }`}
+          } ${isOutOfStock ? "opacity-70 saturate-50" : ""}`}
           alt={sanitize(product?.title || product.model) || "Product image"}
         />
       </Link>
@@ -170,6 +183,11 @@ const ProductItem = ({
           <p className={`font-black text-[var(--site-accent)] ${isListView ? "mt-3 text-base sm:text-lg" : "mt-3 text-[1.32rem] sm:mt-4 sm:text-[1.45rem]"}`}>
             ${product.price.toFixed(2)}
           </p>
+          {isOutOfStock ? (
+            <p className="mt-2 inline-flex w-fit rounded-full border border-red-200 bg-red-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-red-600">
+              Out of stock
+            </p>
+          ) : null}
           {!isListView ? (
             <p className="mt-1 text-sm text-[color-mix(in_srgb,var(--site-muted)_88%,var(--site-text)_12%)]">Including VAT</p>
           ) : null}
