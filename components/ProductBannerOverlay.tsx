@@ -102,7 +102,7 @@ const ProductBannerOverlay = ({
 
   return (
     <div
-      className={`pointer-events-none absolute left-3 top-3 z-30 max-w-[32%] sm:left-4 sm:top-4 ${className}`}
+      className={`pointer-events-none absolute bottom-3 right-3 z-30 max-w-[36%] sm:bottom-4 sm:right-4 ${className}`}
       aria-label={sanitize(matchingBanner.altText || matchingBanner.title)}
     >
       <div className={`relative ${sizeClassName} drop-shadow-[0_10px_18px_rgba(15,23,42,0.20)]`}>
@@ -111,7 +111,7 @@ const ProductBannerOverlay = ({
           alt={sanitize(matchingBanner.altText || matchingBanner.title)}
           fill
           sizes={variant === "gallery" ? "144px" : "112px"}
-          className="object-contain object-left-top"
+          className="object-contain object-right-bottom"
         />
       </div>
     </div>

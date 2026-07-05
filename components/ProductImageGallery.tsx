@@ -245,7 +245,7 @@ const ProductImageGallery = ({ mainImage, images, title, product }: ProductImage
           <ProductBannerOverlay
             product={product}
             variant="gallery"
-            className="left-4 top-4 sm:left-5 sm:top-5 lg:left-6 lg:top-6"
+            className="bottom-4 right-4 sm:bottom-5 sm:right-5 lg:bottom-6 lg:right-6"
           />
         ) : null}
         <Image
@@ -268,7 +268,7 @@ const ProductImageGallery = ({ mainImage, images, title, product }: ProductImage
           }}
           aria-hidden="true"
         />
-        <div className="pointer-events-none absolute bottom-4 right-4 z-20 hidden rounded-full border border-[var(--site-border)] bg-[var(--site-panel)]/90 px-3 py-1.5 text-xs font-semibold text-[var(--site-muted)] backdrop-blur lg:block">
+        <div className="pointer-events-none absolute bottom-4 left-4 z-20 hidden rounded-full border border-[var(--site-border)] bg-[var(--site-panel)]/90 px-3 py-1.5 text-xs font-semibold text-[var(--site-muted)] backdrop-blur lg:block">
           Hover to zoom
         </div>
         {hasMultipleSlides ? (
