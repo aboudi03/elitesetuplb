@@ -49,7 +49,7 @@ const fallbackSlides: HeroSlide[] = [
     subtitle: "Lightweight wireless control for fast flicks, clean aim, and competitive desk setups.",
     image: "/logitechbackg.webp",
     productImage: "https://s24.q4cdn.com/131595232/files/doc_multimedia/2018/08/1/Low_Resolution_JPG-PRO_Wireless_Top_BB.jpg",
-    href: "/shop/gaming-mice",
+    href: "/shop/gaming-mouse",
     productWrapClassName:
       "right-[11%] bottom-8 h-[62%] max-md:bottom-16 max-md:h-[30%] max-sm:bottom-14 max-sm:h-[26%]",
     productImageClassName:
