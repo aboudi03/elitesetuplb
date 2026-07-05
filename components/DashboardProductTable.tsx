@@ -38,6 +38,27 @@ function truncateWords(value: string | null | undefined, limit = 4) {
   return `${words.slice(0, limit).join(" ")}...`;
 }
 
+function HoverCellText({
+  value,
+  children,
+  className = "",
+}: {
+  value: string | null | undefined;
+  children?: React.ReactNode;
+  className?: string;
+}) {
+  const fullText = sanitize(value || "-");
+
+  return (
+    <span className={`group/celltext relative inline-flex min-w-0 max-w-full ${className}`}>
+      {children || <span className="block min-w-0 truncate">{fullText}</span>}
+      <span className="pointer-events-none absolute left-0 top-full z-50 mt-2 hidden max-w-[360px] whitespace-normal break-words rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] px-3 py-2 text-sm font-semibold leading-5 text-[var(--site-text)] shadow-[0_20px_50px_rgba(15,23,42,0.22)] group-hover/celltext:block">
+        {fullText}
+      </span>
+    </span>
+  );
+}
+
 const DashboardProductTable = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -291,13 +312,13 @@ const DashboardProductTable = () => {
     {
       key: "image",
       header: "Image",
-      className: "w-[72px]",
+      className: "w-[112px]",
       cell: (product) => (
         <HoverImagePreview
           src={product.mainImage ? `/${product.mainImage}` : "/product_placeholder.webp"}
           alt={sanitize(product.title) || "Product image"}
-          thumbnailClassName="mask mask-squircle h-12 w-12 overflow-hidden bg-[var(--site-panel-soft)]"
-          previewSize={520}
+          thumbnailClassName="mask mask-squircle h-20 w-20 overflow-hidden bg-[var(--site-panel-soft)]"
+          previewSize={560}
         />
       ),
     },
@@ -319,19 +340,23 @@ const DashboardProductTable = () => {
       className: "w-[190px] min-w-0",
       cell: (product) => (
         <div className="min-w-0 space-y-1">
-          <div className="min-w-0 text-sm font-semibold leading-5" title={sanitize(product.title || product.model || "Untitled product")}>
-            <InlineTextEdit
-              value={product.title || ""}
-              displayValue={truncateWords(sanitize(product.title || product.model || "Untitled product"))}
-              label={`${sanitize(product.model || product.title || "product")} title`}
-              inputClassName="min-w-[11rem] text-left"
-              onConfirm={async (nextTitle) => {
-                await updateProducts([product], { title: nextTitle });
-                toast.success("Title updated");
-              }}
-            />
+          <div className="min-w-0 text-sm font-semibold leading-5">
+            <HoverCellText value={product.title || product.model || "Untitled product"}>
+              <InlineTextEdit
+                value={product.title || ""}
+                displayValue={truncateWords(sanitize(product.title || product.model || "Untitled product"))}
+                label={`${sanitize(product.model || product.title || "product")} title`}
+                inputClassName="min-w-[11rem] text-left"
+                onConfirm={async (nextTitle) => {
+                  await updateProducts([product], { title: nextTitle });
+                  toast.success("Title updated");
+                }}
+              />
+            </HoverCellText>
           </div>
-          <div className="truncate text-xs text-[var(--site-muted)]">{sanitize(product.manufacturer || "-")}</div>
+          <HoverCellText value={product.manufacturer || "-"} className="text-xs text-[var(--site-muted)]">
+            <span className="block min-w-0 truncate">{sanitize(product.manufacturer || "-")}</span>
+          </HoverCellText>
         </div>
       ),
     },
@@ -341,17 +366,19 @@ const DashboardProductTable = () => {
       searchableText: (product) => product.model || "",
       className: "w-[190px] min-w-0",
       cell: (product) => (
-        <div className="min-w-0 text-sm" title={sanitize(product.model || "-")}>
-          <InlineTextEdit
-            value={product.model || ""}
-            displayValue={truncateWords(sanitize(product.model || "-"))}
-            label={`${sanitize(product.title || product.model || "product")} model`}
-            inputClassName="min-w-[11rem] text-left"
-            onConfirm={async (nextModel) => {
-              await updateProducts([product], { model: nextModel });
-              toast.success("Model updated");
-            }}
-          />
+        <div className="min-w-0 text-sm">
+          <HoverCellText value={product.model || "-"}>
+            <InlineTextEdit
+              value={product.model || ""}
+              displayValue={truncateWords(sanitize(product.model || "-"))}
+              label={`${sanitize(product.title || product.model || "product")} model`}
+              inputClassName="min-w-[11rem] text-left"
+              onConfirm={async (nextModel) => {
+                await updateProducts([product], { model: nextModel });
+                toast.success("Model updated");
+              }}
+            />
+          </HoverCellText>
         </div>
       ),
     },
@@ -361,17 +388,19 @@ const DashboardProductTable = () => {
       searchableText: (product) => product.sku || "",
       className: "w-[110px] min-w-0",
       cell: (product) => (
-        <div className="min-w-0 text-sm" title={sanitize(product.sku || "-")}>
-          <InlineTextEdit
-            value={product.sku || ""}
-            displayValue={sanitize(product.sku || "-")}
-            label={`${sanitize(product.title || product.model || "product")} sku`}
-            inputClassName="min-w-[7rem] text-left"
-            onConfirm={async (nextSku) => {
-              await updateProducts([product], { sku: nextSku || null });
-              toast.success("SKU updated");
-            }}
-          />
+        <div className="min-w-0 text-sm">
+          <HoverCellText value={product.sku || "-"}>
+            <InlineTextEdit
+              value={product.sku || ""}
+              displayValue={sanitize(product.sku || "-")}
+              label={`${sanitize(product.title || product.model || "product")} sku`}
+              inputClassName="min-w-[7rem] text-left"
+              onConfirm={async (nextSku) => {
+                await updateProducts([product], { sku: nextSku || null });
+                toast.success("SKU updated");
+              }}
+            />
+          </HoverCellText>
         </div>
       ),
     },
@@ -379,15 +408,15 @@ const DashboardProductTable = () => {
       key: "merchant",
       header: "Merchant",
       searchableText: (product) => product.merchant?.name || "",
-      accessor: (product) => product.merchant?.name || "-",
       className: "w-[110px] text-sm",
+      cell: (product) => <HoverCellText value={product.merchant?.name || "-"} />,
     },
     {
       key: "category",
       header: "Category",
       searchableText: (product) => product.category?.name || "",
-      accessor: (product) => product.category?.name || "Uncategorized",
       className: "w-[120px] text-sm",
+      cell: (product) => <HoverCellText value={product.category?.name || "Uncategorized"} />,
     },
     {
       key: "stock",
@@ -557,9 +586,14 @@ const DashboardProductTable = () => {
       key: "updatedAt",
       header: "Updated",
       searchableText: (product) => product.updatedAt || "",
-      accessor: (product) =>
-        product.updatedAt ? new Date(product.updatedAt).toLocaleDateString() : "-",
       className: "w-[86px] text-sm font-semibold",
+      cell: (product) => (
+        <HoverCellText
+          value={product.updatedAt ? new Date(product.updatedAt).toLocaleString() : "-"}
+        >
+          <span>{product.updatedAt ? new Date(product.updatedAt).toLocaleDateString() : "-"}</span>
+        </HoverCellText>
+      ),
     },
     {
       key: "actions",

@@ -353,6 +353,7 @@ const Hero = ({
     if (expandedMobileCategoryId === category.id) {
       setExpandedMobileCategoryId(null);
       setMobileDropdownPosition(null);
+      router.push(category.href);
       return;
     }
 
