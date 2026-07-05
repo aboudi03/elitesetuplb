@@ -152,7 +152,7 @@ model Customer_order {
   deliveryZone   DeliveryZone?            @relation(fields: [deliveryZoneId], references: [id], onDelete: SetNull)
   deliveryFee    Float                    @default(5)
   grandTotal     Float?
-  orderNotice    String?
+  orderNotice    String?                   @db.Text
   total          Float
   products       customer_order_product[]
 

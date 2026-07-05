@@ -49,6 +49,7 @@ next-env.d.ts
 !prisma/migrations/20260703143000_add_delivery_zones/migration.sql
 !prisma/migrations/20260703152000_simplify_delivery_zones/migration.sql
 !prisma/migrations/20260705120000_make_order_total_decimal/migration.sql
+!prisma/migrations/20260705163000_add_order_notice_to_customer_order/migration.sql
 *.dump
 *.backup
 
