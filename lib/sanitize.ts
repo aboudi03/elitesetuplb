@@ -24,6 +24,24 @@ function stripBackgroundStyles(html: string): string {
   return template.innerHTML;
 }
 
+function decodeHtmlEntities(value: string): string {
+  if (!value) return '';
+
+  if (typeof window !== 'undefined') {
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = value;
+    return textarea.value;
+  }
+
+  return value
+    .replace(/&amp;?/gi, '&')
+    .replace(/&lt;?/gi, '<')
+    .replace(/&gt;?/gi, '>')
+    .replace(/&quot;?/gi, '"')
+    .replace(/&#39;?/gi, "'")
+    .replace(/&#x27;?/gi, "'");
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -127,6 +145,7 @@ export function sanitize(text: string | null | undefined): string {
  */
 export function sanitizeHtml(text: string | null | undefined): string {
   if (!text) return '';
+  const normalizedText = decodeHtmlEntities(text);
 
   const allowedTags = [
     'p',
@@ -149,7 +168,7 @@ export function sanitizeHtml(text: string | null | undefined): string {
 
   // For client-side, use DOMPurify with limited allowed tags
   if (typeof window !== 'undefined') {
-    return stripBackgroundStyles(DOMPurify.sanitize(text, {
+    return stripBackgroundStyles(DOMPurify.sanitize(normalizedText, {
       ALLOWED_TAGS: allowedTags,
       ALLOWED_ATTR: allowedAttributes,
       KEEP_CONTENT: true,
@@ -158,5 +177,5 @@ export function sanitizeHtml(text: string | null | undefined): string {
     }));
   }
   
-  return sanitizeHtmlWithoutDom(text, allowedTags, allowedAttributes);
+  return sanitizeHtmlWithoutDom(normalizedText, allowedTags, allowedAttributes);
 }

@@ -35,7 +35,7 @@ export default function BuildAPcPage() {
           <div className="grid items-center gap-8 lg:grid-cols-[0.92fr_1.08fr]">
             <div className="relative mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-[1.5rem] border border-[var(--site-border)] bg-[radial-gradient(circle_at_top,color-mix(in_srgb,var(--site-panel)_90%,white_10%),color-mix(in_srgb,var(--site-panel-soft)_92%,transparent)_70%)] p-5">
               <Image
-                src="/uploads/Lunar-Cougar-FV150-Mini-White-Hero-Shot.webp"
+                src="/Lunar-Cougar-FV150-Mini-White-Hero-Shot.webp"
                 alt="Build a PC coming soon preview"
                 fill
                 sizes="(max-width: 1024px) 100vw, 360px"

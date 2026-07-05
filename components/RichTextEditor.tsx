@@ -29,6 +29,14 @@ const fonts = [
 const toolbarButtonClassName =
   "inline-flex h-9 w-9 items-center justify-center rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] text-[var(--site-text)] transition hover:border-[var(--site-accent)] hover:text-[var(--site-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--site-accent-soft)]";
 
+function decodeHtmlEntities(value: string) {
+  if (!value) return "";
+
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = value;
+  return textarea.value;
+}
+
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, "&amp;")
@@ -66,6 +74,7 @@ const RichTextEditor = ({
   minHeightClassName = "min-h-[220px]",
 }: RichTextEditorProps) => {
   const editorRef = useRef<HTMLDivElement>(null);
+  const savedSelectionRef = useRef<Range | null>(null);
 
   useEffect(() => {
     const editor = editorRef.current;
@@ -74,12 +83,41 @@ const RichTextEditor = ({
     editor.innerHTML = value || "";
   }, [value]);
 
+  const saveSelection = () => {
+    const editor = editorRef.current;
+    const selection = window.getSelection();
+
+    if (!editor || !selection || selection.rangeCount === 0) {
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    if (editor.contains(range.commonAncestorContainer)) {
+      savedSelectionRef.current = range.cloneRange();
+    }
+  };
+
+  const restoreSelection = () => {
+    const editor = editorRef.current;
+    const selection = window.getSelection();
+    const range = savedSelectionRef.current;
+
+    if (!editor || !selection || !range) {
+      return;
+    }
+
+    selection.removeAllRanges();
+    selection.addRange(range);
+  };
+
   const emitChange = () => {
     onChange(editorRef.current?.innerHTML || "");
+    saveSelection();
   };
 
   const focusEditor = () => {
     editorRef.current?.focus();
+    restoreSelection();
   };
 
   const runCommand = (command: string, commandValue?: string) => {
@@ -104,11 +142,17 @@ const RichTextEditor = ({
     const html = event.clipboardData.getData("text/html");
     const text = event.clipboardData.getData("text/plain");
     const content = html
-      ? stripPastedThemeColors(sanitizeHtml(html))
-      : escapeHtml(text).replace(/\r?\n/g, "<br>");
+      ? stripPastedThemeColors(sanitizeHtml(decodeHtmlEntities(html)))
+      : escapeHtml(decodeHtmlEntities(text)).replace(/\r?\n/g, "<br>");
 
+    restoreSelection();
     document.execCommand("insertHTML", false, content);
     emitChange();
+  };
+
+  const handleToolbarMouseDown = (event: React.MouseEvent<HTMLButtonElement | HTMLLabelElement>) => {
+    event.preventDefault();
+    restoreSelection();
   };
 
   return (
@@ -117,6 +161,7 @@ const RichTextEditor = ({
         <button
           type="button"
           className={toolbarButtonClassName}
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => runCommand("bold")}
           title="Bold"
           aria-label="Bold"
@@ -126,6 +171,7 @@ const RichTextEditor = ({
         <button
           type="button"
           className={toolbarButtonClassName}
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => runCommand("italic")}
           title="Italic"
           aria-label="Italic"
@@ -135,6 +181,7 @@ const RichTextEditor = ({
         <button
           type="button"
           className={toolbarButtonClassName}
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => runCommand("underline")}
           title="Underline"
           aria-label="Underline"
@@ -145,6 +192,7 @@ const RichTextEditor = ({
         <select
           className="h-9 rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] px-2 text-sm text-[var(--site-text)] outline-none focus:border-[var(--site-accent)]"
           defaultValue="p"
+          onMouseDown={saveSelection}
           onChange={(event) => runCommand("formatBlock", event.target.value)}
           aria-label="Text style"
         >
@@ -156,6 +204,7 @@ const RichTextEditor = ({
         <select
           className="h-9 rounded-md border border-[var(--site-border)] bg-[var(--site-panel)] px-2 text-sm text-[var(--site-text)] outline-none focus:border-[var(--site-accent)]"
           defaultValue={fonts[0].value}
+          onMouseDown={saveSelection}
           onChange={(event) => runCommand("fontName", event.target.value)}
           aria-label="Font family"
         >
@@ -169,6 +218,7 @@ const RichTextEditor = ({
         <button
           type="button"
           className={toolbarButtonClassName}
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => runCommand("insertUnorderedList")}
           title="Bullet list"
           aria-label="Bullet list"
@@ -178,6 +228,7 @@ const RichTextEditor = ({
         <button
           type="button"
           className={toolbarButtonClassName}
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => runCommand("insertOrderedList")}
           title="Numbered list"
           aria-label="Numbered list"
@@ -187,6 +238,7 @@ const RichTextEditor = ({
         <button
           type="button"
           className={toolbarButtonClassName}
+          onMouseDown={handleToolbarMouseDown}
           onClick={insertChecklist}
           title="Checklist"
           aria-label="Checklist"
@@ -198,6 +250,7 @@ const RichTextEditor = ({
           className={toolbarButtonClassName}
           title="Text color"
           aria-label="Text color"
+          onMouseDown={saveSelection}
         >
           <FaPalette />
           <input
@@ -210,6 +263,7 @@ const RichTextEditor = ({
           className={toolbarButtonClassName}
           title="Highlight"
           aria-label="Highlight"
+          onMouseDown={saveSelection}
         >
           <FaHighlighter />
           <input
@@ -229,6 +283,8 @@ const RichTextEditor = ({
         suppressContentEditableWarning
         onPaste={handlePaste}
         onInput={emitChange}
+        onKeyUp={saveSelection}
+        onMouseUp={saveSelection}
         onBlur={emitChange}
         style={{ direction: "ltr", textAlign: "left" }}
         dangerouslySetInnerHTML={{ __html: value || "" }}
