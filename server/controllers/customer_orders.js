@@ -787,6 +787,7 @@ async function getAllOrders(request, response) {
     const dateTo = parseOptionalDate(request.query.dateTo, { endOfDay: true });
     const sortBy = typeof request.query.sortBy === "string" ? request.query.sortBy.trim() : "date";
     const sortDirection = request.query.sortDirection === "asc" ? "asc" : "desc";
+    const includeFailed = request.query.includeFailed === "true";
 
     let statusCodesForGroup = [];
 
@@ -817,6 +818,28 @@ async function getAllOrders(request, response) {
       whereClause.status = {
         in: statusCodesForGroup,
       };
+    }
+
+    if (!includeFailed) {
+      if (typeof whereClause.status === "string") {
+        if (whereClause.status === "failed") {
+          return response.json({
+            orders: [],
+            pagination: {
+              page,
+              limit,
+              total: 0,
+              totalPages: 0,
+            },
+          });
+        }
+      } else if (whereClause.status?.in) {
+        whereClause.status.in = whereClause.status.in.filter((statusCode) => statusCode !== "failed");
+      } else {
+        whereClause.status = {
+          not: "failed",
+        };
+      }
     }
 
     if (minTotal !== undefined || maxTotal !== undefined) {

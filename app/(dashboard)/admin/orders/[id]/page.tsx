@@ -566,7 +566,7 @@ const AdminSingleOrder = () => {
               </div>
             </section>
 
-            <section className={sectionClassName}>
+            <section id="order-status-history" className={`${sectionClassName} scroll-mt-6`}>
               <h2 className="text-xl font-semibold">Order status history</h2>
               <div className="mt-4 space-y-3">
                 {statusHistory.length > 0 ? (

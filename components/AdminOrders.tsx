@@ -12,6 +12,7 @@
 
 import React, { useDeferredValue, useEffect, useMemo, useState } from "react";
 import apiClient from "@/lib/api";
+import Link from "next/link";
 import toast from "react-hot-toast";
 import DataTable, { DataTableColumn } from "./ui/DataTable";
 import ViewActionLink from "./ui/ViewActionLink";
@@ -141,6 +142,7 @@ const AdminOrders = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [statusGroupFilter, setStatusGroupFilter] = useState("all");
+  const [showFailedOrders, setShowFailedOrders] = useState(false);
   const [minTotalFilter, setMinTotalFilter] = useState("");
   const [maxTotalFilter, setMaxTotalFilter] = useState("");
   const [dateFromFilter, setDateFromFilter] = useState("");
@@ -197,6 +199,7 @@ const AdminOrders = () => {
         params.set("limit", "200");
         params.set("sortBy", sortBy || "date");
         params.set("sortDirection", sortDirection || "desc");
+        params.set("includeFailed", showFailedOrders ? "true" : "false");
 
         if (deferredSearch.trim()) {
           params.set("search", deferredSearch.trim());
@@ -257,6 +260,7 @@ const AdminOrders = () => {
     sortValue,
     statusFilter,
     statusGroupFilter,
+    showFailedOrders,
   ]);
 
   const updateOrderStatus = async (order: Order, status: string) => {
@@ -307,9 +311,14 @@ const AdminOrders = () => {
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-bold">{order.orderNumber || order.id.slice(0, 8)}</p>
           {(order.failedHistoryCount || 0) > 0 && (
-            <span className="rounded-md border border-green-200 bg-green-50 px-2 py-1 text-xs font-semibold text-green-700">
-              F: {order.failedHistoryCount}
-            </span>
+            <Link
+              href={`/admin/orders/${order.id}#order-status-history`}
+              aria-label={`View ${order.failedHistoryCount} failed status ${order.failedHistoryCount === 1 ? "entry" : "entries"} for this order`}
+              title="View order status history"
+              className="inline-flex min-h-6 min-w-6 items-center justify-center rounded-md border border-green-200 bg-green-50 px-1.5 text-xs font-semibold text-green-700 transition hover:border-green-400 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-200"
+            >
+              {order.failedHistoryCount}
+            </Link>
           )}
           {(order.cancelledHistoryCount || 0) > 0 && (
             <span className="rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-xs font-semibold text-orange-700">
@@ -390,6 +399,7 @@ const AdminOrders = () => {
     setSearch("");
     setStatusFilter("all");
     setStatusGroupFilter("all");
+    setShowFailedOrders(false);
     setMinTotalFilter("");
     setMaxTotalFilter("");
     setDateFromFilter("");
@@ -438,6 +448,18 @@ const AdminOrders = () => {
               </option>
             ))}
           </select>
+          <label className="flex min-h-10 items-center gap-2 rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 text-sm">
+            <span>Show failed</span>
+            <select
+              value={showFailedOrders ? "yes" : "no"}
+              onChange={(event) => setShowFailedOrders(event.target.value === "yes")}
+              aria-label="Show failed orders"
+              className="bg-transparent font-semibold outline-none"
+            >
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+            </select>
+          </label>
           <input
             type="number"
             min="0"
