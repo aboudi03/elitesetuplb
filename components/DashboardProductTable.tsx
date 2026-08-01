@@ -15,6 +15,7 @@ import React, { useDeferredValue, useEffect, useState } from "react";
 import CustomButton from "./CustomButton";
 import apiClient from "@/lib/api";
 import { getEffectiveProductPrice } from "@/lib/productPrice";
+import { buildMetaCatalogCsv } from "@/lib/metaCatalog";
 import { sanitize } from "@/lib/sanitize";
 import DataTable, { DataTableColumn } from "./ui/DataTable";
 import InlineNumberEdit from "./ui/InlineNumberEdit";
@@ -24,7 +25,10 @@ import HoverImagePreview from "./ui/HoverImagePreview";
 import ViewActionLink from "./ui/ViewActionLink";
 import toast from "react-hot-toast";
 import Image from "next/image";
-import { FaGripVertical, FaLink, FaTag, FaXmark } from "react-icons/fa6";
+import { FaFileExport, FaGripVertical, FaLink, FaTag, FaXmark } from "react-icons/fa6";
+
+const META_CATALOG_SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://elitesetuplb.com";
 
 function truncateWords(value: string | null | undefined, limit = 4) {
   const words = String(value || "")
@@ -73,6 +77,7 @@ const DashboardProductTable = () => {
   const [saleProduct, setSaleProduct] = useState<Product | null>(null);
   const [salePriceDraft, setSalePriceDraft] = useState("");
   const [isSavingSale, setIsSavingSale] = useState(false);
+  const [isExportingMetaCatalog, setIsExportingMetaCatalog] = useState(false);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [merchantFilter, setMerchantFilter] = useState("all");
@@ -203,6 +208,62 @@ const DashboardProductTable = () => {
           secondProduct.title || secondProduct.model || ""
         );
       });
+
+  const exportMetaCatalog = async () => {
+    setIsExportingMetaCatalog(true);
+
+    try {
+      const params = new URLSearchParams({
+        mode: "admin",
+        isActive: "true",
+        sortBy: "title",
+        sortDirection: "asc",
+      });
+      const response = await apiClient.get(`/api/products?${params.toString()}`, {
+        cache: "no-store",
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.details || data?.error || "Failed to load products");
+      }
+
+      const activeProducts: Product[] = Array.isArray(data)
+        ? data
+        : data?.products || [];
+      const { csv, exportedCount, skippedCount } = buildMetaCatalogCsv(
+        activeProducts,
+        META_CATALOG_SITE_URL
+      );
+
+      if (exportedCount === 0) {
+        throw new Error("No valid active products are available for the Meta catalog");
+      }
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const downloadUrl = URL.createObjectURL(blob);
+      const downloadLink = document.createElement("a");
+      const exportDate = new Date().toISOString().slice(0, 10);
+
+      downloadLink.href = downloadUrl;
+      downloadLink.download = `elite-setup-meta-catalog-${exportDate}.csv`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      downloadLink.remove();
+      URL.revokeObjectURL(downloadUrl);
+
+      toast.success(
+        skippedCount > 0
+          ? `Exported ${exportedCount} products. Skipped ${skippedCount} missing an image or valid price.`
+          : `Exported ${exportedCount} products for Meta`
+      );
+    } catch (error: any) {
+      console.error("Failed to export Meta catalog:", error);
+      toast.error(error?.message || "Failed to export Meta catalog");
+    } finally {
+      setIsExportingMetaCatalog(false);
+    }
+  };
 
   const openFeaturedOrderDialog = () => {
     setFeaturedDraftProducts(getSortedFeaturedProducts(products));
@@ -742,6 +803,15 @@ const DashboardProductTable = () => {
         tableClassName="table-fixed text-sm"
         actions={
           <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={exportMetaCatalog}
+              disabled={isExportingMetaCatalog}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-blue-300 bg-blue-50 px-4 text-sm font-bold text-blue-700 transition hover:border-blue-500 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <FaFileExport aria-hidden="true" />
+              {isExportingMetaCatalog ? "Exporting..." : "Export to Meta"}
+            </button>
             <select
               value={categoryFilter}
               onChange={(event) => setCategoryFilter(event.target.value)}
