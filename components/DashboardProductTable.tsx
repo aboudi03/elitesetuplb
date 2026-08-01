@@ -14,6 +14,7 @@ import Link from "next/link";
 import React, { useDeferredValue, useEffect, useState } from "react";
 import CustomButton from "./CustomButton";
 import apiClient from "@/lib/api";
+import { getEffectiveProductPrice } from "@/lib/productPrice";
 import { sanitize } from "@/lib/sanitize";
 import DataTable, { DataTableColumn } from "./ui/DataTable";
 import InlineNumberEdit from "./ui/InlineNumberEdit";
@@ -80,6 +81,7 @@ const DashboardProductTable = () => {
   const [stockFilter, setStockFilter] = useState("all");
   const [minPriceFilter, setMinPriceFilter] = useState("");
   const [maxPriceFilter, setMaxPriceFilter] = useState("");
+  const [underCostOnly, setUnderCostOnly] = useState(false);
   const [sortValue, setSortValue] = useState("updatedAt:desc");
   const deferredSearch = useDeferredValue(search);
 
@@ -629,19 +631,26 @@ const DashboardProductTable = () => {
       searchableText: (product) => String(product.cost ?? 0),
       className: "w-[96px]",
       cell: (product) => (
-        <InlineTextEdit
-          value={String(product.cost ?? 0)}
-          displayValue={`$${Number(product.cost || 0).toFixed(2)}`}
-          label={`${sanitize(product.title || product.model || "product")} cost`}
-          type="number"
-          min={0}
-          step={0.01}
-          inputClassName="min-w-[8rem]"
-          onConfirm={async (nextCost) => {
-            await updateProducts([product], { cost: Math.max(0, Number(nextCost) || 0) });
-            toast.success("Cost updated");
-          }}
-        />
+        <div className="space-y-1">
+          <InlineTextEdit
+            value={String(product.cost ?? 0)}
+            displayValue={`$${Number(product.cost || 0).toFixed(2)}`}
+            label={`${sanitize(product.title || product.model || "product")} cost`}
+            type="number"
+            min={0}
+            step={0.01}
+            inputClassName="min-w-[8rem]"
+            onConfirm={async (nextCost) => {
+              await updateProducts([product], { cost: Math.max(0, Number(nextCost) || 0) });
+              toast.success("Cost updated");
+            }}
+          />
+          {getEffectiveProductPrice(product) < Number(product.cost || 0) ? (
+            <span className="block text-xs font-bold text-red-600">
+              Losing ${(Number(product.cost || 0) - getEffectiveProductPrice(product)).toFixed(2)}
+            </span>
+          ) : null}
+        </div>
       ),
     },
     {
@@ -702,18 +711,25 @@ const DashboardProductTable = () => {
     setStockFilter("all");
     setMinPriceFilter("");
     setMaxPriceFilter("");
+    setUnderCostOnly(false);
     setSortValue("updatedAt:desc");
   };
+
+  const visibleProducts = underCostOnly
+    ? products.filter(
+        (product) => getEffectiveProductPrice(product) < Number(product.cost || 0)
+      )
+    : products;
 
   return (
     <div className="w-full">
       <DataTable
         title="All products"
-        data={products}
+        data={visibleProducts}
         columns={columns}
         getRowId={(product) => product.id}
         loading={loading}
-        emptyMessage="No products found."
+        emptyMessage={underCostOnly ? "No products are selling under cost." : "No products found."}
         enableSelection
         selectedIds={selectedProductIds}
         onSelectionChange={setSelectedProductIds}
@@ -826,8 +842,21 @@ const DashboardProductTable = () => {
               Order featured products
             </button>
             <span className="inline-flex min-h-11 items-center rounded-xl border border-blue-200 bg-blue-50 px-4 text-sm font-semibold text-blue-700">
-              Products: {products.length}
+              Products: {visibleProducts.length}
             </span>
+            <button
+              type="button"
+              onClick={() => setUnderCostOnly((currentValue) => !currentValue)}
+              aria-pressed={underCostOnly}
+              className={`inline-flex min-h-11 items-center justify-center rounded-xl border px-4 text-sm font-bold transition ${
+                underCostOnly
+                  ? "border-red-300 bg-red-50 text-red-700 hover:bg-red-100"
+                  : "border-[var(--site-border)] bg-[var(--site-panel-soft)] text-[var(--site-text)] hover:border-red-300 hover:text-red-600"
+              }`}
+            >
+              Under cost
+              {underCostOnly ? ` (${visibleProducts.length})` : ""}
+            </button>
             <Link href="/admin/products/new">
               <CustomButton
                 buttonType="button"
