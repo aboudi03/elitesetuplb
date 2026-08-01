@@ -23,6 +23,7 @@ import type { CatalogViewMode } from "@/app/_zustand/catalogViewStore";
 import { useProductStore } from "@/app/_zustand/store";
 import { trackCartAdd } from "@/lib/cartTracking";
 import ProductBannerOverlay from "./ProductBannerOverlay";
+import { getEffectiveProductPrice, getValidSalePrice } from "@/lib/productPrice";
 
 const PUBLIC_ORDER_LIMIT = 10;
 
@@ -56,6 +57,8 @@ const ProductItem = ({
   const productPathSegment = encodeURIComponent(product.slug || product.id);
   const productHref = `/product/${productPathSegment}`;
   const isOutOfStock = Number(product.inStock || 0) <= 0;
+  const salePrice = getValidSalePrice(product);
+  const effectivePrice = getEffectiveProductPrice(product);
 
   const handleCardClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (!mobileCardLinkEnabled || isListView) {
@@ -99,7 +102,7 @@ const ProductItem = ({
       cartItemId,
       id: product.id.toString(),
       title: displayTitle,
-      price: product.price,
+      price: effectivePrice,
       taxRate: product.taxRate || 0,
       image: displayImage,
       amount: 1,
@@ -180,9 +183,25 @@ const ProductItem = ({
           >
             {sanitize(product.title || product.model)}
           </Link>
-          <p className={`font-black text-[var(--site-accent)] ${isListView ? "mt-3 text-base sm:text-lg" : "mt-3 text-[1.32rem] sm:mt-4 sm:text-[1.45rem]"}`}>
-            ${product.price.toFixed(2)}
-          </p>
+          {salePrice !== null ? (
+            <div className={isListView ? "mt-3" : "mt-3 sm:mt-4"}>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-bold text-red-600 line-through decoration-2">
+                  ${product.price.toFixed(2)}
+                </span>
+                <span className="rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-white">
+                  Sale
+                </span>
+              </div>
+              <p className={`font-black text-[var(--site-accent)] ${isListView ? "text-base sm:text-lg" : "text-[1.32rem] sm:text-[1.45rem]"}`}>
+                ${salePrice.toFixed(2)}
+              </p>
+            </div>
+          ) : (
+            <p className={`font-black text-[var(--site-accent)] ${isListView ? "mt-3 text-base sm:text-lg" : "mt-3 text-[1.32rem] sm:mt-4 sm:text-[1.45rem]"}`}>
+              ${product.price.toFixed(2)}
+            </p>
+          )}
           {isOutOfStock ? (
             <p className="mt-2 inline-flex w-fit rounded-full border border-red-200 bg-red-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.12em] text-red-600">
               Out of stock

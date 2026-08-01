@@ -15,6 +15,7 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { trackCartAdd } from "@/lib/cartTracking";
 import { useSession } from "next-auth/react";
+import { getEffectiveProductPrice } from "@/lib/productPrice";
 
 const PUBLIC_ORDER_LIMIT = 10;
 
@@ -37,6 +38,7 @@ const BuyNowSingleProductBtn = ({
   const cartItemId = `${product.id}::${selectedColor || "default"}::${selectedSize || "default"}`;
   const displayTitle = product.title || product.model || "Product";
   const displayImage = product.mainImage || "/product_placeholder.webp";
+  const effectivePrice = getEffectiveProductPrice(product);
 
   const handleAddToCart = async () => {
     const existingQuantityForProduct = products
@@ -57,7 +59,7 @@ const BuyNowSingleProductBtn = ({
       cartItemId,
       id: product?.id.toString(),
       title: displayTitle,
-      price: product?.price,
+      price: effectivePrice,
       taxRate: product?.taxRate || 0,
       image: displayImage,
       selectedColor,

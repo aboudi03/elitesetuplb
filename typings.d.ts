@@ -5,6 +5,7 @@ interface Product {
   model: string;
   sku?: string | null;
   price: number;
+  salePrice?: number | null;
   rating: number;
   description?: string | null;
   mainImage?: string | null;

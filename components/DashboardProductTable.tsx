@@ -23,7 +23,7 @@ import HoverImagePreview from "./ui/HoverImagePreview";
 import ViewActionLink from "./ui/ViewActionLink";
 import toast from "react-hot-toast";
 import Image from "next/image";
-import { FaGripVertical, FaLink, FaXmark } from "react-icons/fa6";
+import { FaGripVertical, FaLink, FaTag, FaXmark } from "react-icons/fa6";
 
 function truncateWords(value: string | null | undefined, limit = 4) {
   const words = String(value || "")
@@ -69,6 +69,9 @@ const DashboardProductTable = () => {
   const [featuredDraftProducts, setFeaturedDraftProducts] = useState<Product[]>([]);
   const [draggedFeaturedProductId, setDraggedFeaturedProductId] = useState<string | null>(null);
   const [isSavingFeaturedOrder, setIsSavingFeaturedOrder] = useState(false);
+  const [saleProduct, setSaleProduct] = useState<Product | null>(null);
+  const [salePriceDraft, setSalePriceDraft] = useState("");
+  const [isSavingSale, setIsSavingSale] = useState(false);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [merchantFilter, setMerchantFilter] = useState("all");
@@ -276,6 +279,7 @@ const DashboardProductTable = () => {
       Pick<
         Product,
         "inStock" | "isActive" | "featured" | "title" | "model" | "sku" | "price"
+        | "salePrice"
         | "cost"
       >
     >
@@ -306,6 +310,59 @@ const DashboardProductTable = () => {
         return updatedProduct ? { ...currentProduct, ...updatedProduct } : currentProduct;
       })
     );
+  };
+
+  const openSaleDialog = (product: Product) => {
+    setSaleProduct(product);
+    setSalePriceDraft(product.salePrice ? String(product.salePrice) : "");
+  };
+
+  const closeSaleDialog = () => {
+    if (isSavingSale) return;
+    setSaleProduct(null);
+    setSalePriceDraft("");
+  };
+
+  const saveSalePrice = async () => {
+    if (!saleProduct) return;
+
+    const nextSalePrice = Number(salePriceDraft);
+    if (!Number.isFinite(nextSalePrice) || nextSalePrice <= 0) {
+      toast.error("Enter a sale price greater than 0");
+      return;
+    }
+    if (nextSalePrice >= saleProduct.price) {
+      toast.error("Sale price must be lower than the regular price");
+      return;
+    }
+
+    setIsSavingSale(true);
+    try {
+      await updateProducts([saleProduct], { salePrice: nextSalePrice });
+      toast.success("Sale price saved");
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to save sale price");
+    } finally {
+      setIsSavingSale(false);
+      setSaleProduct(null);
+      setSalePriceDraft("");
+    }
+  };
+
+  const removeSalePrice = async () => {
+    if (!saleProduct) return;
+
+    setIsSavingSale(true);
+    try {
+      await updateProducts([saleProduct], { salePrice: null });
+      toast.success("Sale removed");
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to remove sale");
+    } finally {
+      setIsSavingSale(false);
+      setSaleProduct(null);
+      setSalePriceDraft("");
+    }
   };
 
   const columns: DataTableColumn<Product>[] = [
@@ -558,6 +615,11 @@ const DashboardProductTable = () => {
             />
           </div>
           <div className="text-xs text-[var(--site-muted)]">Tax: {product.taxRate ?? 0}%</div>
+          {product.salePrice ? (
+            <div className="text-xs font-bold text-red-600">
+              Sale: ${product.salePrice.toFixed(2)}
+            </div>
+          ) : null}
         </div>
       ),
     },
@@ -600,6 +662,20 @@ const DashboardProductTable = () => {
       header: "",
       cell: (product) => (
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => openSaleDialog(product)}
+            aria-label={`Set sale price for ${sanitize(product.title || product.model || "product")}`}
+            title="Sale"
+            className={`inline-flex h-9 items-center justify-center gap-1.5 rounded-md border px-2.5 text-xs font-bold transition focus:outline-none focus:ring-2 focus:ring-red-100 ${
+              product.salePrice
+                ? "border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
+                : "border-[var(--site-border)] bg-[var(--site-panel-soft)] text-[var(--site-text)] hover:border-red-300 hover:text-red-600"
+            }`}
+          >
+            <FaTag aria-hidden="true" />
+            Sale
+          </button>
           <ViewActionLink href={`/admin/products/${product.id}`} label="View product details" />
           <Link
             href={`/product/${encodeURIComponent(product.slug || product.id)}`}
@@ -765,6 +841,81 @@ const DashboardProductTable = () => {
           </div>
         }
       />
+      {saleProduct && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/55 px-4 py-6">
+          <div className="w-full max-w-md rounded-3xl border border-[var(--site-border)] bg-[var(--site-panel)] p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-semibold text-[var(--site-text)]">Product sale</h2>
+                <p className="mt-2 text-sm text-[var(--site-muted)]">
+                  {sanitize(saleProduct.title || saleProduct.model || "Product")}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeSaleDialog}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)]"
+                aria-label="Close sale dialog"
+              >
+                <FaXmark />
+              </button>
+            </div>
+
+            <div className="mt-6 rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-4">
+              <p className="text-sm text-[var(--site-muted)]">Regular price</p>
+              <p className="mt-1 text-xl font-black text-[var(--site-text)]">
+                ${saleProduct.price.toFixed(2)}
+              </p>
+            </div>
+
+            <label className="mt-5 block">
+              <span className="mb-2 block text-sm font-semibold text-[var(--site-muted)]">
+                New sale price
+              </span>
+              <input
+                type="number"
+                min="0.01"
+                max={Math.max(0.01, saleProduct.price - 0.01)}
+                step="0.01"
+                value={salePriceDraft}
+                onChange={(event) => setSalePriceDraft(event.target.value)}
+                placeholder="Enter exact new price"
+                autoFocus
+                className="min-h-12 w-full rounded-xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-4 text-lg font-bold outline-none focus:border-red-400 focus:ring-2 focus:ring-red-100"
+              />
+            </label>
+
+            <div className="mt-6 flex flex-wrap justify-end gap-3">
+              {saleProduct.salePrice ? (
+                <button
+                  type="button"
+                  onClick={removeSalePrice}
+                  disabled={isSavingSale}
+                  className="mr-auto min-h-11 rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-bold text-red-600 disabled:opacity-60"
+                >
+                  Remove sale
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={closeSaleDialog}
+                disabled={isSavingSale}
+                className="min-h-11 rounded-xl border border-[var(--site-border)] px-4 text-sm font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={saveSalePrice}
+                disabled={isSavingSale}
+                className="min-h-11 rounded-xl bg-red-600 px-5 text-sm font-bold text-white transition hover:bg-red-700 disabled:opacity-60"
+              >
+                {isSavingSale ? "Saving..." : "Save sale"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {isFeaturedOrderDialogOpen && (
         <div className="fixed inset-0 z-[140] flex items-center justify-center bg-black/55 px-4 py-6">
           <div className="w-full max-w-3xl rounded-3xl border border-[var(--site-border)] bg-[var(--site-panel)] shadow-2xl">

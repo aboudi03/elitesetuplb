@@ -35,6 +35,23 @@ function normalizeNumber(value, defaultValue = 0) {
   return Number.isFinite(parsed) ? parsed : defaultValue;
 }
 
+function normalizeSalePrice(value) {
+  if (value === undefined) return undefined;
+  if (value === null || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function validateSalePrice(salePrice, regularPrice) {
+  if (salePrice === null || salePrice === undefined) return;
+  if (salePrice <= 0) {
+    throw new AppError("Sale price must be greater than 0", 400);
+  }
+  if (salePrice >= regularPrice) {
+    throw new AppError("Sale price must be lower than the regular price", 400);
+  }
+}
+
 function normalizeInteger(value, defaultValue = 0) {
   if (value === undefined || value === null || value === "") return defaultValue;
   const parsed = Number.parseInt(value, 10);
@@ -698,6 +715,7 @@ const createProduct = asyncHandler(async (request, response) => {
     sku,
     mainImage,
     price,
+    salePrice,
     cost,
     taxRate = 0,
     description,
@@ -724,6 +742,9 @@ const createProduct = asyncHandler(async (request, response) => {
   });
 
   const nextFeaturedValue = normalizeBoolean(featured, false);
+  const normalizedPrice = normalizeNumber(price, 0);
+  const normalizedSalePrice = normalizeSalePrice(salePrice) ?? null;
+  validateSalePrice(normalizedSalePrice, normalizedPrice);
   const product = await prisma.$transaction(async (tx) => {
     const featuredSortOrder = nextFeaturedValue
       ? await getNextFeaturedSortOrder(tx)
@@ -738,7 +759,8 @@ const createProduct = asyncHandler(async (request, response) => {
         model: normalizedModel,
         sku: normalizeText(sku),
         mainImage: normalizeText(mainImage),
-        price: normalizeNumber(price, 0),
+        price: normalizedPrice,
+        salePrice: normalizedSalePrice,
         cost: normalizeNumber(cost, 0),
         taxRate: normalizeNumber(taxRate, 0),
         rating: 5,
@@ -768,6 +790,7 @@ const updateProduct = asyncHandler(async (request, response) => {
     sku,
     mainImage,
     price,
+    salePrice,
     cost,
     taxRate,
     rating,
@@ -828,6 +851,13 @@ const updateProduct = asyncHandler(async (request, response) => {
           productIdToExclude: id,
         });
 
+  const nextPrice =
+    price === undefined ? existingProduct.price : normalizeNumber(price, existingProduct.price);
+  const parsedSalePrice = normalizeSalePrice(salePrice);
+  const nextSalePrice =
+    parsedSalePrice === undefined ? existingProduct.salePrice : parsedSalePrice;
+  validateSalePrice(nextSalePrice, nextPrice);
+
   // Updating found product
   const updatedProduct = await prisma.$transaction(async (tx) => {
     let featuredSortOrder = existingProduct.featuredSortOrder;
@@ -851,7 +881,8 @@ const updateProduct = asyncHandler(async (request, response) => {
         sku: sku === undefined ? existingProduct.sku : normalizeText(sku),
         mainImage: mainImage === undefined ? existingProduct.mainImage : normalizeText(mainImage),
         slug: nextSlug,
-        price: price === undefined ? existingProduct.price : normalizeNumber(price, existingProduct.price),
+        price: nextPrice,
+        salePrice: nextSalePrice,
         cost: cost === undefined ? existingProduct.cost : normalizeNumber(cost, existingProduct.cost),
         taxRate: taxRate === undefined ? existingProduct.taxRate : normalizeNumber(taxRate, existingProduct.taxRate),
         rating: rating === undefined ? existingProduct.rating : normalizeInteger(rating, existingProduct.rating),

@@ -17,6 +17,7 @@ import toast from "react-hot-toast";
 import { buildAnalyticsItem, trackAddToCartEvent } from "@/lib/analytics";
 import { trackCartAdd } from "@/lib/cartTracking";
 import { useSession } from "next-auth/react";
+import { getEffectiveProductPrice } from "@/lib/productPrice";
 
 const PUBLIC_ORDER_LIMIT = 10;
 
@@ -38,6 +39,7 @@ const AddToCartSingleProductBtn = ({
   const cartItemId = `${product.id}::${selectedColor || "default"}::${selectedSize || "default"}`;
   const displayTitle = product.title || product.model || "Product";
   const displayImage = product.mainImage || "/product_placeholder.webp";
+  const effectivePrice = getEffectiveProductPrice(product);
 
   const handleAddToCart = async () => {
     const existingQuantityForProduct = products
@@ -58,7 +60,7 @@ const AddToCartSingleProductBtn = ({
       cartItemId,
       id: product?.id.toString(),
       title: displayTitle,
-      price: product?.price,
+      price: effectivePrice,
       taxRate: product?.taxRate || 0,
       image: displayImage,
       selectedColor,
@@ -68,12 +70,12 @@ const AddToCartSingleProductBtn = ({
     });
     calculateTotals();
     trackAddToCartEvent({
-      value: product.price * quantityCount,
+      value: effectivePrice * quantityCount,
       item: buildAnalyticsItem({
         id: product.id,
         title: displayTitle,
         model: product.model,
-        price: product.price,
+        price: effectivePrice,
         manufacturer: product.manufacturer,
         quantity: quantityCount,
         selectedColor,

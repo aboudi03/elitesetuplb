@@ -21,6 +21,7 @@ import {
 } from "@/lib/seo";
 import { FaStar } from "react-icons/fa6";
 import Heading from "@/components/Heading";
+import { getEffectiveProductPrice, getValidSalePrice } from "@/lib/productPrice";
 
 interface ImageItem {
   imageID: string;
@@ -188,11 +189,17 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
     mainImage: product.mainImage || null,
     sku: product.sku || "",
     price: Number(product.price || 0),
+    salePrice:
+      product.salePrice === null || product.salePrice === undefined
+        ? null
+        : Number(product.salePrice),
     inStock: Number(product.inStock || 0),
     category:
       product.category && typeof product.category === "object" ? product.category : null,
   };
   const productName = normalizedProduct.title || normalizedProduct.model || "Product";
+  const salePrice = getValidSalePrice(normalizedProduct);
+  const effectivePrice = getEffectiveProductPrice(normalizedProduct);
   const productDescriptionHtml = sanitizeHtml(normalizedProduct.description || "");
 
   // sending API request for more than 1 product image if it exists
@@ -226,7 +233,7 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
       "@type": "Offer",
       url: absoluteUrl(`/product/${normalizedProduct.slug}`),
       priceCurrency: "USD",
-      price: normalizedProduct.price,
+      price: effectivePrice,
       availability:
         normalizedProduct.inStock > 0
           ? "https://schema.org/InStock"
@@ -263,9 +270,25 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
                 <h1 className="max-w-3xl break-words text-[1.9rem] font-black leading-[1.14] text-[var(--site-text)] sm:text-4xl xl:text-[2.7rem]">
                   {sanitize(productName)}
                 </h1>
-                <p className="shrink-0 text-[1.9rem] font-black text-[var(--site-accent)] sm:text-4xl">
-                  ${normalizedProduct.price.toFixed(2)}
-                </p>
+                {salePrice !== null ? (
+                  <div className="shrink-0">
+                    <div className="flex items-center justify-end gap-2">
+                      <span className="text-lg font-bold text-red-600 line-through decoration-2 sm:text-xl">
+                        ${normalizedProduct.price.toFixed(2)}
+                      </span>
+                      <span className="rounded-full bg-red-600 px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-white">
+                        Sale
+                      </span>
+                    </div>
+                    <p className="text-right text-[1.9rem] font-black text-[var(--site-accent)] sm:text-4xl">
+                      ${salePrice.toFixed(2)}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="shrink-0 text-[1.9rem] font-black text-[var(--site-accent)] sm:text-4xl">
+                    ${normalizedProduct.price.toFixed(2)}
+                  </p>
+                )}
               </div>
 
               <div className="flex flex-col gap-2 text-sm font-semibold text-[var(--site-muted)] sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
