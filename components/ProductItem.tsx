@@ -102,6 +102,7 @@ const ProductItem = ({
     addToCart({
       cartItemId,
       id: product.id.toString(),
+      sku: product.sku || undefined,
       title: displayTitle,
       price: effectivePrice,
       taxRate: product.taxRate || 0,
@@ -116,6 +117,7 @@ const ProductItem = ({
         id: product.id,
         title: displayTitle,
         model: product.model,
+        sku: product.sku,
         price: effectivePrice,
         manufacturer: product.manufacturer,
         categoryName: product.category?.name,

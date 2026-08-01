@@ -13,7 +13,7 @@ export type AnalyticsItem = {
 
 type ProductAnalyticsInput = Pick<
   Product,
-  "id" | "title" | "model" | "price" | "manufacturer"
+  "id" | "title" | "model" | "sku" | "price" | "manufacturer"
 > & {
   quantity?: number;
   selectedColor?: string;
@@ -142,6 +142,7 @@ export const buildAnalyticsItem = ({
   id,
   title,
   model,
+  sku,
   price,
   manufacturer,
   quantity = 1,
@@ -152,7 +153,7 @@ export const buildAnalyticsItem = ({
   const variantParts = [selectedColor, selectedSize].filter(Boolean);
 
   return {
-    item_id: id,
+    item_id: sku?.trim() || id,
     item_name: title || model || "Product",
     item_brand: manufacturer || undefined,
     item_category: categoryName || undefined,
@@ -169,6 +170,7 @@ export const buildCartAnalyticsItems = (products: ProductInCart[]) =>
       id: product.id,
       title: product.title,
       model: product.title,
+      sku: product.sku,
       price: product.price,
       quantity: product.amount,
       selectedColor: product.selectedColor,

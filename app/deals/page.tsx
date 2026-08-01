@@ -115,6 +115,7 @@ const DealsPage = () => {
       addToCart({
         cartItemId: `deal:${deal.id}:${product.id}`,
         id: product.id,
+        sku: product.sku || undefined,
         title: `${deal.title} - ${getProductTitle(product)}`,
         price: allocatedPrices[index],
         taxRate: product.taxRate || 0,
@@ -132,6 +133,7 @@ const DealsPage = () => {
           id: product.id,
           title: `${deal.title} - ${getProductTitle(product)}`,
           model: product.model,
+          sku: product.sku,
           price: allocatedPrices[index],
           manufacturer: product.manufacturer,
           categoryName: product.category?.name,

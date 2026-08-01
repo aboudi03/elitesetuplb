@@ -4,6 +4,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 export type ProductInCart = {
   cartItemId: string;
   id: string;
+  sku?: string;
   title: string;
   price: number;
   taxRate?: number;
@@ -51,6 +52,7 @@ export const useProductStore = create<State & Actions>()(
             state.products.map((product) => {
               if (product.cartItemId === cartItem.cartItemId) {
                 product.amount += newProduct.amount;
+                product.sku = product.sku || newProduct.sku;
               }
             });
           }

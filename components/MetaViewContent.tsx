@@ -7,7 +7,7 @@ import {
 } from "@/lib/analytics";
 
 type MetaViewContentProps = {
-  product: Pick<Product, "id" | "title" | "model" | "price" | "manufacturer"> & {
+  product: Pick<Product, "id" | "title" | "model" | "sku" | "price" | "manufacturer"> & {
     categoryName?: string | null;
   };
 };

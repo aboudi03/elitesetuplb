@@ -59,6 +59,7 @@ const AddToCartSingleProductBtn = ({
     addToCart({
       cartItemId,
       id: product?.id.toString(),
+      sku: product.sku || undefined,
       title: displayTitle,
       price: effectivePrice,
       taxRate: product?.taxRate || 0,
@@ -75,6 +76,7 @@ const AddToCartSingleProductBtn = ({
         id: product.id,
         title: displayTitle,
         model: product.model,
+        sku: product.sku,
         price: effectivePrice,
         manufacturer: product.manufacturer,
         quantity: quantityCount,

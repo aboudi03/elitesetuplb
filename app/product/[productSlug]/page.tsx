@@ -250,6 +250,7 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
           id: normalizedProduct.id,
           title: normalizedProduct.title,
           model: normalizedProduct.model,
+          sku: normalizedProduct.sku,
           price: effectivePrice,
           manufacturer: normalizedProduct.manufacturer,
           categoryName: normalizedProduct.category?.name,
