@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { trackCartAdd } from "@/lib/cartTracking";
 import { useSession } from "next-auth/react";
 import { getEffectiveProductPrice } from "@/lib/productPrice";
+import { buildAnalyticsItem, trackAddToCartEvent } from "@/lib/analytics";
 
 const PUBLIC_ORDER_LIMIT = 10;
 
@@ -68,6 +69,20 @@ const BuyNowSingleProductBtn = ({
       stock: product?.inStock,
     });
     calculateTotals();
+    trackAddToCartEvent({
+      value: effectivePrice * quantityCount,
+      item: buildAnalyticsItem({
+        id: product.id,
+        title: displayTitle,
+        model: product.model,
+        price: effectivePrice,
+        manufacturer: product.manufacturer,
+        quantity: quantityCount,
+        selectedColor,
+        selectedSize,
+        categoryName: product.category?.name,
+      }),
+    });
     await trackCartAdd({
       productId: product.id,
       productTitle: displayTitle,

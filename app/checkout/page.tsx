@@ -8,7 +8,12 @@ import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import apiClient from "@/lib/api";
-import { buildCartAnalyticsItems, trackBeginCheckoutEvent, trackPurchaseEvent } from "@/lib/analytics";
+import {
+  buildCartAnalyticsItems,
+  sendMetaPurchaseServerEvent,
+  trackBeginCheckoutEvent,
+  trackPurchaseEvent,
+} from "@/lib/analytics";
 import { calculateCartGrandTotal, calculateCartTax } from "@/lib/cartPricing";
 import { pcBuilderWhatsAppNumber } from "@/lib/pc-builder";
 
@@ -409,12 +414,20 @@ const CheckoutPage = () => {
         total: orderGrandTotal,
       };
 
-      trackPurchaseEvent({
+      const analyticsItems = buildCartAnalyticsItems(products);
+      const metaEventId = trackPurchaseEvent({
         transactionId: orderId,
         value: total,
         tax: orderTaxTotal,
         shipping: deliveryFee,
-        items: buildCartAnalyticsItems(products),
+        metaValue: orderGrandTotal,
+        items: analyticsItems,
+      });
+      void sendMetaPurchaseServerEvent({
+        orderId,
+        eventId: metaEventId,
+        value: orderGrandTotal,
+        items: analyticsItems,
       });
 
       hasCompletedCheckout.current = true;

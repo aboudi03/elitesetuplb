@@ -22,6 +22,7 @@ import { sanitize } from "@/lib/sanitize";
 import type { CatalogViewMode } from "@/app/_zustand/catalogViewStore";
 import { useProductStore } from "@/app/_zustand/store";
 import { trackCartAdd } from "@/lib/cartTracking";
+import { buildAnalyticsItem, trackAddToCartEvent } from "@/lib/analytics";
 import ProductBannerOverlay from "./ProductBannerOverlay";
 import { getEffectiveProductPrice, getValidSalePrice } from "@/lib/productPrice";
 
@@ -109,6 +110,17 @@ const ProductItem = ({
       stock: product.inStock,
     });
     calculateTotals();
+    trackAddToCartEvent({
+      value: effectivePrice,
+      item: buildAnalyticsItem({
+        id: product.id,
+        title: displayTitle,
+        model: product.model,
+        price: effectivePrice,
+        manufacturer: product.manufacturer,
+        categoryName: product.category?.name,
+      }),
+    });
     await trackCartAdd({
       productId: product.id,
       productTitle: displayTitle,

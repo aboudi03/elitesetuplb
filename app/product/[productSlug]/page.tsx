@@ -22,6 +22,7 @@ import {
 import { FaStar } from "react-icons/fa6";
 import Heading from "@/components/Heading";
 import { getEffectiveProductPrice, getValidSalePrice } from "@/lib/productPrice";
+import MetaViewContent from "@/components/MetaViewContent";
 
 interface ImageItem {
   imageID: string;
@@ -244,6 +245,16 @@ const SingleProductPage = async ({ params }: SingleProductPageProps) => {
 
   return (
     <div className="bg-[var(--site-bg)] text-[var(--site-text)]">
+      <MetaViewContent
+        product={{
+          id: normalizedProduct.id,
+          title: normalizedProduct.title,
+          model: normalizedProduct.model,
+          price: effectivePrice,
+          manufacturer: normalizedProduct.manufacturer,
+          categoryName: normalizedProduct.category?.name,
+        }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}

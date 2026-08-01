@@ -3,6 +3,10 @@
 import { useProductStore } from "@/app/_zustand/store";
 import apiClient from "@/lib/api";
 import { sanitize } from "@/lib/sanitize";
+import {
+  buildAnalyticsItem,
+  trackAddToCartItemsEvent,
+} from "@/lib/analytics";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
@@ -121,6 +125,19 @@ const DealsPage = () => {
     });
 
     calculateTotals();
+    trackAddToCartItemsEvent({
+      value: deal.specialPrice,
+      items: products.map((product, index) =>
+        buildAnalyticsItem({
+          id: product.id,
+          title: `${deal.title} - ${getProductTitle(product)}`,
+          model: product.model,
+          price: allocatedPrices[index],
+          manufacturer: product.manufacturer,
+          categoryName: product.category?.name,
+        })
+      ),
+    });
     toast.success("Deal added to cart");
   };
 

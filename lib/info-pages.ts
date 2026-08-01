@@ -186,7 +186,7 @@ export const infoPages: InfoPage[] = [
     slug: "privacy-policy",
     title: "Privacy Policy",
     description: "How Elite Setup handles customer information used for accounts, orders, and support.",
-    updatedAt: "June 6, 2026",
+    updatedAt: "August 1, 2026",
     sections: [
       {
         heading: "Information We Collect",
@@ -194,6 +194,7 @@ export const infoPages: InfoPage[] = [
           "Account details such as email address and password-protected login information.",
           "Order details such as name, phone number, address, products, and notes.",
           "Support messages sent by email, WhatsApp, or website forms.",
+          "Website activity such as page views, product views, cart actions, and purchases collected through analytics and advertising tools.",
         ],
       },
       {
@@ -202,12 +203,18 @@ export const infoPages: InfoPage[] = [
           "To process orders and contact customers about their purchases.",
           "To provide customer support and answer product questions.",
           "To improve website reliability, catalog quality, and service operations.",
+          "To measure advertising performance and show more relevant ads where permitted.",
         ],
       },
       {
         heading: "Data Sharing",
         body:
-          "We do not sell customer personal information. We may share only the information needed with service providers involved in order handling, delivery, hosting, payments, security, or customer support.",
+          "We do not sell customer personal information. We may share only the information needed with service providers involved in order handling, delivery, hosting, payments, security, customer support, analytics, or advertising. Advertising conversion data may be sent to Meta and Google; contact details used for server-side matching are normalized and securely hashed before transmission.",
+      },
+      {
+        heading: "Cookies and Advertising Measurement",
+        body:
+          "We and our analytics or advertising providers may use cookies and similar technologies to measure visits, product interactions, cart activity, and completed orders. You can control cookies through your browser and through any consent choices presented on the website.",
       },
       {
         heading: "Customer Requests",

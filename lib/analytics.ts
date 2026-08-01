@@ -1,6 +1,6 @@
 import type { ProductInCart } from "@/app/_zustand/store";
 
-type AnalyticsItem = {
+export type AnalyticsItem = {
   item_id: string;
   item_name: string;
   item_brand?: string;
@@ -31,6 +31,7 @@ type PurchaseAnalyticsPayload = CheckoutAnalyticsPayload & {
   transactionId: string;
   tax?: number;
   shipping?: number;
+  metaValue?: number;
 };
 
 export const GOOGLE_ANALYTICS_ID =
@@ -38,6 +39,8 @@ export const GOOGLE_ANALYTICS_ID =
 export const GOOGLE_ADS_ID =
   process.env.NEXT_PUBLIC_GOOGLE_ADS_ID?.trim() || "";
 export const googleTagId = GOOGLE_ANALYTICS_ID || GOOGLE_ADS_ID;
+export const META_PIXEL_ID =
+  process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim() || "";
 
 const GOOGLE_ADS_ADD_TO_CART_LABEL =
   process.env.NEXT_PUBLIC_GOOGLE_ADS_ADD_TO_CART_LABEL?.trim() || "";
@@ -50,6 +53,50 @@ const DEFAULT_CURRENCY =
   process.env.NEXT_PUBLIC_STORE_CURRENCY?.trim().toUpperCase() || "USD";
 
 const canTrack = () => typeof window !== "undefined" && typeof window.gtag === "function";
+const canTrackMeta = () =>
+  typeof window !== "undefined" && typeof window.fbq === "function";
+
+const toMetaContents = (items: AnalyticsItem[]) =>
+  items.map((item) => ({
+    id: item.item_id,
+    quantity: item.quantity,
+    item_price: item.price,
+  }));
+
+const sendMetaEvent = (
+  eventName: "ViewContent" | "AddToCart" | "InitiateCheckout" | "Purchase",
+  {
+    currency,
+    value,
+    items,
+  }: {
+    currency: string;
+    value: number;
+    items: AnalyticsItem[];
+  },
+  eventId?: string
+) => {
+  if (!META_PIXEL_ID || !canTrackMeta()) {
+    return;
+  }
+
+  const firstItem = items[0];
+  const parameters = {
+    content_ids: items.map((item) => item.item_id),
+    content_name: items.length === 1 ? firstItem?.item_name : undefined,
+    content_type: "product",
+    contents: toMetaContents(items),
+    currency,
+    value,
+  };
+
+  if (eventId) {
+    window.fbq!("track", eventName, parameters, { eventID: eventId });
+    return;
+  }
+
+  window.fbq!("track", eventName, parameters);
+};
 
 const sendGoogleAdsConversion = ({
   label,
@@ -137,10 +184,22 @@ export const trackAddToCartEvent = ({
   value: number;
   item: AnalyticsItem;
 }) => {
-  sendEcommerceEvent("add_to_cart", {
+  trackAddToCartItemsEvent({
     currency,
     value,
     items: [item],
+  });
+};
+
+export const trackAddToCartItemsEvent = ({
+  currency = DEFAULT_CURRENCY,
+  value,
+  items,
+}: CheckoutAnalyticsPayload) => {
+  sendEcommerceEvent("add_to_cart", {
+    currency,
+    value,
+    items,
   });
 
   sendGoogleAdsConversion({
@@ -148,6 +207,8 @@ export const trackAddToCartEvent = ({
     value,
     currency,
   });
+
+  sendMetaEvent("AddToCart", { currency, value, items });
 };
 
 export const trackBeginCheckoutEvent = ({
@@ -166,6 +227,8 @@ export const trackBeginCheckoutEvent = ({
     value,
     currency,
   });
+
+  sendMetaEvent("InitiateCheckout", { currency, value, items });
 };
 
 export const trackPurchaseEvent = ({
@@ -174,8 +237,11 @@ export const trackPurchaseEvent = ({
   value,
   tax,
   shipping,
+  metaValue,
   items,
 }: PurchaseAnalyticsPayload) => {
+  const metaEventId = `purchase_${transactionId}`;
+
   sendEcommerceEvent("purchase", {
     transaction_id: transactionId,
     value,
@@ -191,4 +257,85 @@ export const trackPurchaseEvent = ({
     currency,
     transactionId,
   });
+
+  sendMetaEvent(
+    "Purchase",
+    { currency, value: metaValue ?? value, items },
+    metaEventId
+  );
+
+  return metaEventId;
+};
+
+export const trackViewContentEvent = ({
+  currency = DEFAULT_CURRENCY,
+  value,
+  item,
+}: {
+  currency?: string;
+  value: number;
+  item: AnalyticsItem;
+}) => {
+  sendMetaEvent("ViewContent", {
+    currency,
+    value,
+    items: [item],
+  });
+};
+
+const getCookie = (name: string) => {
+  if (typeof document === "undefined") {
+    return undefined;
+  }
+
+  const prefix = `${name}=`;
+  const cookie = document.cookie
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(prefix));
+
+  return cookie ? decodeURIComponent(cookie.slice(prefix.length)) : undefined;
+};
+
+export const sendMetaPurchaseServerEvent = async ({
+  orderId,
+  eventId,
+  currency = DEFAULT_CURRENCY,
+  value,
+  items,
+}: {
+  orderId: string;
+  eventId: string;
+  currency?: string;
+  value: number;
+  items: AnalyticsItem[];
+}) => {
+  if (!META_PIXEL_ID || typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/meta-conversions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        orderId,
+        eventId,
+        currency,
+        value,
+        contents: toMetaContents(items),
+        fbp: getCookie("_fbp"),
+        fbc: getCookie("_fbc"),
+        eventSourceUrl: window.location.href,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Meta Conversions API event was not accepted", response.status);
+    }
+  } catch (error) {
+    console.error("Failed to send Meta Conversions API event", error);
+  }
 };
