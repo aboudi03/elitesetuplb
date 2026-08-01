@@ -422,13 +422,12 @@ const CheckoutPage = () => {
         value: total,
         tax: orderTaxTotal,
         shipping: deliveryFee,
-        metaValue: orderGrandTotal,
         items: analyticsItems,
       });
       void sendMetaPurchaseServerEvent({
         orderId,
         eventId: metaEventId,
-        value: orderGrandTotal,
+        value: total,
         items: analyticsItems,
       });
 

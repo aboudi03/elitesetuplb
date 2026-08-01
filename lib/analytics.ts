@@ -31,7 +31,6 @@ type PurchaseAnalyticsPayload = CheckoutAnalyticsPayload & {
   transactionId: string;
   tax?: number;
   shipping?: number;
-  metaValue?: number;
 };
 
 export const GOOGLE_ANALYTICS_ID =
@@ -76,7 +75,7 @@ const sendMetaEvent = (
   },
   eventId?: string
 ) => {
-  if (!META_PIXEL_ID || !canTrackMeta()) {
+  if (!META_PIXEL_ID || typeof window === "undefined") {
     return;
   }
 
@@ -90,12 +89,25 @@ const sendMetaEvent = (
     value,
   };
 
-  if (eventId) {
-    window.fbq!("track", eventName, parameters, { eventID: eventId });
+  const dispatchMetaEvent = () => {
+    if (!canTrackMeta()) {
+      return;
+    }
+
+    if (eventId) {
+      window.fbq!("track", eventName, parameters, { eventID: eventId });
+      return;
+    }
+
+    window.fbq!("track", eventName, parameters);
+  };
+
+  if (canTrackMeta()) {
+    dispatchMetaEvent();
     return;
   }
 
-  window.fbq!("track", eventName, parameters);
+  window.addEventListener("meta-pixel-ready", dispatchMetaEvent, { once: true });
 };
 
 const sendGoogleAdsConversion = ({
@@ -237,7 +249,6 @@ export const trackPurchaseEvent = ({
   value,
   tax,
   shipping,
-  metaValue,
   items,
 }: PurchaseAnalyticsPayload) => {
   const metaEventId = `purchase_${transactionId}`;
@@ -258,11 +269,7 @@ export const trackPurchaseEvent = ({
     transactionId,
   });
 
-  sendMetaEvent(
-    "Purchase",
-    { currency, value: metaValue ?? value, items },
-    metaEventId
-  );
+  sendMetaEvent("Purchase", { currency, value, items }, metaEventId);
 
   return metaEventId;
 };
