@@ -79,6 +79,11 @@ const getApiErrorMessage = (errorData: any, fallback: string) => {
   return fallback;
 };
 
+const formatAttributionChannel = (source?: string | null, medium?: string | null) => {
+  if (!source) return "Direct / unknown";
+  return medium && medium !== "none" ? `${source} / ${medium}` : source;
+};
+
 const AdminSingleOrder = () => {
   const [orderProducts, setOrderProducts] = useState<OrderProduct[]>();
   const [statusOptions, setStatusOptions] = useState<OrderStatusOption[]>([]);
@@ -331,6 +336,118 @@ const AdminSingleOrder = () => {
                 value={order?.orderNotice || ""}
                 onChange={(e) => setOrder({ ...order, orderNotice: e.target.value })}
               />
+            </section>
+
+            <section className={sectionClassName}>
+              <div className="mb-6">
+                <h2 className="text-2xl font-semibold">Acquisition and campaign</h2>
+                <p className="mt-2 text-sm text-[var(--site-muted)]">
+                  The most recent campaign touch captured before this order was placed.
+                </p>
+              </div>
+
+              <dl className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-4">
+                  <dt className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--site-muted)]">
+                    Source / medium
+                  </dt>
+                  <dd className="mt-2 break-words font-semibold text-[var(--site-text)]">
+                    {formatAttributionChannel(
+                      order.attributionSource,
+                      order.attributionMedium
+                    )}
+                  </dd>
+                </div>
+
+                <div className="rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-4">
+                  <dt className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--site-muted)]">
+                    Campaign
+                  </dt>
+                  <dd className="mt-2 break-words font-semibold text-[var(--site-text)]">
+                    {order.attributionCampaign || "-"}
+                  </dd>
+                  {order.attributionCampaignId ? (
+                    <dd className="mt-1 break-all font-mono text-xs text-[var(--site-muted)]">
+                      ID: {order.attributionCampaignId}
+                    </dd>
+                  ) : null}
+                </div>
+
+                <div className="rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-4">
+                  <dt className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--site-muted)]">
+                    Ad set
+                  </dt>
+                  <dd className="mt-2 break-words font-semibold text-[var(--site-text)]">
+                    {order.attributionAdset || "-"}
+                  </dd>
+                  {order.attributionAdsetId ? (
+                    <dd className="mt-1 break-all font-mono text-xs text-[var(--site-muted)]">
+                      ID: {order.attributionAdsetId}
+                    </dd>
+                  ) : null}
+                </div>
+
+                <div className="rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-4">
+                  <dt className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--site-muted)]">
+                    Ad
+                  </dt>
+                  <dd className="mt-2 break-words font-semibold text-[var(--site-text)]">
+                    {order.attributionAd || "-"}
+                  </dd>
+                  {order.attributionAdId ? (
+                    <dd className="mt-1 break-all font-mono text-xs text-[var(--site-muted)]">
+                      ID: {order.attributionAdId}
+                    </dd>
+                  ) : null}
+                </div>
+              </dl>
+
+              <div className="mt-4 space-y-3 rounded-2xl border border-[var(--site-border)] bg-[var(--site-panel-soft)] p-4 text-sm">
+                <p className="break-all">
+                  <span className="font-semibold text-[var(--site-text)]">Meta click ID:</span>{" "}
+                  <span className="text-[var(--site-muted)]">
+                    {order.attributionFbclid || "-"}
+                  </span>
+                </p>
+                <p className="break-all">
+                  <span className="font-semibold text-[var(--site-text)]">Landing page:</span>{" "}
+                  {order.attributionLandingPage ? (
+                    <Link
+                      href={order.attributionLandingPage}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[var(--site-accent)] hover:underline"
+                    >
+                      {order.attributionLandingPage}
+                    </Link>
+                  ) : (
+                    <span className="text-[var(--site-muted)]">-</span>
+                  )}
+                </p>
+                <p className="break-all">
+                  <span className="font-semibold text-[var(--site-text)]">Referrer:</span>{" "}
+                  {order.attributionReferrer ? (
+                    <a
+                      href={order.attributionReferrer}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[var(--site-accent)] hover:underline"
+                    >
+                      {order.attributionReferrer}
+                    </a>
+                  ) : (
+                    <span className="text-[var(--site-muted)]">Direct / unavailable</span>
+                  )}
+                </p>
+                <p>
+                  <span className="font-semibold text-[var(--site-text)]">Captured:</span>{" "}
+                  <span className="text-[var(--site-muted)]">
+                    {order.attributionCapturedAt
+                      ? new Date(order.attributionCapturedAt).toLocaleString()
+                      : "-"}
+                  </span>
+                </p>
+              </div>
             </section>
           </div>
 

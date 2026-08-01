@@ -104,6 +104,18 @@ interface Order {
   total: number;
   failedHistoryCount?: number;
   cancelledHistoryCount?: number;
+  attributionSource?: string | null;
+  attributionMedium?: string | null;
+  attributionCampaign?: string | null;
+  attributionCampaignId?: string | null;
+  attributionAdset?: string | null;
+  attributionAdsetId?: string | null;
+  attributionAd?: string | null;
+  attributionAdId?: string | null;
+  attributionFbclid?: string | null;
+  attributionLandingPage?: string | null;
+  attributionReferrer?: string | null;
+  attributionCapturedAt?: string | null;
 }
 
 interface FeaturedBrand {

@@ -135,29 +135,42 @@ model User {
 }
 
 model Customer_order {
-  id             String                   @id @default(uuid())
-  orderNumber    Int?                     @unique
-  name           String
-  lastname       String
-  phone          String
-  email          String
-  company        String
-  adress         String
-  apartment      String
-  postalCode     String
-  dateTime       DateTime?                @default(now())
-  status         String
-  city           String
-  country        String
-  deliveryZoneId String?
-  deliveryZone   DeliveryZone?            @relation(fields: [deliveryZoneId], references: [id], onDelete: SetNull)
-  deliveryFee    Float                    @default(5)
-  grandTotal     Float?
-  orderNotice    String?                   @db.Text
-  total          Float
-  products       customer_order_product[]
+  id                     String                   @id @default(uuid())
+  orderNumber            Int?                     @unique
+  name                   String
+  lastname               String
+  phone                  String
+  email                  String
+  company                String
+  adress                 String
+  apartment              String
+  postalCode             String
+  dateTime               DateTime?                @default(now())
+  status                 String
+  city                   String
+  country                String
+  deliveryZoneId         String?
+  deliveryZone           DeliveryZone?            @relation(fields: [deliveryZoneId], references: [id], onDelete: SetNull)
+  deliveryFee            Float                    @default(5)
+  grandTotal             Float?
+  orderNotice            String?                  @db.Text
+  total                  Float
+  products               customer_order_product[]
+  attributionSource      String?
+  attributionMedium      String?
+  attributionCampaign    String?
+  attributionCampaignId  String?
+  attributionAdset       String?
+  attributionAdsetId     String?
+  attributionAd          String?
+  attributionAdId        String?
+  attributionFbclid      String?
+  attributionLandingPage String?                  @db.Text
+  attributionReferrer    String?                  @db.Text
+  attributionCapturedAt  DateTime?
 
   @@index([deliveryZoneId])
+  @@index([attributionCampaignId])
 }
 
 model DeliveryZone {

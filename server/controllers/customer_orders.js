@@ -46,6 +46,68 @@ function parseOptionalDate(value, { endOfDay = false } = {}) {
   return Number.isNaN(dateValue.getTime()) ? undefined : dateValue;
 }
 
+function normalizeAttributionText(value, maxLength = 191) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalizedValue = value
+    .replace(/[\u0000-\u001F\u007F]/g, "")
+    .trim();
+
+  return normalizedValue
+    ? normalizedValue.substring(0, maxLength)
+    : null;
+}
+
+function normalizeLandingPage(value) {
+  const normalizedValue = normalizeAttributionText(value, 2048);
+  return normalizedValue &&
+    normalizedValue.startsWith("/") &&
+    !normalizedValue.startsWith("//")
+    ? normalizedValue
+    : null;
+}
+
+function normalizeReferrer(value) {
+  const normalizedValue = normalizeAttributionText(value, 2048);
+  if (!normalizedValue) {
+    return null;
+  }
+
+  try {
+    const url = new URL(normalizedValue);
+    return url.protocol === "http:" || url.protocol === "https:"
+      ? normalizedValue
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeOrderAttribution(attribution) {
+  if (!attribution || typeof attribution !== "object" || Array.isArray(attribution)) {
+    return {};
+  }
+
+  const capturedAt = new Date(attribution.capturedAt);
+
+  return {
+    attributionSource: normalizeAttributionText(attribution.source),
+    attributionMedium: normalizeAttributionText(attribution.medium),
+    attributionCampaign: normalizeAttributionText(attribution.campaign),
+    attributionCampaignId: normalizeAttributionText(attribution.campaignId),
+    attributionAdset: normalizeAttributionText(attribution.adset),
+    attributionAdsetId: normalizeAttributionText(attribution.adsetId),
+    attributionAd: normalizeAttributionText(attribution.ad),
+    attributionAdId: normalizeAttributionText(attribution.adId),
+    attributionFbclid: normalizeAttributionText(attribution.fbclid),
+    attributionLandingPage: normalizeLandingPage(attribution.landingPage),
+    attributionReferrer: normalizeReferrer(attribution.referrer),
+    attributionCapturedAt: Number.isNaN(capturedAt.getTime()) ? null : capturedAt,
+  };
+}
+
 async function resolveDeliveryZone(deliveryZoneId) {
   await ensureDefaultDeliveryZones(prisma);
 
@@ -237,6 +299,7 @@ async function createCustomerOrder(request, response) {
     const deliveryZone = await resolveDeliveryZone(request.body.deliveryZoneId);
     const deliveryFee = Number(deliveryZone?.fee || 5);
     const grandTotal = Number(validatedData.total || 0) + deliveryFee;
+    const attribution = normalizeOrderAttribution(request.body.attribution);
 
     // Create the order with validated data
     const corder = await prisma.$transaction(async (tx) => {
@@ -274,7 +337,8 @@ async function createCustomerOrder(request, response) {
           grandTotal,
           orderNotice: validatedData.orderNotice,
           total: validatedData.total,
-          dateTime: new Date()
+          dateTime: new Date(),
+          ...attribution,
         },
       });
 

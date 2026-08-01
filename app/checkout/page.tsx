@@ -16,6 +16,7 @@ import {
 } from "@/lib/analytics";
 import { calculateCartGrandTotal, calculateCartTax } from "@/lib/cartPricing";
 import { pcBuilderWhatsAppNumber } from "@/lib/pc-builder";
+import { getOrderAttribution } from "@/lib/orderAttribution";
 
 const inputClassName =
   "block w-full rounded-md border border-[var(--site-border)] bg-[var(--site-panel-soft)] px-3 py-2 text-[var(--site-text)] shadow-sm outline-none focus:border-[var(--site-accent)] focus:ring-2 focus:ring-[var(--site-accent)] sm:text-sm disabled:cursor-not-allowed disabled:opacity-60";
@@ -311,7 +312,8 @@ const CheckoutPage = () => {
         city: selectedDeliveryZone?.city || checkoutForm.city.trim(),
         deliveryZoneId: checkoutForm.deliveryZoneId,
         orderNotice: checkoutForm.orderNotice.trim(),
-        userId: userId // Add user ID for notifications
+        userId: userId, // Add user ID for notifications
+        attribution: getOrderAttribution(),
       };
 
       console.log("📋 Order data being sent:", orderData);

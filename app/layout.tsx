@@ -11,6 +11,7 @@ import Footer from "@/components/Footer";
 import Providers from "@/Providers";
 import GoogleTag from "@/components/GoogleTag";
 import MetaPixel from "@/components/MetaPixel";
+import OrderAttributionTracker from "@/components/OrderAttributionTracker";
 import { absoluteUrl, STORE_NAME } from "@/lib/seo";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -74,6 +75,7 @@ export default async function RootLayout({
       <body className={`${inter.className} bg-[var(--site-bg)] text-[var(--site-text)]`}>
         <GoogleTag />
         <MetaPixel />
+        <OrderAttributionTracker />
         <SessionProvider session={session}>
           <Header />
           <Providers>
