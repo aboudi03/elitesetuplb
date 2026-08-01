@@ -81,6 +81,7 @@ const sendMetaEvent = (
 
   const firstItem = items[0];
   const parameters = {
+    content_category: items.length === 1 ? firstItem?.item_category : undefined,
     content_ids: items.map((item) => item.item_id),
     content_name: items.length === 1 ? firstItem?.item_name : undefined,
     content_type: "product",
@@ -108,6 +109,33 @@ const sendMetaEvent = (
   }
 
   window.addEventListener("meta-pixel-ready", dispatchMetaEvent, { once: true });
+};
+
+export const trackSearchEvent = (searchString: string) => {
+  const normalizedSearchString = searchString.trim();
+
+  if (!META_PIXEL_ID || !normalizedSearchString || typeof window === "undefined") {
+    return;
+  }
+
+  const dispatchMetaSearchEvent = () => {
+    if (!canTrackMeta()) {
+      return;
+    }
+
+    window.fbq!("track", "Search", {
+      search_string: normalizedSearchString,
+    });
+  };
+
+  if (canTrackMeta()) {
+    dispatchMetaSearchEvent();
+    return;
+  }
+
+  window.addEventListener("meta-pixel-ready", dispatchMetaSearchEvent, {
+    once: true,
+  });
 };
 
 const sendGoogleAdsConversion = ({

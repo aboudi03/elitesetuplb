@@ -3,6 +3,7 @@ import apiClient from "@/lib/api";
 import type { Metadata } from "next";
 import React from "react";
 import { sanitize } from "@/lib/sanitize";
+import MetaSearchEvent from "@/components/MetaSearchEvent";
 
 interface Props {
   searchParams: { search: string };
@@ -40,6 +41,7 @@ const SearchPage = async ({ searchParams }: Props) => {
 
   return (
     <div>
+      {sp?.search && <MetaSearchEvent searchString={sp.search} />}
       <SectionTitle title="Search" path="Home | Search" />
       <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
         {sp?.search && (
