@@ -7,7 +7,7 @@
     "build": "echo Backend build step not required",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app.js",
-    "db:generate": "prisma generate --schema ../prisma/schema.prisma",
+    "db:generate": "prisma generate --schema ../prisma/schema.prisma --generator serverClient",
     "logs": "node view-logs.js",
     "logs:access": "node view-logs.js access",
     "logs:error": "node view-logs.js error",

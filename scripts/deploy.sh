@@ -15,7 +15,7 @@ echo "Installing backend dependencies..."
 npm --prefix server ci
 
 echo "Generating root Prisma client..."
-npx prisma generate
+npx prisma generate --generator client
 
 echo "Generating backend Prisma client..."
 npm --prefix server run db:generate

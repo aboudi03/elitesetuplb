@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "node index.js",
-    "dev:frontend": "prisma generate && next dev --turbo",
+    "dev:frontend": "prisma generate --generator client && next dev --turbo",
     "dev:backend": "npm --prefix server start",
-    "build": "prisma generate && cross-env NODE_ENV=production next build",
+    "build": "prisma generate --generator client && cross-env NODE_ENV=production next build",
     "start": "next start",
     "pm2:start": "pm2 start ecosystem.config.js",
     "pm2:restart": "pm2 restart ecosystem.config.js --update-env",
@@ -15,7 +15,7 @@
     "deploy:server": "bash scripts/deploy.sh",
     "images:convert-public": "node scripts/convert-public-images-to-webp.js",
     "lint": "next lint",
-    "db:generate": "prisma generate && npm --prefix server run db:generate",
+    "db:generate": "prisma generate --generator client && npm --prefix server run db:generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "seed:gaming": "node server/scripts/seed-gaming-store.js"
