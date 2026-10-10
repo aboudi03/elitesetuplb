@@ -34,5 +34,5 @@ export const fallbackNavbarCategories: NavbarCategoryItem[] = [
       { id: "controllers", label: "Controllers", href: "/shop/controllers" },
     ],
   },
-  { id: "deals", label: "Deals", href: "/shop" },
+  { id: "deals", label: "Deals", href: "/deals" },
 ];

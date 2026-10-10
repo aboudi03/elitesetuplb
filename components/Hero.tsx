@@ -32,40 +32,43 @@ type MobileDropdownPosition = {
 
 const fallbackSlides: HeroSlide[] = [
   {
-    eyebrow: "Audio drop",
-    title: "HyperX Cloud III",
-    subtitle: "Comfortable wired headset with clear voice, deep game audio, and a clean black setup look.",
-    image: "/hyperxbackg.webp",
-    productImage: "https://hyperx.com/cdn/shop/files/hyperx_cloud_iii_black_66x0048_main_1_c352faf1-cd4b-4be0-b3cb-2d49d3581ae9_1024x1024.jpg?v=1775587372",
-    href: "/shop/gaming-headsets",
+    eyebrow: "Pro Combo · Save $10",
+    title: "X2 PRO + L90 for $49.99",
+    subtitle:
+      "Attack Shark X2 PRO wireless mouse with RGB charging dock plus the L90 wireless headset. One price, limited stock.",
+    image: "/hero/bg-obsidian-rgb.webp",
+    productImage: "/hero/pro-combo.webp",
+    href: "/deals",
     productWrapClassName:
-      "right-[9%] bottom-2 h-[74%] max-md:bottom-16 max-md:h-[34%] max-sm:bottom-14 max-sm:h-[30%]",
+      "right-[12%] bottom-4 h-[72%] max-md:bottom-16 max-md:h-[34%] max-sm:bottom-14 max-sm:h-[30%]",
     productImageClassName:
-      "max-h-full w-auto object-contain drop-shadow-[0_28px_35px_rgba(0,0,0,0.34)]",
+      "max-h-full w-auto object-contain drop-shadow-[0_28px_35px_rgba(0,0,0,0.3)]",
   },
   {
-    eyebrow: "Pro wireless mice",
-    title: "Logitech G Pro Wireless",
-    subtitle: "Lightweight wireless control for fast flicks, clean aim, and competitive desk setups.",
-    image: "/logitechbackg.webp",
-    productImage: "https://s24.q4cdn.com/131595232/files/doc_multimedia/2018/08/1/Low_Resolution_JPG-PRO_Wireless_Top_BB.jpg",
-    href: "/shop/gaming-mouse",
+    eyebrow: "Starter Combo · Save $10",
+    title: "X5 + L80 PRO for $39.99",
+    subtitle:
+      "The 49g Attack Shark X5 wireless mouse plus the L80 PRO wireless headset. The easiest setup upgrade.",
+    image: "/hero/bg-black-chrome-blue.webp",
+    productImage: "/hero/starter-combo.webp",
+    href: "/deals",
     productWrapClassName:
-      "right-[11%] bottom-8 h-[62%] max-md:bottom-16 max-md:h-[30%] max-sm:bottom-14 max-sm:h-[26%]",
+      "right-[12%] bottom-4 h-[72%] max-md:bottom-16 max-md:h-[34%] max-sm:bottom-14 max-sm:h-[30%]",
     productImageClassName:
-      "max-h-full w-auto object-contain drop-shadow-[0_26px_34px_rgba(2,12,27,0.4)]",
+      "max-h-full w-auto object-contain drop-shadow-[0_28px_35px_rgba(0,0,0,0.3)]",
   },
   {
-    eyebrow: "RGB keyboards",
-    title: "HyperX Alloy Origins",
-    subtitle: "Mechanical switches, compact aluminum build, and bright RGB for your main setup.",
-    image: "/hyperxbackg2.webp",
-    productImage: "https://row.hyperx.com/cdn/shop/products/hyperx_alloy_origins_pbt_hx_aqua_tw_angle_2_1024x1024.jpg?v=1666376510",
-    href: "/shop/gaming-keyboards",
+    eyebrow: "Attack Shark sale",
+    title: "Wireless gear from $16.99",
+    subtitle:
+      "Attack Shark mice and headsets at new lower prices. Delivery all over Lebanon, cash on delivery.",
+    image: "/hero/bg-silver-studio.webp",
+    productImage: "/hero/attack-shark-sale.webp",
+    href: "/search?search=Attack%20Shark",
     productWrapClassName:
-      "right-[7%] bottom-5 h-[64%] max-md:bottom-16 max-md:h-[31%] max-sm:bottom-14 max-sm:h-[27%]",
+      "right-[12%] bottom-4 h-[72%] max-md:bottom-16 max-md:h-[34%] max-sm:bottom-14 max-sm:h-[30%]",
     productImageClassName:
-      "max-h-full w-auto object-contain drop-shadow-[0_30px_38px_rgba(0,0,0,0.38)]",
+      "max-h-full w-auto object-contain drop-shadow-[0_28px_35px_rgba(0,0,0,0.3)]",
   },
 ];
 

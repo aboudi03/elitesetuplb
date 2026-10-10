@@ -90,7 +90,7 @@ export const heroNavCategories = [
       { id: "controllers", label: "Controllers", href: "/shop/controllers" },
     ],
   },
-  { id: "deals", label: "Deals", href: "/shop" },
+  { id: "deals", label: "Deals", href: "/deals" },
 ];
 
 export const contactEmails = {
