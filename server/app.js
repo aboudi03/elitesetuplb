@@ -37,6 +37,7 @@ const {
   errorLogger, 
   securityLogger 
 } = require('./middleware/requestLogger');
+const { accessControl } = require('./middleware/accessControl');
 
 // Import rate limiting middleware
 const {
@@ -167,6 +168,9 @@ app.use("/api/users/email", authLimiter); // For login attempts via email lookup
 
 // Apply admin rate limiting to admin routes
 
+// Block admin/private routes unless the request comes through the
+// authenticated Next.js proxy
+app.use(accessControl);
 
 app.use("/api/products", productsRouter);
 app.use("/api/categories", categoryRouter);
