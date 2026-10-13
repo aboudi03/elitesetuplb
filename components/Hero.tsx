@@ -32,8 +32,8 @@ type MobileDropdownPosition = {
 
 const fallbackSlides: HeroSlide[] = [
   {
-    eyebrow: "Pro Combo · Save $10",
-    title: "X2 PRO + L90 for $49.99",
+    eyebrow: "Pro Combo · Save $7",
+    title: "X2 PRO + L90 for $44.99",
     subtitle:
       "Attack Shark X2 PRO wireless mouse with RGB charging dock plus the L90 wireless headset. One price, limited stock.",
     image: "/hero/bg-obsidian-rgb.webp",
@@ -45,8 +45,8 @@ const fallbackSlides: HeroSlide[] = [
       "max-h-full w-auto object-contain drop-shadow-[0_28px_35px_rgba(0,0,0,0.3)]",
   },
   {
-    eyebrow: "Starter Combo · Save $10",
-    title: "X5 + L80 PRO for $39.99",
+    eyebrow: "Starter Combo · Save $8",
+    title: "X5 + L80 PRO for $34.99",
     subtitle:
       "The 49g Attack Shark X5 wireless mouse plus the L80 PRO wireless headset. The easiest setup upgrade.",
     image: "/hero/bg-black-chrome-blue.webp",

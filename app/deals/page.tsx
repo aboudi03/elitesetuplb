@@ -2,6 +2,7 @@
 
 import { useProductStore } from "@/app/_zustand/store";
 import apiClient from "@/lib/api";
+import { getEffectiveProductPrice } from "@/lib/productPrice";
 import { sanitize } from "@/lib/sanitize";
 import {
   buildAnalyticsItem,
@@ -171,7 +172,7 @@ const DealsPage = () => {
               const products = deal.products.map((item) => item.product).filter(isProduct);
               const originalPrice =
                 deal.originalPrice ||
-                products.reduce((sum, product) => sum + Number(product.price || 0), 0);
+                products.reduce((sum, product) => sum + getEffectiveProductPrice(product), 0);
               const savings = Math.max(0, originalPrice - deal.specialPrice);
 
               return (

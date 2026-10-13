@@ -75,9 +75,22 @@ function getDealInclude() {
   };
 }
 
+// What the customer would pay buying the items separately today, so deal
+// savings are measured against current sale prices, not old regular prices.
+function getCurrentProductPrice(product) {
+  const regularPrice = Number(product.price || 0);
+  const salePrice = Number(product.salePrice);
+
+  return Number.isFinite(salePrice) && salePrice > 0 && salePrice < regularPrice
+    ? salePrice
+    : regularPrice;
+}
+
 function serializeDeal(deal) {
   const products = (deal.products || []).map((item) => item.product).filter(Boolean);
-  const originalPrice = products.reduce((sum, product) => sum + Number(product.price || 0), 0);
+  const originalPrice = Number(
+    products.reduce((sum, product) => sum + getCurrentProductPrice(product), 0).toFixed(2)
+  );
 
   return {
     ...deal,
