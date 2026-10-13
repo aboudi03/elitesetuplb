@@ -12,5 +12,5 @@ export const calculateCartGrandTotal = (
   deliveryFee = 5
 ) => {
   const shipping = subtotal === 0 ? 0 : deliveryFee;
-  return Math.round(subtotal + calculateCartTax(products) + shipping);
+  return Math.round((subtotal + calculateCartTax(products) + shipping) * 100) / 100;
 };

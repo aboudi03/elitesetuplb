@@ -1,5 +1,6 @@
 const prisma = require("../utills/db");
 const { asyncHandler, AppError } = require("../utills/errorHandler");
+const { getCurrentProductPrice } = require("../utills/orderPricing");
 
 function normalizeText(value) {
   if (value === undefined || value === null) return null;
@@ -75,17 +76,7 @@ function getDealInclude() {
   };
 }
 
-// What the customer would pay buying the items separately today, so deal
-// savings are measured against current sale prices, not old regular prices.
-function getCurrentProductPrice(product) {
-  const regularPrice = Number(product.price || 0);
-  const salePrice = Number(product.salePrice);
-
-  return Number.isFinite(salePrice) && salePrice > 0 && salePrice < regularPrice
-    ? salePrice
-    : regularPrice;
-}
-
+// Savings are measured against what the items cost separately today.
 function serializeDeal(deal) {
   const products = (deal.products || []).map((item) => item.product).filter(Boolean);
   const originalPrice = Number(

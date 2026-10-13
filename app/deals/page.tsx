@@ -310,6 +310,8 @@ const DealsPage = () => {
         image: getProductImage(product),
         amount: 1,
         stock: product.inStock,
+        dealId: deal.id,
+        dealTitle: deal.title,
       });
     });
 

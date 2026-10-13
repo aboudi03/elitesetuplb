@@ -4,6 +4,8 @@ const { validateOrderData, ValidationError } = require('../utills/validation');
 const { createOrderUpdateNotification } = require('../utills/notificationHelpers');
 const { getStatusWithGroup, ensureDefaultOrderStatuses } = require('../utills/orderStatus');
 const { ensureDefaultDeliveryZones } = require('../utills/deliveryZones');
+const { AppError } = require('../utills/errorHandler');
+const { priceOrderItems, assertStockAvailable } = require('../utills/orderPricing');
 
 function normalizeStatusCode(status) {
   return status === 'canceled' ? 'cancelled' : status;
@@ -262,7 +264,21 @@ async function createCustomerOrder(request, response) {
 
     const validatedData = validation.validatedData;
     console.log("✅ Validation passed, validated data:", validatedData);
-    validatedData.status = normalizeStatusCode(validatedData.status);
+    // Storefront orders always start as pending; customers can't choose a status.
+    validatedData.status = normalizeStatusCode("pending");
+
+    // Price the order from the database. The browser's total is only used to
+    // detect a cart that is out of date, never as the amount we charge.
+    const pricing = await priceOrderItems(prisma, request.body.items);
+    if (Math.abs(pricing.total - validatedData.total) > 0.01) {
+      return response.status(409).json({
+        error: "Prices changed",
+        details:
+          "Some prices in your cart changed since you added them. Please empty your cart and add the items again.",
+        total: pricing.total,
+      });
+    }
+    validatedData.total = pricing.total;
 
     // Additional business logic validation
     if (validatedData.total < 0.01) {
@@ -301,8 +317,11 @@ async function createCustomerOrder(request, response) {
     const grandTotal = Number(validatedData.total || 0) + deliveryFee;
     const attribution = normalizeOrderAttribution(request.body.attribution);
 
-    // Create the order with validated data
+    // Create the order and its items together, so an order never exists without
+    // the items it was priced for
     const corder = await prisma.$transaction(async (tx) => {
+      await assertStockAvailable(tx, pricing.items);
+
       const latestOrder = await tx.customer_order.findFirst({
         where: {
           orderNumber: {
@@ -340,6 +359,16 @@ async function createCustomerOrder(request, response) {
           dateTime: new Date(),
           ...attribution,
         },
+      });
+
+      await tx.customer_order_product.createMany({
+        data: pricing.items.map((item) => ({
+          customerOrderId: createdOrder.id,
+          productId: item.productId,
+          quantity: item.quantity,
+          selectedColor: item.selectedColor,
+          selectedSize: item.selectedSize,
+        })),
       });
 
       await tx.orderStatusHistory.create({
@@ -411,7 +440,8 @@ async function createCustomerOrder(request, response) {
     const responseData = {
       id: corder.id,
       message: "Order created successfully",
-      orderNumber: corder.orderNumber
+      orderNumber: corder.orderNumber,
+      total: corder.total,
     };
     
     console.log("Sending response:", responseData);
@@ -425,6 +455,13 @@ async function createCustomerOrder(request, response) {
       return response.status(409).json({ 
         error: "Order conflict",
         details: "An order with this information already exists"
+      });
+    }
+
+    if (error instanceof AppError) {
+      return response.status(error.statusCode).json({
+        error: error.message,
+        details: error.message
       });
     }
 

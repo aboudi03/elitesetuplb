@@ -16,7 +16,7 @@ const PUBLIC_ROUTES = {
     /^\/api\/featured-brands$/,
     /^\/api\/product-banners(\/[^/]+)?$/,
   ],
-  POST: [/^\/api\/orders$/, /^\/api\/order-product$/, /^\/api\/cart-events$/],
+  POST: [/^\/api\/orders$/, /^\/api\/cart-events$/],
 };
 
 // Internal fields that must never reach anonymous visitors.

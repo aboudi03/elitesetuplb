@@ -13,7 +13,13 @@ export type ProductInCart = {
   selectedSize?: string;
   amount: number;
   stock?: number;
+  // Set on items added as part of a deal. Bundle items are only sold together,
+  // so they are removed and re-quantified as one unit.
+  dealId?: string;
+  dealTitle?: string;
 };
+
+const DEAL_CART_ITEM_PREFIX = "deal:";
 
 export type State = {
   products: ProductInCart[];
@@ -71,10 +77,13 @@ export const useProductStore = create<State & Actions>()(
       },
       removeFromCart: (cartItemId) => {
         set((state) => {
-          state.products = state.products.filter(
-            (product: ProductInCart) => product.cartItemId !== cartItemId
+          const removedItem = state.products.find((item) => item.cartItemId === cartItemId);
+          const products = state.products.filter((product: ProductInCart) =>
+            removedItem?.dealId
+              ? product.dealId !== removedItem.dealId
+              : product.cartItemId !== cartItemId
           );
-          return { products: state.products };
+          return { products };
         });
       },
 
@@ -100,35 +109,49 @@ export const useProductStore = create<State & Actions>()(
 
           if (!cartItem) {
             return { products: [...state.products] };
-          } else {
-            state.products.map((product) => {
-              if (product.cartItemId === cartItem.cartItemId) {
-                product.amount = amount;
-              }
-            });
           }
 
-          return { products: [...state.products] };
+          return {
+            products: state.products.map((product) =>
+              (cartItem.dealId ? product.dealId === cartItem.dealId : product.cartItemId === cartItemId)
+                ? { ...product, amount }
+                : product
+            ),
+          };
         });
       },
     }),
     {
       name: "products-storage",
-      version: 2,
+      version: 3,
       migrate: (persistedState: any) => {
         if (!persistedState?.products) {
           return persistedState;
         }
 
-        return {
-          ...persistedState,
-          products: persistedState.products.map((product: ProductInCart & { cartItemId?: string }) => ({
-            ...product,
-            cartItemId:
+        const products = persistedState.products.map(
+          (product: ProductInCart & { cartItemId?: string }) => {
+            const cartItemId =
               product.cartItemId ||
-                `${product.id}::${product.selectedColor || "default"}::${product.selectedSize || "default"}`,
-          })),
-        };
+              `${product.id}::${product.selectedColor || "default"}::${product.selectedSize || "default"}`;
+            // Deal items added before bundles were tracked: recover the deal id
+            // from "deal:<dealId>:<productId>".
+            const legacyDealId =
+              !product.dealId && cartItemId.startsWith(DEAL_CART_ITEM_PREFIX)
+                ? cartItemId.split(":")[1]
+                : undefined;
+
+            return {
+              ...product,
+              cartItemId,
+              ...(legacyDealId
+                ? { dealId: legacyDealId, dealTitle: product.title.split(" - ")[0] }
+                : {}),
+            };
+          }
+        );
+
+        return { ...persistedState, products };
       },
       storage: createJSONStorage(() =>
         typeof window !== "undefined" ? sessionStorage : createNoopStorage()

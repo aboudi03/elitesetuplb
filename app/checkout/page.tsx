@@ -15,6 +15,7 @@ import {
   trackPurchaseEvent,
 } from "@/lib/analytics";
 import { calculateCartGrandTotal, calculateCartTax } from "@/lib/cartPricing";
+import { getBundleItemName, groupCartItems, toOrderItems } from "@/lib/cartBundles";
 import { pcBuilderWhatsAppNumber } from "@/lib/pc-builder";
 import { getOrderAttribution } from "@/lib/orderAttribution";
 
@@ -314,6 +315,8 @@ const CheckoutPage = () => {
         orderNotice: checkoutForm.orderNotice.trim(),
         userId: userId, // Add user ID for notifications
         attribution: getOrderAttribution(),
+        // The server prices these itself and creates them with the order.
+        items: toOrderItems(products),
       };
 
       console.log("📋 Order data being sent:", orderData);
@@ -375,27 +378,6 @@ const CheckoutPage = () => {
         throw new Error("Order ID not received from server");
       }
 
-      console.log("✅ Order ID validation passed, proceeding with product addition...");
-
-      // Add products to order
-      for (let i = 0; i < products.length; i++) {
-        console.log(`🛍️ Adding product ${i + 1}/${products.length}:`, {
-          orderId,
-          productId: products[i].id,
-          quantity: products[i].amount
-        });
-        
-        await addOrderProduct(
-          orderId,
-          products[i].id,
-          products[i].amount,
-          products[i].selectedColor,
-          products[i].selectedSize
-        );
-        console.log(`✅ Product ${i + 1} added successfully`);
-      }
-
-      console.log(" All products added successfully!");
 
       const completedOrderSummary: CheckoutSuccessSummary = {
         orderId,
@@ -492,52 +474,6 @@ const CheckoutPage = () => {
     }
   };
 
-  const addOrderProduct = async (
-    orderId: string,
-    productId: string,
-    productQuantity: number,
-    selectedColor?: string,
-    selectedSize?: string
-  ) => {
-    try {
-      console.log("️ Adding product to order:", {
-        customerOrderId: orderId,
-        productId,
-        quantity: productQuantity
-      });
-      
-      const response = await apiClient.post("/api/order-product", {
-        customerOrderId: orderId,
-        productId: productId,
-        quantity: productQuantity,
-        selectedColor,
-        selectedSize,
-      });
-
-      console.log("📡 Product order response:", response);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("❌ Product order failed:", response.status, errorText);
-        let message = `Product order failed: ${response.status}`;
-        try {
-          const errorData = JSON.parse(errorText);
-          message = errorData.error || errorData.details || message;
-        } catch {
-          message = errorText || message;
-        }
-        throw new Error(message);
-      }
-
-      const data = await response.json();
-      console.log("✅ Product order successful:", data);
-      
-    } catch (error) {
-      console.error("💥 Error creating product order:", error);
-      throw error;
-    }
-  };
-
   useEffect(() => {
     if (!isMounted) {
       return;
@@ -596,36 +532,65 @@ const CheckoutPage = () => {
               role="list"
               className="divide-y divide-[var(--site-border)] text-sm font-medium text-[var(--site-text)]"
             >
-              {products.map((product) => (
-                <li key={product?.cartItemId} className="flex items-start space-x-4 py-6">
-                  <Image
-                    src={product?.image ? `/${product?.image}` : "/product_placeholder.webp"}
-                    alt={product?.title}
-                    width={80}
-                    height={80}
-                    className="h-20 w-20 flex-none rounded-md object-cover object-center"
-                  />
-                  <div className="flex-auto space-y-1">
-                    <h3>{product?.title}</h3>
-                    <p className="text-[var(--site-muted)]">x{product?.amount}</p>
-                    {product.selectedColor && (
-                      <p className="text-[var(--site-muted)]">Color: {product.selectedColor}</p>
-                    )}
-                    {product.selectedSize && (
-                      <p className="text-[var(--site-muted)]">Size: {product.selectedSize}</p>
-                    )}
-                  </div>
-                  <p className="flex-none text-base font-medium">
-                    ${product?.price}
-                  </p>
-                </li>
-              ))}
+              {groupCartItems(products).map((group) =>
+                group.type === "bundle" ? (
+                  <li key={group.key} className="py-6">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0 space-y-1">
+                        <span className="inline-flex rounded-full bg-[var(--site-accent)] px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wide text-white">
+                          Bundle
+                        </span>
+                        <h3>{group.title}</h3>
+                        <p className="text-[var(--site-muted)]">x{group.amount}</p>
+                      </div>
+                      <p className="flex-none text-base font-medium">
+                        ${(group.unitPrice * group.amount).toFixed(2)}
+                      </p>
+                    </div>
+                    <ul className="mt-3 space-y-2">
+                      {group.items.map((item) => (
+                        <li key={item.cartItemId} className="flex items-center gap-3">
+                          <Image
+                            src={item.image ? `/${item.image}` : "/product_placeholder.webp"}
+                            alt={getBundleItemName(item)}
+                            width={48}
+                            height={48}
+                            className="h-12 w-12 flex-none rounded-md bg-[#fff] object-contain p-0.5"
+                          />
+                          <span className="text-[var(--site-muted)]">{getBundleItemName(item)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ) : (
+                  <li key={group.item.cartItemId} className="flex items-start space-x-4 py-6">
+                    <Image
+                      src={group.item.image ? `/${group.item.image}` : "/product_placeholder.webp"}
+                      alt={group.item.title}
+                      width={80}
+                      height={80}
+                      className="h-20 w-20 flex-none rounded-md object-cover object-center"
+                    />
+                    <div className="flex-auto space-y-1">
+                      <h3>{group.item.title}</h3>
+                      <p className="text-[var(--site-muted)]">x{group.item.amount}</p>
+                      {group.item.selectedColor && (
+                        <p className="text-[var(--site-muted)]">Color: {group.item.selectedColor}</p>
+                      )}
+                      {group.item.selectedSize && (
+                        <p className="text-[var(--site-muted)]">Size: {group.item.selectedSize}</p>
+                      )}
+                    </div>
+                    <p className="flex-none text-base font-medium">${group.item.price}</p>
+                  </li>
+                )
+              )}
             </ul>
 
             <dl className="hidden space-y-6 border-t border-[var(--site-border)] pt-6 text-sm font-medium text-[var(--site-text)] lg:block">
               <div className="flex items-center justify-between">
                 <dt className="text-[var(--site-muted)]">Subtotal</dt>
-                <dd>${total}</dd>
+                <dd>${total.toFixed(2)}</dd>
               </div>
               <div className="flex items-center justify-between">
                 <dt className="text-[var(--site-muted)]">Shipping</dt>
@@ -638,7 +603,7 @@ const CheckoutPage = () => {
               <div className="flex items-center justify-between border-t border-[var(--site-border)] pt-6">
                 <dt className="text-base">Total</dt>
                 <dd className="text-base">
-                  ${orderGrandTotal}
+                  ${orderGrandTotal.toFixed(2)}
                 </dd>
               </div>
             </dl>
