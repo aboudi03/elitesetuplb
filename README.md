@@ -127,7 +127,7 @@ We have applied this method by examining the code after each new added functiona
 NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
 NODE_ENV=development
 DATABASE_URL="mysql://username:password@localhost:3306/elite_setup?sslmode=disabled"
-NEXTAUTH_SECRET=12D16C923BA17672F89B18C1DB22A
+NEXTAUTH_SECRET=generate-a-long-random-value
 NEXTAUTH_URL=http://localhost:3000
 ```
 

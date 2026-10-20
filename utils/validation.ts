@@ -29,10 +29,11 @@ export const commonValidations = {
     .string()
     .min(8, "Password must be at least 8 characters long")
     .max(128, "Password must be no more than 128 characters")
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
-      "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
-    )
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/\d/, "Password must contain at least one number")
+    // Any symbol counts (# . _ - + etc.), not just a fixed short list
+    .regex(/[^A-Za-z0-9]/, "Password must contain at least one symbol, like # or @")
     .refine(
       (password) => {
         // Check for common weak passwords

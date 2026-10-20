@@ -49,9 +49,23 @@ const RegisterPage = () => {
       return;
     }
 
-    if (!password || password.length < 8) {
-      setError("Password must be 8 characters long");
-      toast.error("Password must be 8 characters long");
+    // Same rules as the server (utils/validation.ts), checked here for instant feedback
+    const passwordProblem =
+      password.length < 8
+        ? "Password must be at least 8 characters long"
+        : !/[a-z]/.test(password)
+          ? "Password must contain at least one lowercase letter"
+          : !/[A-Z]/.test(password)
+            ? "Password must contain at least one uppercase letter"
+            : !/\d/.test(password)
+              ? "Password must contain at least one number"
+              : !/[^A-Za-z0-9]/.test(password)
+                ? "Password must contain at least one symbol, like # or @"
+                : "";
+
+    if (passwordProblem) {
+      setError(passwordProblem);
+      toast.error(passwordProblem);
       return;
     }
 
@@ -124,8 +138,14 @@ const RegisterPage = () => {
                 { id: "name", label: "Name", type: "text", autoComplete: undefined },
                 { id: "lastname", label: "Lastname", type: "text", autoComplete: undefined },
                 { id: "email", label: "Email address", type: "email", autoComplete: "email" },
-                { id: "password", label: "Password", type: "password", autoComplete: "current-password" },
-                { id: "confirmpassword", label: "Confirm password", type: "password", autoComplete: "current-password" },
+                {
+                  id: "password",
+                  label: "Password",
+                  type: "password",
+                  autoComplete: "new-password",
+                  hint: "At least 8 characters, with an uppercase letter, a lowercase letter, a number and a symbol (e.g. Elite2026#)",
+                },
+                { id: "confirmpassword", label: "Confirm password", type: "password", autoComplete: "new-password" },
               ].map((field) => (
                 <div key={field.id}>
                   <label htmlFor={field.id} className="block text-sm font-bold leading-6">
@@ -141,6 +161,9 @@ const RegisterPage = () => {
                       className={inputClassName}
                     />
                   </div>
+                  {"hint" in field && field.hint && (
+                    <p className="mt-1.5 text-xs text-[var(--site-muted)]">{field.hint}</p>
+                  )}
                 </div>
               ))}
 
